@@ -39,7 +39,8 @@ if __name__ == "__main__":
                                                         kvs['metadata'].iloc[val_index])
 
         net = train_utils.init_model()
-        optimizer = train_utils.init_optimizer(net)
+        optimizer = train_utils.init_optimizer([{'params': net.module.classifier_kl.parameters()},
+                                                {'params': net.module.classifier_prog.parameters()}])
         scheduler = MultiStepLR(optimizer, milestones=kvs['args'].lr_drop, gamma=0.1)
 
         writer = SummaryWriter(os.path.join(kvs['args'].logs,
@@ -50,6 +51,6 @@ if __name__ == "__main__":
             if epoch == kvs['args'].unfreeze_epoch:
                 print(colored('==> ', 'red')+'Unfreezing the layers!')
                 new_lr_drop_milestones = list(map(lambda x: x-kvs['args'].unfreeze_epoch, kvs['args'].lr_drop))
-                optimizer = train_utils.init_optimizer()
+                optimizer = train_utils.init_optimizer(net)
                 scheduler = MultiStepLR(optimizer, milestones=new_lr_drop_milestones, gamma=0.1)
             train_loss = train_utils.train_epoch(epoch, net, optimizer, train_loader)

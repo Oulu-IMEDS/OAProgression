@@ -19,12 +19,12 @@ def init_model():
     return net
 
 
-def init_optimizer(net):
+def init_optimizer(parameters):
     kvs = GlobalKVS()
     if kvs['args'].optimizer == 'adam':
-        return optim.Adam(net.parameters(), lr=kvs['args'].lr, weight_decay=kvs['args'].wd)
+        return optim.Adam(parameters, lr=kvs['args'].lr, weight_decay=kvs['args'].wd)
     elif kvs['args'].optimizer == 'sgd':
-        return optim.SGD(net.parameters(), lr=kvs['args'].lr, weight_decay=kvs['args'].wd, momentum=0.9)
+        return optim.SGD(parameters, lr=kvs['args'].lr, weight_decay=kvs['args'].wd, momentum=0.9)
     else:
         raise NotImplementedError
 

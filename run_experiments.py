@@ -1,7 +1,12 @@
+import os
 import cv2
+
+from torch.optim.lr_scheduler import MultiStepLR
+
 from termcolor import colored
 from tensorboardX import SummaryWriter
 from sklearn.model_selection import GroupKFold
+
 from oaprogression.kvs import GlobalKVS
 from oaprogression.training import session
 from oaprogression.training import train_utils
@@ -34,4 +39,17 @@ if __name__ == "__main__":
                                                         kvs['metadata'].iloc[val_index])
 
         net = train_utils.init_model()
+        optimizer = train_utils.init_optimizer(net)
+        scheduler = MultiStepLR(optimizer, milestones=kvs['args'].lr_drop, gamma=0.1)
 
+        writer = SummaryWriter(os.path.join(kvs['args'].logs,
+                                            'OA_progression', 'fold_{}'.format(fold_id),
+                                            kvs['snapshot_name']))
+
+        for epoch in range(kvs['args'].n_epochs):
+            if epoch == kvs['args'].unfreeze_epoch:
+                print(colored('==> ', 'red')+'Unfreezing the layers!')
+                new_lr_drop_milestones = list(map(lambda x: x-kvs['args'].unfreeze_epoch, kvs['args'].lr_drop))
+                optimizer = train_utils.init_optimizer()
+                scheduler = MultiStepLR(optimizer, milestones=new_lr_drop_milestones, gamma=0.1)
+            train_loss = train_utils.train_epoch(epoch, net, optimizer, train_loader)

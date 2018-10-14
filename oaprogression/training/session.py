@@ -3,10 +3,11 @@ import time
 import numpy as np
 from tqdm import tqdm
 from termcolor import colored
-import torch
-from torch import optim
-from torch.utils.data import DataLoader
 from functools import partial
+
+import torch
+from torch.utils.data import DataLoader
+
 import solt.transforms as slt
 from torchvision import transforms as tv_transforms
 

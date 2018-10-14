@@ -18,7 +18,7 @@ def parse_args():
     parser.add_argument('--start_val', type=int, default=-1)
     parser.add_argument('--loss_weight', type=float, default=0.5)
     parser.add_argument('--unfreeze_epoch', type=int, default=5)
-    parser.add_argument('--crop_y', type=int, default=512)
+    parser.add_argument('--dropout_rate', type=float, default=0.5)
     parser.add_argument('--lr', type=float, default=1e-2)
     parser.add_argument('--lr_drop', default=[10, 20, 30])
     parser.add_argument('--wd', type=float, default=5e-5)

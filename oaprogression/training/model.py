@@ -2,7 +2,6 @@ import pretrainedmodels
 from torch import nn
 
 
-
 class FCViewer(nn.Module):
     def forward(self, x):
         return x.view(x.size(0), -1)

@@ -15,6 +15,7 @@ from oaprogression.training.dataset import OAProgressionDataset
 from oaprogression.training.transforms import init_train_augs, apply_by_index, img_labels2solt, unpack_solt_data
 from oaprogression.kvs import GlobalKVS, git_info
 
+
 def init_session():
     kvs = GlobalKVS()
 
@@ -82,6 +83,7 @@ def init_data_processing():
     val_trf = tv_transforms.Compose([
         img_labels2solt,
         slt.CropTransform(crop_size=(300, 300), crop_mode='c'),
+        unpack_solt_data,
         partial(apply_by_index, transform=tv_transforms.ToTensor(), idx=[0, 1]),
         partial(apply_by_index, transform=norm_trf, idx=0)
     ])

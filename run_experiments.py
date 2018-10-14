@@ -1,11 +1,13 @@
 import os
 import cv2
+import numpy as np
 
 from torch.optim.lr_scheduler import MultiStepLR
 
 from termcolor import colored
 from tensorboardX import SummaryWriter
 from sklearn.model_selection import GroupKFold
+from sklearn.metrics import roc_auc_score, cohen_kappa_score, confusion_matrix, mean_squared_error
 
 from oaprogression.kvs import GlobalKVS
 from oaprogression.training import session
@@ -57,3 +59,25 @@ if __name__ == "__main__":
             train_loss = train_utils.train_epoch(epoch, net, optimizer, train_loader)
             val_out = train_utils.validate_epoch(epoch, net, val_loader)
             val_loss, val_ids, gt_progression, preds_progression, gt_kl, preds_kl = val_out
+
+            # Computing Validation metrics
+            preds_progression_bin = preds_progression[:, 1:].sum(1)
+            preds_kl_bin = preds_kl[:, 1:].sum(1)
+
+            cm_prog = confusion_matrix(gt_progression, preds_progression.argmax(1))
+            cm_kl = confusion_matrix(gt_kl, preds_kl.argmax(1))
+
+            kappa_prog = cohen_kappa_score(gt_progression, preds_progression.argmax(1), weights="quadratic")
+            acc_prog = np.mean(cm_prog.diagonal().astype(float) / cm_prog.sum(axis=1))
+            mse_prog = mean_squared_error(gt_progression, preds_progression.argmax(1))
+            auc_prog = roc_auc_score(gt_progression > 0, preds_progression_bin)
+
+            kappa_kl = cohen_kappa_score(gt_kl, preds_kl.argmax(1), weights="quadratic")
+            acc_kl = np.mean(cm_kl.diagonal().astype(float) / cm_kl.sum(axis=1))
+            mse_kl = mean_squared_error(gt_kl, preds_kl.argmax(1))
+            auc_oa = roc_auc_score(gt_kl > 1, preds_kl_bin)
+
+            print(colored('====> ', 'green')+f'AUC [prog]: {auc_prog:.5f}')
+            print(colored('====> ', 'green')+f'Kappa [prog]: {kappa_prog:.5f}')
+            print(colored('====> ', 'green')+f'MSE [prog]: {mse_prog:.5f}')
+            print(colored('====> ', 'green')+f'Accuracy [prog]: {acc_prog:.5f}')

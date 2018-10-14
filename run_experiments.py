@@ -6,7 +6,6 @@ from torch.optim.lr_scheduler import MultiStepLR
 
 from termcolor import colored
 from tensorboardX import SummaryWriter
-from sklearn.model_selection import GroupKFold
 from sklearn.metrics import roc_auc_score, cohen_kappa_score, confusion_matrix, mean_squared_error
 
 from oaprogression.kvs import GlobalKVS
@@ -24,15 +23,13 @@ if __name__ == "__main__":
 
     print(colored("==> ", 'green') + f"Combined dataset has "
                                      f"{(kvs['metadata'].Progressor == 0).sum()} non-progressed knees")
-    print(colored("==> ",'green')+f"Combined dataset has "
-                                  f"{(kvs['metadata'].Progressor > 0).sum()} progressed knees")
+    print(colored("==> ", 'green')+f"Combined dataset has "
+                                   f"{(kvs['metadata'].Progressor > 0).sum()} progressed knees")
 
     session.init_data_processing()
 
-    gkf = GroupKFold(n_splits=5)
-    cv_split = gkf.split(kvs['metadata'], kvs['metadata']['Progressor'], kvs['metadata']['ID'].astype(str))
     print(colored('==> ', 'green') + 'Initialized the datasplits....')
-    for fold_id, (train_index, val_index) in enumerate(cv_split):
+    for fold_id, (train_index, val_index) in enumerate(kvs['cv_split']):
         print(colored('====> ', 'blue') + f'Training fold {fold_id}....')
         if kvs['args'].fold != -1 and fold_id != kvs['args'].fold:
             continue
@@ -53,7 +50,7 @@ if __name__ == "__main__":
             if epoch == kvs['args'].unfreeze_epoch:
                 print(colored('==> ', 'red')+'Unfreezing the layers!')
                 new_lr_drop_milestones = list(map(lambda x: x-kvs['args'].unfreeze_epoch, kvs['args'].lr_drop))
-                optimizer = train_utils.init_optimizer(net)
+                optimizer = train_utils.init_optimizer(net.parameters())
                 scheduler = MultiStepLR(optimizer, milestones=new_lr_drop_milestones, gamma=0.1)
 
             train_loss = train_utils.train_epoch(epoch, net, optimizer, train_loader)
@@ -77,7 +74,14 @@ if __name__ == "__main__":
             mse_kl = mean_squared_error(gt_kl, preds_kl.argmax(1))
             auc_oa = roc_auc_score(gt_kl > 1, preds_kl_bin)
 
+            print(colored('====> ', 'green')+f'Val. loss: {val_loss:.5f}')
             print(colored('====> ', 'green')+f'AUC [prog]: {auc_prog:.5f}')
             print(colored('====> ', 'green')+f'Kappa [prog]: {kappa_prog:.5f}')
             print(colored('====> ', 'green')+f'MSE [prog]: {mse_prog:.5f}')
             print(colored('====> ', 'green')+f'Accuracy [prog]: {acc_prog:.5f}')
+
+            writer.add_scalars('Losses', {'train': train_loss, 'val': val_loss}, epoch)
+            writer.add_scalars('Kappas progression', {'val': kappa_prog}, epoch)
+            writer.add_scalars('Acc progression', {'val': acc_prog}, epoch)
+            writer.add_scalars('AUC progression', {'val': auc_prog}, epoch)
+            scheduler.step()

@@ -3,6 +3,7 @@ import cv2
 import os
 import pandas as pd
 from oaprogression.kvs import GlobalKVS
+from sklearn.model_selection import GroupKFold
 
 cv2.ocl.setUseOpenCL(False)
 cv2.setNumThreads(0)
@@ -63,4 +64,11 @@ def init_metadata():
 
     most_meta = most_meta_full[most_meta_full.Progressor > 0]
     kvs.update('metadata', pd.concat((oai_meta, most_meta), axis=0))
+
+    gkf = GroupKFold(n_splits=5)
+    cv_split = [x for x in gkf.split(kvs['metadata'],
+                                     kvs['metadata']['Progressor'],
+                                     kvs['metadata']['ID'].astype(str))]
+    kvs.update('cv_split', cv_split)
+
     kvs.save_pkl(os.path.join(kvs['args'].snapshots, kvs['snapshot_name'], 'session.pkl'))

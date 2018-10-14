@@ -1,10 +1,8 @@
-import torch
 import torch.utils.data as data
 import cv2
 import os
-
-import io
-from tqdm import tqdm
+import pandas as pd
+from oaprogression.kvs import GlobalKVS
 
 cv2.ocl.setUseOpenCL(False)
 cv2.setNumThreads(0)
@@ -33,6 +31,7 @@ class OAProgressionDataset(data.Dataset):
     def __len__(self):
         return self.split.shape[0]
 
+
 def make_weights_for_balanced_classes(labels):
     """
     https://discuss.pytorch.org/t/balanced-sampling-between-classes-with-torchvision-dataloader/2703/3
@@ -54,3 +53,14 @@ def make_weights_for_balanced_classes(labels):
     return weight, weight_per_class
 
 
+def init_metadata():
+    # We get rid of non-progressors from MOST because we can check
+    # non-progressors only up to 84 months
+    kvs = GlobalKVS()
+
+    most_meta_full = pd.read_csv(os.path.join(kvs['args'].metadata_root, 'MOST_progression.csv'))
+    oai_meta = pd.read_csv(os.path.join(kvs['args'].metadata_root, 'OAI_progression.csv'))
+
+    most_meta = most_meta_full[most_meta_full.Progressor > 0]
+    kvs.update('metadata', pd.concat((oai_meta, most_meta), axis=0))
+    kvs.save_pkl(os.path.join(kvs['args'].snapshots, kvs['snapshot_name'], 'session.pkl'))

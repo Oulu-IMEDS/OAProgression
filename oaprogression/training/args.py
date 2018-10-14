@@ -3,7 +3,8 @@ import argparse
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset', default='')
+    parser.add_argument('--dataset_root', default='')
+    parser.add_argument('--metadata_root', default='')
     parser.add_argument('--snapshots', default='')
     parser.add_argument('--logs', default='')
     parser.add_argument('--backbone', type=str, choices=['seresnet50'], default='seresnet50')

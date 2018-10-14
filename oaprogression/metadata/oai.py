@@ -3,16 +3,15 @@ from tqdm import tqdm
 import os
 from oaprogression.metadata.utils import read_sas7bdata_pd
 
-# 0 - no progression
-# 1 - progression earlier than 60 months
-# 2 - progression later than 60 and earlier than 84 months
-# 3 - progression later than 84 and earlier than 96 months
-mapping_prog = {0: 0, 1: 1, 2: 1, 3: 1, 4: 2, 5: 3}
-
 
 def build_img_progression_meta(oai_src_dir):
     visits = ['00', '12', '24', '36', '72', '96']
     exam_codes = ['00', '01', '03', '05', '08', '10']
+    # 0 - no progression
+    # 1 - progression earlier than 60 months
+    # 2 - progression later than 60 and earlier than 72 months
+    # 3 - progression later than 72 and earlier than 96 months
+    mapping_prog = {0: 0, 1: 1, 2: 1, 3: 1, 4: 2, 5: 3}
     KL_files = []
     for i, visit in enumerate(visits):
         print(f'==> Reading OAI {visit} visit')
@@ -32,13 +31,13 @@ def build_img_progression_meta(oai_src_dir):
         KL_files.append(meta[['ID', 'SIDE', 'KL']])
 
     bad_ids = [9076900, 9466244]  # couldn't annotate these images, seem to be broken
-    ID_set_last_fu = set(KL_files[-1].ID.values.astype(int).tolist())  # Subjects present at all FU
+    id_set_last_fu = set(KL_files[-1].ID.values.astype(int).tolist())  # Subjects present at all FU
 
     # looking for progressors
     progressors = []
     identified_prog = {}
     sides = [None, 'R', 'L']
-    for _, knee in tqdm(KL_files[0].iterrows(), total=KL_files[0].shape[0]):
+    for _, knee in tqdm(KL_files[0].iterrows(), total=KL_files[0].shape[0], desc='Processing OAI:'):
         if int(knee.ID) in bad_ids:
             continue
         if int(knee.ID) in identified_prog:
@@ -52,7 +51,7 @@ def build_img_progression_meta(oai_src_dir):
             if ind.any():
                 old_kl = int(knee.KL)
                 new_kl = int(follow_up[ind].KL.values[0])
-                if new_kl >= 0 and new_kl <= 4:
+                if 0 <= new_kl <= 4:
                     # If not TKR
                     if new_kl != 1 and new_kl > old_kl:
                         progressors.append([int(knee.ID), sides[int(knee.SIDE)], old_kl, follow_up_id])
@@ -70,7 +69,7 @@ def build_img_progression_meta(oai_src_dir):
         if int(knee.ID) in identified_prog:
             if identified_prog[int(knee.ID)] == sides[int(knee.SIDE)]:
                 continue
-        if int(knee.ID) not in ID_set_last_fu:
+        if int(knee.ID) not in id_set_last_fu:
             continue
 
         if int(knee.ID) in bad_ids:
@@ -80,7 +79,6 @@ def build_img_progression_meta(oai_src_dir):
 
     data = pd.DataFrame(data=progressors + non_progressors, columns=['ID', 'Side', 'KL', 'Progressor'])
     data.Progressor = data.apply(lambda x: mapping_prog[x.Progressor], axis=1)
-
     return data
 
 

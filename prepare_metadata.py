@@ -24,4 +24,8 @@ if __name__ == "__main__":
 
     if not os.path.isfile(os.path.join('Metadata', 'MOST_progression.csv')):
         most_meta = most.build_img_progression_meta(args.most_meta)
-        #most_meta.to_csv(os.path.join('Metadata', 'MOST_progression.csv'), index=None)
+        most_meta.to_csv(os.path.join('Metadata', 'MOST_progression.csv'), index=None)
+
+    if not os.path.isfile(os.path.join('Metadata', 'MOST_participants.csv')):
+        most_meta = most.build_clinical(args.most_meta)
+        most_meta.to_csv(os.path.join('Metadata', 'MOST_participants.csv'), index=None)

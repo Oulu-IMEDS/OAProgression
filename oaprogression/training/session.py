@@ -53,16 +53,6 @@ def init_session():
     return args, snapshot_name
 
 
-def init_optimizer(net):
-    kvs = GlobalKVS()
-    if kvs['args'].optimizer == 'adam':
-        return optim.Adam(net.parameters(), lr=kvs['args'].lr, weight_decay=kvs['args'].wd)
-    elif kvs['args'].optimizer == 'sgd':
-        return optim.SGD(net.parameters(), lr=kvs['args'].lr, weight_decay=kvs['args'].wd, momentum=0.9)
-    else:
-        raise NotImplementedError
-
-
 def init_data_processing():
     kvs = GlobalKVS()
     train_augs = init_train_augs()
@@ -118,3 +108,23 @@ def init_mean_std(snapshots_dir, dataset, batch_size, n_threads):
 
     return mean_vector, std_vector
 
+
+def init_loaders(x_train, x_val):
+    kvs = GlobalKVS()
+    train_dataset = OAProgressionDataset(dataset=kvs['args'].dataset_root,
+                                         split=x_train,
+                                         transforms=kvs['train_trf'])
+
+    val_dataset = OAProgressionDataset(dataset=kvs['args'].dataset_root,
+                                       split=x_val,
+                                       transforms=kvs['val_trf'])
+
+    train_loader = DataLoader(train_dataset, batch_size=kvs['args'].bs,
+                              num_workers=kvs['args'].n_threads, shuffle=True,
+                              drop_last=True,
+                              worker_init_fn=lambda wid: np.random.seed(np.uint32(torch.initial_seed() + wid)))
+
+    val_loader = DataLoader(val_dataset, batch_size=kvs['args'].val_bs,
+                            num_workers=kvs['args'].n_threads)
+
+    return train_loader, val_loader

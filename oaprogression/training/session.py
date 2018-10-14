@@ -6,11 +6,14 @@ from termcolor import colored
 import torch
 from torch import optim
 from torch.utils.data import DataLoader
-import pandas as pd
+from functools import partial
+import solt.transforms as slt
+from torchvision import transforms as tv_transforms
+
 from oaprogression.training.args import parse_args
 from oaprogression.training.dataset import OAProgressionDataset
+from oaprogression.training.transforms import init_train_augs, apply_by_index, img_labels2solt, unpack_solt_data
 from oaprogression.kvs import GlobalKVS, git_info
-
 
 def init_session():
     kvs = GlobalKVS()
@@ -58,41 +61,37 @@ def init_optimizer(net):
     else:
         raise NotImplementedError
 
-"""
+
 def init_data_processing():
     kvs = GlobalKVS()
-    train_augs = build_train_augmentation_pipeline()
+    train_augs = init_train_augs()
 
-    dataset = OAProgressionDataset(split=kvs['metadata'],
-                                  trf=train_augs,
-                                  read_img=read_gs_ocv,
-                                  read_mask=read_gs_mask_ocv)
+    dataset = OAProgressionDataset(dataset=kvs['args'].dataset_root, split=kvs['metadata'], transforms=train_augs)
 
-    mean_vector, std_vector, class_weights = init_mean_std(snapshots_dir=kvs['args'].snapshots,
-                                                           dataset=dataset,
-                                                           batch_size=kvs['args'].bs,
-                                                           n_threads=kvs['args'].n_threads,
-                                                           n_classes=kvs['args'].n_classes)
+    mean_vector, std_vector = init_mean_std(snapshots_dir=kvs['args'].snapshots,
+                                            dataset=dataset, batch_size=kvs['args'].bs,
+                                            n_threads=kvs['args'].n_threads)
 
-    norm_trf = transforms.Normalize(torch.from_numpy(mean_vector).float(),
-                                    torch.from_numpy(std_vector).float())
-    train_trf = transforms.Compose([
+    norm_trf = tv_transforms.Normalize(torch.from_numpy(mean_vector).float(),
+                                       torch.from_numpy(std_vector).float())
+    train_trf = tv_transforms.Compose([
         train_augs,
         partial(apply_by_index, transform=norm_trf, idx=0)
     ])
 
-    val_trf = transforms.Compose([
-        partial(apply_by_index, transform=gs2tens, idx=[0, 1]),
+    val_trf = tv_transforms.Compose([
+        img_labels2solt,
+        slt.CropTransform(crop_size=(300, 300), crop_mode='c'),
+        partial(apply_by_index, transform=tv_transforms.ToTensor(), idx=[0, 1]),
         partial(apply_by_index, transform=norm_trf, idx=0)
     ])
-    kvs.update('class_weights', class_weights)
+
     kvs.update('train_trf', train_trf)
     kvs.update('val_trf', val_trf)
     kvs.save_pkl(os.path.join(kvs['args'].snapshots, kvs['snapshot_name'], 'session.pkl'))
-"""
 
 
-def init_mean_std(snapshots_dir, dataset, batch_size, n_threads, n_classes):
+def init_mean_std(snapshots_dir, dataset, batch_size, n_threads):
     if os.path.isfile(os.path.join(snapshots_dir, 'mean_std.npy')):
         tmp = np.load(os.path.join(snapshots_dir, 'mean_std.npy'))
         mean_vector, std_vector = tmp

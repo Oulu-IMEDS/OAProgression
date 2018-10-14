@@ -16,13 +16,13 @@ class OAProgressionDataset(data.Dataset):
 
     def __getitem__(self, ind):
         entry = self.split.iloc[ind]
+        fname = os.path.join(self.dataset, '{}_00_{}.png'.format(entry.ID, entry.Side))
+        img = cv2.imread(fname)
+        img, kl_grade, label = self.transforms((img, entry.KL, entry.Progressor))
 
-        img = cv2.imread(self.dataset + '{}_00.png'.format(entry.ID))
-        img, KL = self.transforms((img, entry.KL, entry.Progressor))
-
-        res = {'KL': entry.KL,
+        res = {'KL': kl_grade,
                'img': img,
-               'label': entry.Progressor,
+               'label': label,
                'ID_SIDE': str(entry.ID) + '_' + entry.Side
                }
 

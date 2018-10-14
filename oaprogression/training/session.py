@@ -75,7 +75,7 @@ def init_data_processing():
         img_labels2solt,
         slt.CropTransform(crop_size=(300, 300), crop_mode='c'),
         unpack_solt_data,
-        partial(apply_by_index, transform=tv_transforms.ToTensor(), idx=[0, 1]),
+        partial(apply_by_index, transform=tv_transforms.ToTensor(), idx=0),
         partial(apply_by_index, transform=norm_trf, idx=0)
     ])
 

@@ -53,4 +53,7 @@ if __name__ == "__main__":
                 new_lr_drop_milestones = list(map(lambda x: x-kvs['args'].unfreeze_epoch, kvs['args'].lr_drop))
                 optimizer = train_utils.init_optimizer(net)
                 scheduler = MultiStepLR(optimizer, milestones=new_lr_drop_milestones, gamma=0.1)
+
             train_loss = train_utils.train_epoch(epoch, net, optimizer, train_loader)
+            val_out = train_utils.validate_epoch(epoch, net, val_loader)
+            val_loss, val_ids, gt_progression, preds_progression, gt_kl, preds_kl = val_out

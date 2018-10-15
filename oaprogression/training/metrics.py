@@ -4,7 +4,7 @@ import numpy as np
 import os
 
 
-def log_val_metrics(boardlogger, val_loss, train_loss, gt_progression, preds_progression, gt_kl, preds_kl):
+def log_metrics(boardlogger, val_loss, train_loss, gt_progression, preds_progression, gt_kl, preds_kl):
     kvs = GlobalKVS()
 
     # Computing Validation metrics

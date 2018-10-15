@@ -18,6 +18,9 @@ from oaprogression.kvs import GlobalKVS, git_info
 
 
 def init_session():
+    if not torch.cuda.is_available():
+        raise EnvironmentError('The code must be run on GPU.')
+
     kvs = GlobalKVS()
 
     # Getting the arguments

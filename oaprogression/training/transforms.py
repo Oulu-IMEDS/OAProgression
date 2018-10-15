@@ -1,9 +1,15 @@
+import matplotlib.pyplot as plt
+import numpy as np
+
 from torchvision import transforms
 import solt.transforms as slt
 import solt.core as slc
 import solt.data as sld
 import copy
 from functools import partial
+
+from oaprogression.training import dataset
+from oaprogression.kvs import GlobalKVS
 
 
 def img_labels2solt(inp):
@@ -53,12 +59,32 @@ def init_train_augs():
         slc.Stream([
             slt.ResizeTransform((310, 310)),
             slt.ImageAdditiveGaussianNoise(p=0.5, gain_range=0.2),
-            slt.RandomRotate(rotation_range=(-5, 5)),
+            slt.RandomRotate(rotation_range=(-10, 10)),
             slt.CropTransform(crop_size=(300, 300), crop_mode='r'),
             slt.ImageGammaCorrection(p=1, gamma_range=(0.7, 2)),
             slt.ImageColorTransform(mode='gs2rgb')
-        ]),
+        ], interpolation='bicubic', padding='r'),
         unpack_solt_data,
         partial(apply_by_index, transform=transforms.ToTensor(), idx=0),
     ])
     return trf
+
+
+def debug_augmentations(n_iter=20):
+    kvs = GlobalKVS()
+
+    ds = dataset.OAProgressionDataset(dataset=kvs['args'].dataset_root,
+                                      split=kvs['metadata'],
+                                      transforms=init_train_augs())
+
+    for ind in np.random.choice(len(ds), n_iter, replace=False):
+        sample = ds[ind]
+        img = np.clip(sample['img'].numpy()*255, 0, 255).astype(np.uint8)
+        img = np.swapaxes(img, 0, -1)
+        img = np.swapaxes(img, 0, 1)
+        plt.figure()
+        plt.imshow(img)
+        plt.show()
+
+
+

@@ -1,3 +1,5 @@
+import sys
+
 import cv2
 
 from torch.optim.lr_scheduler import MultiStepLR
@@ -10,9 +12,12 @@ from oaprogression.training import session
 from oaprogression.training import train_utils
 from oaprogression.training import dataset
 from oaprogression.training import metrics
+from oaprogression.training import transforms
 
 cv2.ocl.setUseOpenCL(False)
 cv2.setNumThreads(0)
+
+DEBUG = sys.gettrace() is not None
 
 if __name__ == "__main__":
     kvs = GlobalKVS()
@@ -21,10 +26,12 @@ if __name__ == "__main__":
     session.init_data_processing()
     writers = session.init_folds()
 
+    if DEBUG:
+        transforms.debug_augmentations()
+
     for fold_id in kvs['cv_split_train']:
         kvs.update('cur_fold', fold_id)
         kvs.update('prev_model', None)
-        kvs.update('best_val_metric', 1e10)
         print(colored('====> ', 'blue') + f'Training fold {fold_id}....')
 
         train_index, val_index = kvs['cv_split_train'][fold_id]

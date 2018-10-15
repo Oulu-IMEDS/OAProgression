@@ -67,6 +67,9 @@ def init_data_processing():
                                             dataset=dataset, batch_size=kvs['args'].bs,
                                             n_threads=kvs['args'].n_threads)
 
+    print(colored('====> ', 'red') + 'Mean:', mean_vector)
+    print(colored('====> ', 'red') + 'Std:', std_vector)
+
     norm_trf = tv_transforms.Normalize(torch.from_numpy(mean_vector).float(),
                                        torch.from_numpy(std_vector).float())
     train_trf = tv_transforms.Compose([

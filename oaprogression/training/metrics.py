@@ -6,7 +6,7 @@ from sklearn.metrics import roc_auc_score, cohen_kappa_score, confusion_matrix, 
 from oaprogression.kvs import GlobalKVS
 
 
-def log_metrics(boardlogger, val_loss, train_loss, gt_progression, preds_progression, gt_kl, preds_kl):
+def log_metrics(boardlogger, train_loss, val_loss, gt_progression, preds_progression, gt_kl, preds_kl):
     kvs = GlobalKVS()
 
     # Computing Validation metrics
@@ -42,7 +42,7 @@ def log_metrics(boardlogger, val_loss, train_loss, gt_progression, preds_progres
      }
 
     print(colored('====> ', 'green') + f'Train loss: {train_loss:.5f}')
-    print(colored('====> ', 'green') + f'Validation loss: {train_loss:.5f}')
+    print(colored('====> ', 'green') + f'Validation loss: {val_loss:.5f}')
     print(colored('====> ', 'green') + f'Validation AUC [prog]: {auc_prog:.5f}')
     print(colored('====> ', 'green') + f'Validation AUC [oa]: {auc_oa:.5f}')
     print(colored('====> ', 'green') + f'Kappa [oa]: {kappa_kl:.5f}')

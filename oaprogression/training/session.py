@@ -10,6 +10,7 @@ from torch.utils.data import DataLoader
 
 import solt.transforms as slt
 from torchvision import transforms as tv_transforms
+import operator
 
 from oaprogression.training.args import parse_args
 from oaprogression.training.dataset import OAProgressionDataset
@@ -80,6 +81,7 @@ def init_data_processing():
     val_trf = tv_transforms.Compose([
         img_labels2solt,
         slt.CropTransform(crop_size=(300, 300), crop_mode='c'),
+        slt.ImageColorTransform(mode='gs2rgb'),
         unpack_solt_data,
         partial(apply_by_index, transform=tv_transforms.ToTensor(), idx=0),
         partial(apply_by_index, transform=norm_trf, idx=0)
@@ -156,7 +158,7 @@ def init_folds():
     return writers
 
 
-def save_checkpoint(model, val_metric_name):
+def save_checkpoint(model, val_metric_name, comparator='lt'):
     if isinstance(model, torch.nn.DataParallel):
         model = model.module
 
@@ -164,6 +166,7 @@ def save_checkpoint(model, val_metric_name):
     fold_id = kvs['cur_fold']
     epoch = kvs['cur_epoch']
     val_metric = kvs[f'val_metrics_fold_[{fold_id}]'][-1][0][val_metric_name]
+    comparator = getattr(operator, comparator)
     cur_snapshot_name = os.path.join(kvs['args'].snapshots, kvs['snapshot_name'],
                                      f'fold_{fold_id}_epoch_{epoch+1}.pth')
 
@@ -174,7 +177,7 @@ def save_checkpoint(model, val_metric_name):
         kvs.update('best_val_metric', val_metric)
 
     else:
-        if val_metric < kvs['best_val_metric']:
+        if comparator(val_metric, kvs['best_val_metric']):
             print(colored('====> ', 'red') + 'Snapshot was saved to', cur_snapshot_name)
             os.remove(kvs['prev_model'])
             torch.save(model.state_dict(), cur_snapshot_name)

@@ -53,5 +53,5 @@ if __name__ == "__main__":
             metrics.log_metrics(writers[fold_id], train_loss, val_loss,
                                 gt_progression, preds_progression, gt_kl, preds_kl)
 
-            session.save_checkpoint(net, 'auc_prog')
+            session.save_checkpoint(net, 'auc_prog', 'gt')
             scheduler.step()

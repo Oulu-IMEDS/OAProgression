@@ -40,11 +40,12 @@ if __name__ == "__main__":
         for epoch in range(kvs['args'].n_epochs):
             kvs.update('cur_epoch', epoch)
             if epoch == kvs['args'].unfreeze_epoch:
-                print(colored('==> ', 'red')+'Unfreezing the layers!')
+                print(colored('====> ', 'red')+'Unfreezing the layers!')
                 new_lr_drop_milestones = list(map(lambda x: x-kvs['args'].unfreeze_epoch, kvs['args'].lr_drop))
                 optimizer = train_utils.init_optimizer(net.parameters())
                 scheduler = MultiStepLR(optimizer, milestones=new_lr_drop_milestones, gamma=0.1)
 
+            print(colored('====> ', 'red') + 'LR:', scheduler.get_lr())
             train_loss = train_utils.train_epoch(net, optimizer, train_loader)
             val_out = train_utils.validate_epoch(net, val_loader)
             val_loss, val_ids, gt_progression, preds_progression, gt_kl, preds_kl = val_out

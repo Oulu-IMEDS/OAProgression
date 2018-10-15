@@ -1,6 +1,6 @@
 import pretrainedmodels
 from torch import nn
-
+from torchvision import models
 
 class FCViewer(nn.Module):
     def forward(self, x):
@@ -40,18 +40,50 @@ class SeResNet(nn.Module):
         return x
 
 
+class ResNet(nn.Module):
+    def __init__(self, layers, drop, ncls):
+        super().__init__()
+
+        if layers == 18:
+            model = models.resnet18(pretrained=True)
+        if layers == 34:
+            model = models.resnet34(pretrained=True)
+        if layers == 50:
+            model = models.resnet50(pretrained=True)
+        if layers == 101:
+            model = models.resnet101(pretrained=True)
+        if layers == 152:
+            model = models.resnet152(pretrained=True)
+        self.encoder = list(model.children())[:-2]
+        self.encoder.append(nn.AdaptiveAvgPool2d(1))
+        self.encoder = nn.Sequential(*self.encoder)
+
+        nfeats = model.fc.in_features
+
+        if drop > 0:
+            self.classifier = nn.Sequential(nn.Dropout(drop), nn.Linear(nfeats, ncls))
+        else:
+            self.classifier = nn.Linear(nfeats, ncls)
+
+    def forward(self, x):
+        x = self.encoder(x)
+        x = x.view(x.size(0), -1)
+        x = self.classifier(x)
+        return x
+
+
 class KneeNet(nn.Module):
     """
-    Network to automatically grade osteoarthritis
-
     Aleksei Tiulpin, Unversity of Oulu, 2017 (c).
 
     """
 
     def __init__(self, backbone_net, drop):
         super(KneeNet, self).__init__()
-        if backbone_net == 'seresnet50':
-            backbone = SeResNet(50, 1, 1)
+        if backbone_net.startswith('seresnet'):
+            backbone = SeResNet(int(backbone_net.split('seresnet')[-1]), 1, 1)
+        elif backbone_net.startswith('resnet'):
+            backbone = ResNet(int(backbone_net.split('resnet')[-1]), 1, 1)
         else:
             raise NotImplementedError
 

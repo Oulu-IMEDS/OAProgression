@@ -9,9 +9,8 @@ def build_img_progression_meta(oai_src_dir):
     exam_codes = ['00', '01', '03', '05', '08', '10']
     # 0 - no progression within 96 months range
     # 1 - progression earlier than 60 months
-    # 2 - progression later than 60 and earlier than 72 months
-    # 3 - progression later than 72 and earlier than 96 months
-    mapping_prog = {0: 0, 1: 1, 2: 1, 3: 1, 4: 2, 5: 3}
+    # 2 - progression later than 60 months
+    mapping_prog = {0: 0, 1: 1, 2: 1, 3: 1, 4: 2, 5: 2}
     KL_files = []
     for i, visit in enumerate(visits):
         print(f'==> Reading OAI {visit} visit')

@@ -7,7 +7,7 @@ from oaprogression.metadata.utils import read_sas7bdata_pd
 
 
 def build_img_progression_meta(most_src_dir):
-    # 0 - no progression observed up to 84 months
+    # 0 - no progression observed (up to 84 months)
     # 1 - progression earlier than 60 months
     # 2 - progression later than 60 and earlier than 84 months
     mapping = {0: 0, 1: 1, 2: 1, 3: 2, 4: 2, 5: 2}

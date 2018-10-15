@@ -10,7 +10,7 @@ def parse_args():
     parser.add_argument('--backbone', type=str, choices=['seresnet50'], default='seresnet50')
     parser.add_argument('--optimizer', type=str, choices=['adam', 'sgd'], default='adam')
     parser.add_argument('--bs', type=int, default=64)
-    parser.add_argument('--val_bs', type=int, default=96)
+    parser.add_argument('--val_bs', type=int, default=128)
     parser.add_argument('--n_folds', type=int, default=5)
     parser.add_argument('--fold', type=int, default=-1)
     parser.add_argument('--n_epochs', type=int, default=40)

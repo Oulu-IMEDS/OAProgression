@@ -4,7 +4,7 @@ import numpy as np
 from tqdm import tqdm
 from termcolor import colored
 from functools import partial
-
+from tensorboardX import SummaryWriter
 import torch
 from torch.utils.data import DataLoader
 
@@ -129,3 +129,22 @@ def init_loaders(x_train, x_val):
                             num_workers=kvs['args'].n_threads)
 
     return train_loader, val_loader
+
+
+def init_folds():
+    kvs = GlobalKVS()
+    writers = {}
+    cv_split_train = {}
+    for fold_id, split in enumerate(kvs['cv_split_all_folds']):
+        if kvs['args'].fold != -1 and fold_id != kvs['args'].fold:
+            continue
+        kvs.update(f'losses_fold_[{fold_id}', None, list)
+        kvs.update(f'metrics_fold_[{fold_id}', None, list)
+        cv_split_train[fold_id] = split
+        writers[fold_id] = SummaryWriter(os.path.join(kvs['args'].logs,
+                                                      'OA_progression',
+                                                      'fold_{}'.format(fold_id), kvs['snapshot_name']))
+
+    kvs.update('cv_split_train', cv_split_train)
+    kvs.save_pkl(os.path.join(kvs['args'].snapshots, kvs['snapshot_name'], 'session.pkl'))
+    return writers

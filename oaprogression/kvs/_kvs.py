@@ -41,7 +41,7 @@ class GlobalKVS(object):
             elif isinstance(self._d[tag], dict):
                 self._d[tag].update((value, str(datetime.datetime.now())))
             else:
-                self._d[tag] = value
+                self._d[tag] = (value, str(datetime.datetime.now()))
 
     def __getitem__(self, tag):
         return self._d[tag][0]

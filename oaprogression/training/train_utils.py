@@ -31,12 +31,13 @@ def init_optimizer(parameters):
         raise NotImplementedError
 
 
-def train_epoch(epoch, net, optimizer, train_loader):
+def train_epoch(net, optimizer, train_loader):
     kvs = GlobalKVS()
     net.train(True)
     running_loss = 0.0
     n_batches = len(train_loader)
     pbar = tqdm(total=len(train_loader))
+    epoch = kvs['cur_epoch']
     max_epoch = kvs['args'].n_epochs
     device = next(net.parameters()).device
     for i, batch in enumerate(train_loader):
@@ -65,11 +66,12 @@ def train_epoch(epoch, net, optimizer, train_loader):
     return running_loss / n_batches
 
 
-def validate_epoch(epoch, net, val_loader):
+def validate_epoch(net, val_loader):
     kvs = GlobalKVS()
     net.eval()
     running_loss = 0.0
     n_batches = len(val_loader)
+    epoch = kvs['cur_epoch']
 
     preds_progression = []
     gt_progression = []

@@ -59,11 +59,11 @@ def init_train_augs():
         slc.Stream([
             slt.ResizeTransform((310, 310)),
             slt.ImageAdditiveGaussianNoise(p=0.5, gain_range=0.2),
-            slt.RandomRotate(rotation_range=(-10, 10)),
+            slt.RandomRotate(p=0.5, rotation_range=(-10, 10)),
             slt.CropTransform(crop_size=(300, 300), crop_mode='r'),
-            slt.ImageGammaCorrection(p=1, gamma_range=(0.7, 2)),
+            slt.ImageGammaCorrection(p=0.5, gamma_range=(0.7, 1.5)),
             slt.ImageColorTransform(mode='gs2rgb')
-        ], interpolation='bicubic', padding='r'),
+        ], interpolation='bicubic', padding='z'),
         unpack_solt_data,
         partial(apply_by_index, transform=transforms.ToTensor(), idx=0),
     ])

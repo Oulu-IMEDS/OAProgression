@@ -1,3 +1,4 @@
+import torch
 import torch.utils.data as data
 import cv2
 import os
@@ -5,6 +6,7 @@ import pandas as pd
 from oaprogression.kvs import GlobalKVS
 from sklearn.model_selection import GroupKFold
 from termcolor import colored
+
 cv2.ocl.setUseOpenCL(False)
 cv2.setNumThreads(0)
 
@@ -16,6 +18,8 @@ class OAProgressionDataset(data.Dataset):
         self.transforms = transforms
 
     def __getitem__(self, ind):
+        if isinstance(ind, torch.Tensor):
+            ind = ind.item()
         entry = self.split.iloc[ind]
         fname = os.path.join(self.dataset, '{}_00_{}.png'.format(entry.ID, entry.Side))
         img = cv2.imread(fname, 0)

@@ -57,7 +57,7 @@ def train_epoch(net, optimizer, train_loader):
         optimizer.step()
 
         running_loss += loss.item()
-        pbar.set_description(f'[{epoch} / {max_epoch}] Run_loss {running_loss / (i + 1):.3f}')
+        pbar.set_description(f'Training [{epoch} / {max_epoch}]:: {running_loss / (i + 1):.3f}')
         pbar.update()
 
         gc.collect()
@@ -72,7 +72,7 @@ def validate_epoch(net, val_loader):
     running_loss = 0.0
     n_batches = len(val_loader)
     epoch = kvs['cur_epoch']
-
+    max_epoch = kvs['args'].n_epochs
     preds_progression = []
     gt_progression = []
 
@@ -81,7 +81,8 @@ def validate_epoch(net, val_loader):
     device = next(net.parameters()).device
     ids = []
     with torch.no_grad():
-        for i, batch in tqdm(enumerate(val_loader), total=len(val_loader), desc=f'Validating epoch [{epoch}]:: '):
+        for i, batch in tqdm(enumerate(val_loader), total=len(val_loader),
+                             desc=f'Validating [{epoch} / {max_epoch}]:: '):
             labels_prog = batch['label'].long().to(device)
             labels_kl = batch['KL'].long().to(device)
             inputs = batch['img'].to(device)

@@ -7,13 +7,14 @@ from functools import partial
 from tensorboardX import SummaryWriter
 import torch
 from torch.utils.data import DataLoader
+from torch.utils.data.sampler import WeightedRandomSampler
 
 import solt.transforms as slt
 from torchvision import transforms as tv_transforms
 import operator
 
 from oaprogression.training.args import parse_args
-from oaprogression.training.dataset import OAProgressionDataset
+from oaprogression.training.dataset import OAProgressionDataset, make_weights_for_balanced_classes
 from oaprogression.training.transforms import init_train_augs, apply_by_index, img_labels2solt, unpack_solt_data
 from oaprogression.kvs import GlobalKVS, git_info
 
@@ -128,9 +129,12 @@ def init_loaders(x_train, x_val):
                                        split=x_val,
                                        transforms=kvs['val_trf'])
 
+    weights, _ = make_weights_for_balanced_classes(x_train['Progressor'].values.astype(int))
+    sampler = WeightedRandomSampler(weights, len(weights))
+
     train_loader = DataLoader(train_dataset, batch_size=kvs['args'].bs,
-                              num_workers=kvs['args'].n_threads, shuffle=True,
-                              drop_last=True,
+                              num_workers=kvs['args'].n_threads,
+                              drop_last=True, sampler=sampler,
                               worker_init_fn=lambda wid: np.random.seed(np.uint32(torch.initial_seed() + wid)))
 
     val_loader = DataLoader(val_dataset, batch_size=kvs['args'].val_bs,

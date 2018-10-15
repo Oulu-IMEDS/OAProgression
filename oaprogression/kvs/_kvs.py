@@ -44,7 +44,10 @@ class GlobalKVS(object):
                 self._d[tag] = (value, str(datetime.datetime.now()))
 
     def __getitem__(self, tag):
-        return self._d[tag][0]
+        if not isinstance(self._d[tag], (list, dict)):
+            return self._d[tag][0]
+        else:
+            return self._d[tag]
 
     def tag_ts(self, tag):
         return self._d[tag]

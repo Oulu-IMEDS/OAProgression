@@ -1,7 +1,9 @@
-from oaprogression.kvs import GlobalKVS
-from sklearn.metrics import roc_auc_score, cohen_kappa_score, confusion_matrix, mean_squared_error
-import numpy as np
 import os
+import numpy as np
+from termcolor import colored
+
+from sklearn.metrics import roc_auc_score, cohen_kappa_score, confusion_matrix, mean_squared_error
+from oaprogression.kvs import GlobalKVS
 
 
 def log_metrics(boardlogger, val_loss, train_loss, gt_progression, preds_progression, gt_kl, preds_kl):
@@ -26,6 +28,7 @@ def log_metrics(boardlogger, val_loss, train_loss, gt_progression, preds_progres
 
     res = {
      'epoch': kvs['cur_epoch'],
+     'val_loss': val_loss,
      'auc_prog': auc_prog,
      'kappa_prog': kappa_prog,
      'acc_prog': acc_prog,
@@ -38,10 +41,19 @@ def log_metrics(boardlogger, val_loss, train_loss, gt_progression, preds_progres
      'cm_kl': cm_kl,
      }
 
+    print(colored('====> ', 'green') + f'Train loss: {train_loss:.5f}')
+    print(colored('====> ', 'green') + f'Validation loss: {train_loss:.5f}')
+    print(colored('====> ', 'green') + f'Validation AUC [prog]: {auc_prog:.5f}')
+    print(colored('====> ', 'green') + f'Validation AUC [oa]: {auc_oa:.5f}')
+    print(colored('====> ', 'green') + f'Kappa [oa]: {kappa_kl:.5f}')
+
     boardlogger.add_scalars('Losses', {'train': train_loss, 'val': val_loss}, kvs['cur_epoch'])
     boardlogger.add_scalars('AUC progression', {'val': auc_prog}, kvs['cur_epoch'])
 
-    kvs.update(f'losses_fold_[{kvs["cur_fold"]}]', {'epoch': kvs['cur_epoch'], 'train_loss': train_loss, 'val_loss': val_loss})
+    kvs.update(f'losses_fold_[{kvs["cur_fold"]}]', {'epoch': kvs['cur_epoch'],
+                                                    'train_loss': train_loss,
+                                                    'val_loss': val_loss})
+
     kvs.update(f'val_metrics_fold_[{kvs["cur_fold"]}]', res)
 
     kvs.save_pkl(os.path.join(kvs['args'].snapshots, kvs['snapshot_name'], 'session.pkl'))

@@ -13,8 +13,6 @@ from oaprogression.training import train_utils
 from oaprogression.training import dataset
 from oaprogression.training import metrics
 
-
-
 cv2.ocl.setUseOpenCL(False)
 cv2.setNumThreads(0)
 
@@ -27,6 +25,8 @@ if __name__ == "__main__":
 
     for fold_id in kvs['cv_split_train']:
         kvs.update('cur_fold', fold_id)
+        kvs.update('prev_model', None)
+        kvs.update('best_val_metric', 1e10)
         print(colored('====> ', 'blue') + f'Training fold {fold_id}....')
 
         train_index, val_index = kvs['cv_split_train'][fold_id]
@@ -51,6 +51,7 @@ if __name__ == "__main__":
             val_out = train_utils.validate_epoch(net, val_loader)
             val_loss, val_ids, gt_progression, preds_progression, gt_kl, preds_kl = val_out
             metrics.log_metrics(writers[fold_id], train_loss, val_loss,
-                                    gt_progression, preds_progression, gt_kl, preds_kl)
+                                gt_progression, preds_progression, gt_kl, preds_kl)
 
+            session.save_checkpoint(net, 'auc_prog')
             scheduler.step()

@@ -141,8 +141,8 @@ def init_folds():
     for fold_id, split in enumerate(kvs['cv_split_all_folds']):
         if kvs['args'].fold != -1 and fold_id != kvs['args'].fold:
             continue
-        kvs.update(f'losses_fold_[{fold_id}', None, list)
-        kvs.update(f'metrics_fold_[{fold_id}', None, list)
+        kvs.update(f'losses_fold_[{fold_id}]', None, list)
+        kvs.update(f'val_metrics_fold_[{fold_id}]', None, list)
         cv_split_train[fold_id] = split
         writers[fold_id] = SummaryWriter(os.path.join(kvs['args'].logs,
                                                       'OA_progression',
@@ -151,3 +151,31 @@ def init_folds():
     kvs.update('cv_split_train', cv_split_train)
     kvs.save_pkl(os.path.join(kvs['args'].snapshots, kvs['snapshot_name'], 'session.pkl'))
     return writers
+
+
+def save_checkpoint(model, val_metric_name):
+    if isinstance(model, torch.nn.DataParallel):
+        model = model.module
+
+    kvs = GlobalKVS()
+    fold_id = kvs['cur_fold']
+    epoch = kvs['cur_epoch']
+    val_metric = kvs[f'val_metrics_fold_[{fold_id}]'][-1][0][val_metric_name]
+    cur_snapshot_name = os.path.join(kvs['args'].snapshots, kvs['snapshot_name'],
+                                     f'fold_{fold_id}_epoch_{epoch+1}.pth')
+
+    if kvs['prev_model'] is None:
+        print(colored('====> ', 'red') + 'Snapshot was saved to', cur_snapshot_name)
+        torch.save(model.state_dict(), cur_snapshot_name)
+        kvs.update('prev_model', cur_snapshot_name)
+        kvs.update('best_val_metric', val_metric)
+
+    else:
+        if val_metric < kvs['best_val_metric']:
+            print(colored('====> ', 'red') + 'Snapshot was saved to', cur_snapshot_name)
+            os.remove(kvs['prev_model'])
+            torch.save(model.state_dict(), cur_snapshot_name)
+            kvs.update('prev_model', cur_snapshot_name)
+            kvs.update('best_val_metric', val_metric)
+
+    kvs.save_pkl(os.path.join(kvs['args'].snapshots, kvs['snapshot_name'], 'session.pkl'))

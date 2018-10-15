@@ -7,7 +7,7 @@ from oaprogression.metadata.utils import read_sas7bdata_pd
 def build_img_progression_meta(oai_src_dir):
     visits = ['00', '12', '24', '36', '72', '96']
     exam_codes = ['00', '01', '03', '05', '08', '10']
-    # 0 - no progression within 96 months range
+    # 0 - no progression within 84 months range
     # 1 - progression earlier than 60 months
     # 2 - progression later than 60 months
     mapping_prog = {0: 0, 1: 1, 2: 1, 3: 1, 4: 2, 5: 2}

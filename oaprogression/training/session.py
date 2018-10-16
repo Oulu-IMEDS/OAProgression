@@ -10,6 +10,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data.sampler import WeightedRandomSampler
 
 import solt.transforms as slt
+import solt.core as slc
 from torchvision import transforms as tv_transforms
 import operator
 
@@ -81,8 +82,11 @@ def init_data_processing():
 
     val_trf = tv_transforms.Compose([
         img_labels2solt,
-        slt.CropTransform(crop_size=(300, 300), crop_mode='c'),
-        slt.ImageColorTransform(mode='gs2rgb'),
+        slc.Stream([
+            slt.ResizeTransform((310, 310)),
+            slt.CropTransform(crop_size=(300, 300), crop_mode='c'),
+            slt.ImageColorTransform(mode='gs2rgb'),
+        ], interpolation='bicubic'),
         unpack_solt_data,
         partial(apply_by_index, transform=tv_transforms.ToTensor(), idx=0),
         partial(apply_by_index, transform=norm_trf, idx=0)

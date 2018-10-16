@@ -89,12 +89,12 @@ def validate_epoch(net, val_loader):
 
             outputs_kl, outputs_prog = net(inputs)
 
-            probs_progression_batch = F.softmax(outputs_prog, 1).data.to('cpu').numpy()
-            probs_kl_batch = F.softmax(outputs_kl, 1).data.to('cpu').numpy()
-
             loss_kl = F.cross_entropy(outputs_kl, labels_kl)
             loss_prog = F.cross_entropy(outputs_prog, labels_prog)
             loss = loss_prog.mul(kvs['args'].loss_weight) + loss_kl.mul(1 - kvs['args'].loss_weight)
+
+            probs_progression_batch = F.softmax(outputs_prog, 1).data.to('cpu').numpy()
+            probs_kl_batch = F.softmax(outputs_kl, 1).data.to('cpu').numpy()
 
             preds_progression.append(probs_progression_batch)
             gt_progression.append(batch['label'].numpy())

@@ -1,0 +1,9 @@
+tensorflow==1.7.0
+tensorboardx==1.1
+termcolor
+tqdm
+sas7bdat==2.1.1
+pandas==0.22
+solt==0.0.9
+pretrainedmodels==0.7.0
+scikit-learn==0.19.2

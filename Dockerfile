@@ -44,6 +44,15 @@ RUN pip install pip -U -v && pip install -r requirements.txt
 RUN conda install -y numpy=1.15.2 scipy=1.0.1 matplotlib -n oaprog
 RUN conda install -y opencv=3.4.1 -c conda-forge -n oaprog
 
+# Fixing the matplotlib backend issues
+RUN mkdir -p /root/.config/matplotlib/
+RUN echo "backend : Agg" > /root/.config/matplotlib/matplotlibrc
+
+# Setting up the package
 RUN mkdir /opt/pkg
 COPY . /opt/pkg
 RUN pip install -e /opt/pkg/
+
+# Copying the files
+RUN cp /opt/pkg/prepare_metadata.py .
+RUN cp /opt/pkg/run_experiments.py .

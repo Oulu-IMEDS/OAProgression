@@ -9,15 +9,14 @@ mkdir -p $WRKDIR
 
 docker build -t oaprog_img .
 
-nvidia-docker run -it --rm \
+nvidia-docker run -it --name=oa_prog_data_preparation --rm \
 	      -v $OAI_META_SRC:/oai_meta:ro \
 	      -v $MOST_META_SRC:/most_meta:ro \
 	      -v $OAI_MOST_IMG_SRC:/dataset:ro \
 	      -v $WRKDIR:/workdir/:rw --ipc=host \
 	      oaprog_img python prepare_metadata.py --oai_meta /oai_meta --most_meta /most_meta --save_meta /workdir/Metadata
 
-nvidia-docker run -it --rm \
+nvidia-docker run -it --name oa_prog_training --rm \
 	      -v $WRKDIR:/workdir/:rw \
-				-v $OAI_MOST_IMG_SRC:/data/:ro \
-				--ipc=host \
-	      oaprog_img python run_experiments.py --snapshots /workdir/snapshots --logs /workdir/logs --dataset_root /data/--metadata_root /workdir/Metadata
+	      -v $OAI_MOST_IMG_SRC:/data/:ro --ipc=host \
+	      oaprog_img python run_experiments.py --snapshots /workdir/snapshots --logs /workdir/logs --dataset_root /data/ --metadata_root /workdir/Metadata

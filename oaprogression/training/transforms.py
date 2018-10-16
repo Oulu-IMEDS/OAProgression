@@ -58,10 +58,10 @@ def init_train_augs():
         img_labels2solt,
         slc.Stream([
             slt.ResizeTransform((310, 310)),
-            slt.ImageAdditiveGaussianNoise(p=0.5, gain_range=0.2),
+            slt.ImageAdditiveGaussianNoise(p=0.5, gain_range=0.3),
             slt.RandomRotate(p=1, rotation_range=(-10, 10)),
             slt.CropTransform(crop_size=(300, 300), crop_mode='r'),
-            slt.ImageGammaCorrection(p=0.5, gamma_range=(0.5, 1.5)),
+            slt.ImageGammaCorrection(p=0.5, gamma_range=(0.5, 2)),
             slt.ImageColorTransform(mode='gs2rgb')
         ], interpolation='bicubic', padding='z'),
         unpack_solt_data,

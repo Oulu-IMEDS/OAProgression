@@ -26,7 +26,7 @@ def build_img_progression_meta(oai_src_dir):
         meta = meta[meta[f'V{exam_codes[i]}XRKL'] <= 4]
         meta.drop_duplicates(subset=['ID', 'SIDE'], inplace=True)
 
-        meta = meta.assign(KL=meta[f'V{exam_codes[i]}XRKL'])
+        meta['KL'] = meta[f'V{exam_codes[i]}XRKL']
         KL_files.append(meta[['ID', 'SIDE', 'KL']])
 
     bad_ids = [9076900, 9466244]  # couldn't annotate these images, seem to be broken

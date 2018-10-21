@@ -87,5 +87,5 @@ def build_clinical(most_src_dir):
     files = glob.glob(os.path.join(most_src_dir, '*enroll.sas7bdat'))
     files_dict = {file.split('/')[-1].lower(): file for file in files}
     data_enroll = read_sas7bdata_pd(files_dict['mostv0enroll.sas7bdat'])
-    data_enroll = data_enroll.assign(ID=data_enroll.MOSTID)
+    data_enroll['ID'] = data_enroll.MOSTID
     return data_enroll[['ID', 'AGE', 'SEX', 'V0BMI']]

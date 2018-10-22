@@ -13,8 +13,8 @@ from oaprogression.kvs import GlobalKVS
 
 
 def img_labels2solt(inp):
-    img, KL, prog_label = inp
-    return sld.DataContainer((img, KL, prog_label), fmt='ILL')
+    img, KL, prog_increase, prog_label = inp
+    return sld.DataContainer((img, KL, prog_increase, prog_label), fmt='ILLL')
 
 
 def unpack_solt_data(dc: sld.DataContainer):

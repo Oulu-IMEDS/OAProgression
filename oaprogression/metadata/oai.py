@@ -53,13 +53,13 @@ def build_img_progression_meta(oai_src_dir):
                 if 0 <= new_kl <= 4:
                     # If not TKR
                     if new_kl != 1 and new_kl > old_kl:
-                        progressors.append([int(knee.ID), sides[int(knee.SIDE)], old_kl, follow_up_id])
+                        progressors.append([int(knee.ID), sides[int(knee.SIDE)], old_kl, new_kl-old_kl, follow_up_id])
                         identified_prog.update({int(knee.ID): sides[int(knee.SIDE)]})
                 else:
                     # Adding only the TKR cases here
                     if new_kl == -1:
                         # We will denote it as 5
-                        progressors.append([int(knee.ID), sides[int(knee.SIDE)], old_kl, follow_up_id])
+                        progressors.append([int(knee.ID), sides[int(knee.SIDE)], old_kl, 5-old_kl, follow_up_id])
                         identified_prog.update({int(knee.ID): sides[int(knee.SIDE)]})
 
     # Looking for non-progressors
@@ -74,9 +74,9 @@ def build_img_progression_meta(oai_src_dir):
         if int(knee.ID) in bad_ids:
             continue
 
-        non_progressors.append([int(knee.ID), sides[int(knee.SIDE)], int(knee.KL), 0])
+        non_progressors.append([int(knee.ID), sides[int(knee.SIDE)], int(knee.KL), 0, 0])
 
-    data = pd.DataFrame(data=progressors + non_progressors, columns=['ID', 'Side', 'KL', 'Progressor'])
+    data = pd.DataFrame(data=progressors + non_progressors, columns=['ID', 'Side', 'KL', 'Prog_increase', 'Progressor'])
     data.Progressor = data.apply(lambda x: mapping_prog[x.Progressor], axis=1)
     return data
 

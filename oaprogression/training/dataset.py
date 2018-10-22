@@ -26,9 +26,10 @@ class OAProgressionDataset(data.Dataset):
         if entry.Side == 'L':
             img = cv2.flip(img, 1)
         img = img.reshape((img.shape[0], img.shape[1], 1))
-        img, kl_grade, label = self.transforms((img, entry.KL, entry.Progressor))
+        img, kl_grade, prog_increase, label = self.transforms((img, entry.KL, entry.Prog_increase, entry.Progressor))
 
         res = {'KL': kl_grade,
+               'Prog_increase': prog_increase**2,
                'img': img,
                'label': label,
                'ID_SIDE': str(entry.ID) + '_' + entry.Side

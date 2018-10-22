@@ -54,16 +54,23 @@ def build_img_progression_meta(most_src_dir):
                 # We exclude missing values and also "grades" 9 and 8
                 if sum(list(map(lambda x: x[3] == -1 or x[3] == 8 or x[3] == 9, tmp_l))) == 0:
                     prog = None
+                    # going through the follow-up grades
                     for point in tmp_r:
+                        # if we notice a progression case, we stop looking and store the
+                        # visit id where we stopped
                         if point[-2] > KL_bl_l and point[-2] != 1 and point[-2] <= 4 and point[-2] != 1.9:
                             prog = point
                             break
+                    # Checking whether the case is a progressor
                     if prog is None:
+                        # To ignore the patients who dropped during the study, we
+                        # make sure that they were examined at the last follow-up
                         if ID in last_follow_up:
-                            non_progressors.append([ID, 'L', KL_bl_l, 0])
+                            non_progressors.append([ID, 'L', KL_bl_l, 0, 0])
                     else:
-                        progressors.append([ID, 'L', KL_bl_l, prog[-1]])
+                        progressors.append([ID, 'L', KL_bl_l, prog[-2]-KL_bl_r, prog[-1]])
 
+        # Doing the same thing for the right knee
         if 0 <= KL_bl_r <= 4:
             if len(tmp_r) > 0:
                 if sum(list(map(lambda x: x[3] == -1 or x[3] == 8 or x[3] == 9, tmp_r))) == 0:
@@ -74,11 +81,11 @@ def build_img_progression_meta(most_src_dir):
                             break
                     if prog is None:
                         if ID in last_follow_up:
-                            non_progressors.append([ID, 'R', KL_bl_r, 0])
+                            non_progressors.append([ID, 'R', KL_bl_r, 0, 0])
                     else:
-                        progressors.append([ID, 'R', KL_bl_r, prog[-1]])
+                        progressors.append([ID, 'R', KL_bl_r, prog[-2]-KL_bl_r, prog[-1]])
 
-    progr_data = pd.DataFrame(progressors + non_progressors, columns=['ID', 'Side', 'KL', 'Progressor'])
+    progr_data = pd.DataFrame(progressors + non_progressors, columns=['ID', 'Side', 'KL', 'Prog_increase', 'Progressor'])
     progr_data.Progressor = progr_data.apply(lambda x: mapping[x.Progressor], 1)
     return progr_data
 

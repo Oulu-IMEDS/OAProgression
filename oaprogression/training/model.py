@@ -96,7 +96,10 @@ class KneeNet(nn.Module):
         self.classifier_prog = nn.Sequential(nn.Dropout(p=drop),
                                              nn.Linear(backbone.classifier[-1].in_features, 3))
 
+        self.regressor_prog = nn.Sequential(nn.Dropout(p=drop),
+                                            nn.Linear(backbone.classifier[-1].in_features, 1))
+        
     def forward(self, x):
         o = self.features(x)
         feats = o.view(o.size(0), -1)
-        return self.classifier_kl(feats), self.classifier_prog(feats)
+        return self.classifier_kl(feats), self.classifier_prog(feats), self.regressor_prog(feats)

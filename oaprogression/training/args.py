@@ -11,7 +11,7 @@ def parse_args():
                                                          'inceptionv4',
                                                          'se_resnext50_32x4d',
                                                          'se_resnext101_32x4d'
-                                                         ], default='se_resnext101_32x4d')
+                                                         ], default='se_resnext50_32x4d')
     parser.add_argument('--optimizer', type=str, choices=['adam', 'sgd'], default='adam')
     parser.add_argument('--bs', type=int, default=32)
     parser.add_argument('--val_bs', type=int, default=128)

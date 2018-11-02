@@ -98,8 +98,8 @@ def init_metadata():
 
 
 def img_labels2solt(inp):
-    img, KL, prog_increase, prog_label = inp
-    return sld.DataContainer((img, KL, prog_increase, prog_label), fmt='ILLL')
+    img, KL, prog_label = inp
+    return sld.DataContainer((img, KL, prog_label), fmt='ILL')
 
 
 def unpack_solt_data(dc: sld.DataContainer):

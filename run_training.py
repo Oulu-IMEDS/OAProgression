@@ -11,11 +11,9 @@ from oaprogression.training import session
 from oaprogression.training import train_utils
 from oaprogression.training import dataset
 from oaprogression.training import metrics
-from oaprogression.training import transforms
 
 cv2.ocl.setUseOpenCL(False)
 cv2.setNumThreads(0)
-
 
 
 DEBUG = sys.gettrace() is not None
@@ -28,7 +26,7 @@ if __name__ == "__main__":
     writers = session.init_folds()
 
     if DEBUG:
-        transforms.debug_augmentations()
+        dataset.debug_augmentations()
 
     for fold_id in kvs['cv_split_train']:
         kvs.update('cur_fold', fold_id)

@@ -16,7 +16,7 @@ import operator
 
 from oaprogression.training.args import parse_args
 from oaprogression.training.dataset import OAProgressionDataset, make_weights_for_balanced_classes
-from oaprogression.training.transforms import init_train_augs, apply_by_index, img_labels2solt, unpack_solt_data
+from oaprogression.training.dataset import init_train_augs, apply_by_index, img_labels2solt, unpack_solt_data
 from oaprogression.kvs import GlobalKVS, git_info
 
 

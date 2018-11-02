@@ -45,17 +45,14 @@ def train_epoch(net, optimizer, train_loader):
         # forward + backward + optimize
         labels_prog = batch['label'].long().to(device)
         labels_kl = batch['KL'].long().to(device)
-        labels_prog_increase = batch['Prog_increase'].squeeze().float().to(device)
-        
+
         inputs = batch['img'].to(device)
 
-        outputs_kl, outputs_prog, outputs_prog_increase = net(inputs)
-        outputs_prog_increase = outputs_prog_increase.squeeze()
+        outputs_kl, outputs_prog = net(inputs)
         loss_kl = F.cross_entropy(outputs_kl, labels_kl)
         loss_prog = F.cross_entropy(outputs_prog, labels_prog)
-        loss_prog_increase = F.mse_loss(outputs_prog_increase, labels_prog_increase)
-        
-        loss = (loss_prog + loss_prog_increase).mul(kvs['args'].loss_weight) + loss_kl.mul(1 - kvs['args'].loss_weight)
+
+        loss = loss_prog.mul(kvs['args'].loss_weight) + loss_kl.mul(1 - kvs['args'].loss_weight)
 
         loss.backward()
         optimizer.step()
@@ -90,18 +87,15 @@ def validate_epoch(net, val_loader):
 
             labels_prog = batch['label'].long().to(device)
             labels_kl = batch['KL'].long().to(device)
-            labels_prog_increase = batch['Prog_increase'].squeeze().float().to(device)
-            
+
             inputs = batch['img'].to(device)
 
-            outputs_kl, outputs_prog, outputs_prog_increase = net(inputs)
-            outputs_prog_increase = outputs_prog_increase.squeeze()
-            
+            outputs_kl, outputs_prog = net(inputs)
+
             loss_kl = F.cross_entropy(outputs_kl, labels_kl)
             loss_prog = F.cross_entropy(outputs_prog, labels_prog)
-            loss_prog_increase = F.mse_loss(outputs_prog_increase, labels_prog_increase)
-            
-            loss = (loss_prog + loss_prog_increase).mul(kvs['args'].loss_weight) + loss_kl.mul(1 - kvs['args'].loss_weight)
+
+            loss = loss_prog.mul(kvs['args'].loss_weight) + loss_kl.mul(1 - kvs['args'].loss_weight)
 
             probs_progression_batch = F.softmax(outputs_prog, 1).data.to('cpu').numpy()
             probs_kl_batch = F.softmax(outputs_kl, 1).data.to('cpu').numpy()

@@ -26,14 +26,14 @@ class RSDataset(data.Dataset):
 
     def __getitem__(self, ind):
         entry = self.metadata.iloc[ind]
-        img = cv2.imread(os.path.join(self.dataset_root, entry.fname), 0)
+        img = cv2.imread(os.path.join(self.dataset_root, f'{entry.ergoid}_{entry.side}.png'), 0)
         if 'L' == entry.side:
             img = cv2.flip(img, 1)
 
-        img_trf, kl, progressor = self.transforms((img, entry.kl, entry.progressor))
+        img_trf, kl, progressor = self.transforms((img, entry.kl1, entry.progressor))
 
         return {'I': img_trf,
-                'ergo_id': entry.ergo_id,
+                'ergoid': entry.ergoid,
                 'side': entry.side,
                 'progressor': float(entry.progressor)
                 }
@@ -43,21 +43,20 @@ class RSDataset(data.Dataset):
 
 
 def five_crop(img, size):
+    """Returns a stacked 5 crop
     """
-    Returns a stacked 5 crop
-    """
-    img = img.copy()
+    img = img.clone()
     h, w = img.size()[-2:]
     # get central crop
-    c_cr = img[h//2-size//2:h//2+size//2, w//2-size//2:w//2+size//2]
+    c_cr = img[:, h//2-size//2:h//2+size//2, w//2-size//2:w//2+size//2]
     # upper-left crop
-    ul_cr = img[0:size, 0:size]
+    ul_cr = img[:, 0:size, 0:size]
     # upper-right crop
-    ur_cr = img[0:size, w-size:w]
+    ur_cr = img[:, 0:size, w-size:w]
     # bottom-left crop
-    bl_cr = img[h-size:h, 0:size]
+    bl_cr = img[:, h-size:h, 0:size]
     # bottom-right crop
-    br_cr = img[h-size:h, w-size:w]
+    br_cr = img[:, h-size:h, w-size:w]
     return torch.stack((c_cr, ul_cr, ur_cr, bl_cr, br_cr))
 
 

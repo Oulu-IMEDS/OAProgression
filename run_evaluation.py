@@ -8,18 +8,24 @@ from tqdm import tqdm
 import numpy as np
 import cv2
 
+from functools import partial
+
+import solt.transforms as slt
+import solt.core as slc
+
 import torch
 from torch import nn
 import torch.nn.functional as F
-
+import torchvision.transforms as tv_transforms
+from torch.utils.data import DataLoader
+from torch.utils.data.sampler import SequentialSampler
 from sklearn.preprocessing import OneHotEncoder
 
-from oaprogression.kvs import GlobalKVS
+
 from oaprogression.evaluation import rstools
 from oaprogression.training import model
-from oaprogression.training import session as session
-
-
+from oaprogression.training import session as session_utils
+from oaprogression.training import dataset as dataset_utils
 
 cv2.ocl.setUseOpenCL(False)
 cv2.setNumThreads(0)
@@ -29,11 +35,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_root', default='/data/DL_spring2/OA_progression_project/Data/RS_data/')
     parser.add_argument('--rs_cohort', default=3)
+    parser.add_argument('--bs', type=int, default=64)
+    parser.add_argument('--n_threads', type=int, default=12)
     parser.add_argument('--snapshots_root', default='/data/DL_spring2/OA_progression_project/snapshots')
     parser.add_argument('--snapshot', default='2018_11_03_10_38')
+    parser.add_argument('--save_dir', default='/media/lext/FAST/DL_spring2/OA_progression_project/Results')
     args = parser.parse_args()
 
-    mean_vect, std_vect = session.init_mean_std(args.snapshots_root, None, None, None)
     with open(os.path.join(args.snapshots_root, args.snapshot, 'session.pkl'), 'rb') as f:
         session = pickle.load(f)
 
@@ -41,10 +49,38 @@ if __name__ == "__main__":
     rs_meta_preselected = pd.read_csv(os.path.join(args.data_root, f'RS{args.rs_cohort}', 'RS3_preselected.csv'))
     rs_meta = rstools.preprocess_rs_meta(rs_meta, rs_meta_preselected, 3)
 
+    mean_vector, std_vector = session_utils.init_mean_std(args.snapshots_root, None, None, None)
+
+    norm_trf = tv_transforms.Normalize(torch.from_numpy(mean_vector).float(),
+                                       torch.from_numpy(std_vector).float())
+
+    os.makedirs(args.save_dir, exist_ok=True)
+
     net = model.KneeNet(session['args'][0].backbone, session['args'][0].dropout_rate)
 
+    tta_trf = tv_transforms.Compose([
+        dataset_utils.img_labels2solt,
+        slc.Stream([
+            slt.ResizeTransform((310, 310)),
+            slt.ImageColorTransform(mode='gs2rgb'),
+        ], interpolation='bicubic'),
+        dataset_utils.unpack_solt_data,
+        partial(dataset_utils.apply_by_index, transform=tv_transforms.ToTensor(), idx=0),
+        partial(dataset_utils.apply_by_index, transform=norm_trf, idx=0),
+        partial(dataset_utils.apply_by_index, transform=partial(rstools.five_crop, size=300), idx=0),
+    ])
 
-    rs_dataset = rstools.RSDataset(os.path.join(args.data_root, f'RS_{args.rs_cohort}', ))
+    rs_dataset = rstools.RSDataset(dataset_root=os.path.join(args.data_root, f'RS{args.rs_cohort}', 'localized'),
+                                   metadata=rs_meta,
+                                   transforms=tta_trf)
+
+    loader = DataLoader(rs_dataset,
+                        batch_size=args.bs,
+                        sampler=SequentialSampler(rs_dataset),
+                        num_workers=args.n_threads)
+    gradcam_maps_all = 0
+    res = 0
+
     for fold_id in range(session['args'][0].n_folds):
         snapshot_name = glob.glob(os.path.join(args.snapshots_root, args.snapshot, f'fold_{fold_id}*.pth'))[0]
 
@@ -60,10 +96,9 @@ if __name__ == "__main__":
         fc.eval()
 
         preds = []
-        names = []
-        """
         gradcam_maps_fold = []
-        for batch_id, sample in enumerate(tqdm(val_loader, total=len(loader), desc='Prediction from fold {}'.format(fold_id))):
+        id_side = []
+        for batch_id, sample in enumerate(tqdm(loader, total=len(loader), desc='Prediction from fold {}'.format(fold_id))):
             # We don't need gradient to make an inference  for the features
             with torch.no_grad():
                 inputs = sample['I'].to("cuda")
@@ -110,11 +145,11 @@ if __name__ == "__main__":
 
             gradcam_maps_fold.append(gcam_batch)
             preds.append(probs_not_summed)
-            names.extend(sample['fname'])
+            id_side.append([sample['ergoid'], sample['side']])
             gc.collect()
 
         preds = np.vstack(preds)
         gradcam_maps_all += np.vstack(gradcam_maps_fold)
         res += preds
         gc.collect()
-        """
+

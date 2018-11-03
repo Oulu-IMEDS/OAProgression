@@ -44,18 +44,27 @@ if __name__ == "__main__":
 
         preds = []
         gradcam_maps_fold = []
-        id_side = []
-
+        ids = []
+        sides = []
         for batch_id, sample in enumerate(tqdm(loader, total=len(loader), desc='Prediction from fold {}'.format(fold_id))):
             gcam_batch, probs_not_summed = rstools.eval_batch(sample, features, fc)
             gradcam_maps_fold.append(gcam_batch)
             preds.append(probs_not_summed)
-            id_side.append([sample['ergoid'], sample['side']])
+            ids.extend(sample['ergoid'].numpy().tolist())
+            sides.extend(sample['ergoid'])
             gc.collect()
 
         preds = np.vstack(preds)
         gradcam_maps_all += np.vstack(gradcam_maps_fold)
         res += preds
         gc.collect()
+
+    np.savez_compressed(os.path.join(args.save_dir, f'RS{args.rs_cohort}.npz'),
+                        gradcam_maps_all=gradcam_maps_all,
+                        preds=res,
+                        ids=ids,
+                        sides=sides)
+
+
 
 

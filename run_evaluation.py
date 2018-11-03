@@ -8,7 +8,7 @@ import numpy as np
 import cv2
 
 
-from oaprogression.evaluation import rstools, stats
+from oaprogression.evaluation import rstools, stats, gcam
 
 
 cv2.ocl.setUseOpenCL(False)
@@ -48,7 +48,7 @@ if __name__ == "__main__":
             ids = []
             sides = []
             for batch_id, sample in enumerate(tqdm(loader, total=len(loader), desc='Prediction from fold {}'.format(fold_id))):
-                gcam_batch, probs_not_summed = rstools.eval_batch(sample, features, fc)
+                gcam_batch, probs_not_summed = gcam.eval_batch(sample, features, fc)
                 gradcam_maps_fold.append(gcam_batch)
                 preds.append(probs_not_summed)
                 ids.extend(sample['ergoid'].numpy().tolist())

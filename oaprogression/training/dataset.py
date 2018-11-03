@@ -142,6 +142,8 @@ def init_train_augs():
     trf = transforms.Compose([
         img_labels2solt,
         slc.Stream([
+            slt.PadTransform(pad_to=(700, 700)),
+            slt.CropTransform(crop_size=(700, 700), crop_mode='c'),
             slt.ResizeTransform((310, 310)),
             slt.ImageAdditiveGaussianNoise(p=0.5, gain_range=0.3),
             slt.RandomRotate(p=1, rotation_range=(-10, 10)),

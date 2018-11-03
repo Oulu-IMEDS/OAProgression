@@ -69,11 +69,12 @@ if __name__ == "__main__":
 
     data = np.load(os.path.join(args.save_dir, f'RS{args.rs_cohort}.npz'))
 
+    gcams = data['gradcam_maps_all']
     preds = data['preds'][:, 1:].sum(1)
     ergoids = data['ids']
     sides = data['sides']
 
-    res = pd.DataFrame(data={'ergoid': ergoids, 'side': sides, 'pred':preds})
+    res = pd.DataFrame(data={'ergoid': ergoids, 'side': sides, 'pred': preds})
 
     res = pd.merge(rs_meta, res, on=('ergoid', 'side'))
 
@@ -88,7 +89,7 @@ if __name__ == "__main__":
                               res.pred.values.flatten(),
                               n_bootstrap=args.n_bootstrap,
                               savepath=os.path.join(args.save_dir, f'auc_all_subjects_RS{args.rs_cohort}.pdf'))
-
+    print('')
     print('KL0 at baseline:')
     print('----------------')
 
@@ -96,7 +97,7 @@ if __name__ == "__main__":
                               res[res.kl1 == 0].pred.values.flatten(),
                               n_bootstrap=args.n_bootstrap,
                               savepath=os.path.join(args.save_dir, f'auc_kl0_bl_RS{args.rs_cohort}.pdf'))
-
+    print('')
     print('KL1 at baseline:')
     print('----------------')
 
@@ -105,7 +106,12 @@ if __name__ == "__main__":
                               n_bootstrap=args.n_bootstrap,
                               savepath=os.path.join(args.save_dir, f'auc_kl1_bl_RS{args.rs_cohort}.pdf'))
 
-
+    gcam.preds_and_hmaps(rs_result=res[res.kl1 == 0],
+                         gradcams=gcams,
+                         dataset_root=os.path.join(args.data_root, f'RS{args.rs_cohort}', 'localized'),
+                         figsize=6,
+                         threshold=0.5,
+                         savepath=args.save_dir)
 
 
 

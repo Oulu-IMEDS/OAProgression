@@ -2,9 +2,13 @@ import numpy as np
 import torch.nn.functional as F
 from sklearn.preprocessing import OneHotEncoder
 import torch
+import cv2
+import os
+import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 
-def eval_batch(sample, features, fc, ):
+def eval_batch(sample, features, fc):
     # We don't need gradient to make an inference  for the features
     with torch.no_grad():
         inputs = sample['I'].to("cuda")
@@ -50,3 +54,59 @@ def eval_batch(sample, features, fc, ):
         gcam_batch = gcam_batch.to('cpu').numpy()
 
     return gcam_batch, probs_not_summed
+
+
+def preds_and_hmaps(rs_result, gradcams, dataset_root, figsize, threshold, savepath):
+    ids_rs = []
+    hmaps = []
+
+    w, h = 310, 310
+    size = (300, 300)
+    x1 = w // 2 - size[0] // 2
+    y1 = h // 2 - size[1] // 2
+
+    for i, entry in tqdm(rs_result.iterrows(), total=rs_result.shape[0]):
+        if entry.pred < threshold or entry.progressor == 0:
+            continue
+        img = cv2.imread(os.path.join(dataset_root, f'{entry.ergoid}_{entry.side}.png'), 0)
+
+        if 'L' == entry.side:
+            img = cv2.flip(img, 1)
+
+        img = cv2.resize(img, (w, h))
+
+        tmp = np.zeros((h, w))
+        # Center crop
+        tmp[y1:y1 + size[0], x1:x1 + size[1]] += cv2.resize(gradcams[i, 0, :, :], size)
+        # Upper-left crop
+        tmp[0:size[0], 0:size[1]] += cv2.resize(gradcams[i, 1, :, :], size)
+        # Upper-right crop
+        tmp[0:size[0], w - size[1]:w] += cv2.resize(gradcams[i, 2, :, :], size)
+        # Bottom-left crop
+        tmp[h - size[0]:h, 0:size[1]] += cv2.resize(gradcams[i, 3, :, :], size)
+        # Bottom-right crop
+        tmp[h - size[0]:h, w - size[1]:w] += cv2.resize(gradcams[i, 4, :, :], size)
+
+        tmp = tmp[y1:y1 + size[0], x1:x1 + size[1]]
+        tmp -= tmp.min()
+        tmp /= tmp.max()
+        tmp *= 255
+
+        hmaps.append(tmp)
+        ids_rs.append(entry.ergoid)
+
+        plt.figure(figsize=(figsize, figsize))
+        plt.subplot(121)
+        plt.title('Original Image {}'.format(entry.ergoid))
+        plt.imshow(img, cmap=plt.cm.Greys_r)
+        plt.xticks([])
+        plt.yticks([])
+
+        plt.subplot(122)
+        plt.title('GradCAM {}'.format(entry.ergoid))
+        plt.imshow(img, cmap=plt.cm.Greys_r)
+        plt.imshow(tmp, cmap=plt.cm.jet, alpha=0.5)
+        plt.xticks([])
+        plt.yticks([])
+        plt.savefig(os.path.join(savepath, f'{entry.ergoid}_{entry.side}.pdf'), bbox_inches='tight')
+        plt.close()

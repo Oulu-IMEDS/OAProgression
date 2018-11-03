@@ -14,9 +14,9 @@ nvidia-docker run -it --name=oa_prog_data_preparation --rm \
 	      -v $MOST_META_SRC:/most_meta:ro \
 	      -v $OAI_MOST_IMG_SRC:/dataset:ro \
 	      -v $WRKDIR:/workdir/:rw --ipc=host \
-	      oaprog_img python prepare_metadata.py --oai_meta /oai_meta --most_meta /most_meta --save_meta /workdir/Metadata
+	      oaprog_img python -u prepare_metadata.py --oai_meta /oai_meta --most_meta /most_meta --save_meta /workdir/Metadata
 
 nvidia-docker run -it --name oa_prog_training --rm \
 	      -v $WRKDIR:/workdir/:rw \
 	      -v $OAI_MOST_IMG_SRC:/data/:ro --ipc=host \
-	      oaprog_img python run_training.py --snapshots /workdir/snapshots --logs /workdir/logs --dataset_root /data/ --metadata_root /workdir/Metadata
+	      oaprog_img python -u run_training.py --snapshots /workdir/snapshots --logs /workdir/logs --dataset_root /data/ --metadata_root /workdir/Metadata

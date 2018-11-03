@@ -30,7 +30,7 @@ if __name__ == "__main__":
     parser.add_argument('--data_root', default='/data/DL_spring2/OA_progression_project/Data/RS_data/')
     parser.add_argument('--rs_cohort', default=3)
     parser.add_argument('--snapshots_root', default='/data/DL_spring2/OA_progression_project/snapshots')
-    parser.add_argument('--snapshot', default='2018_10_21_13_44')
+    parser.add_argument('--snapshot', default='2018_11_03_10_38')
     args = parser.parse_args()
 
     mean_vect, std_vect = session.init_mean_std(args.snapshots_root, None, None, None)
@@ -38,10 +38,13 @@ if __name__ == "__main__":
         session = pickle.load(f)
 
     rs_meta = pd.read_csv(os.path.join(args.data_root, 'RS_metadata.csv'))
-    rs_meta = rstools.preprocess_rs_meta(rs_meta, 3)
+    rs_meta_preselected = pd.read_csv(os.path.join(args.data_root, f'RS{args.rs_cohort}', 'RS3_preselected.csv'))
+    rs_meta = rstools.preprocess_rs_meta(rs_meta, rs_meta_preselected, 3)
 
     net = model.KneeNet(session['args'][0].backbone, session['args'][0].dropout_rate)
 
+
+    rs_dataset = rstools.RSDataset(os.path.join(args.data_root, f'RS_{args.rs_cohort}', ))
     for fold_id in range(session['args'][0].n_folds):
         snapshot_name = glob.glob(os.path.join(args.snapshots_root, args.snapshot, f'fold_{fold_id}*.pth'))[0]
 

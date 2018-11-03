@@ -94,16 +94,17 @@ def preds_and_hmaps(rs_result, gradcams, dataset_root, figsize, threshold, savep
 
         hmaps.append(tmp)
         ids_rs.append(entry.ergoid)
+        img = img[y1:y1 + size[0], x1:x1 + size[1]]
 
         plt.figure(figsize=(figsize, figsize))
         plt.subplot(121)
-        plt.title('Original Image {}'.format(entry.ergoid))
+        plt.title(f'Original Image {entry.ergoid} | Prog. {entry.kl1} -> {entry.kl2}')
         plt.imshow(img, cmap=plt.cm.Greys_r)
         plt.xticks([])
         plt.yticks([])
 
         plt.subplot(122)
-        plt.title('GradCAM {}'.format(entry.ergoid))
+        plt.title(f'GradCAM {entry.ergoid}')
         plt.imshow(img, cmap=plt.cm.Greys_r)
         plt.imshow(tmp, cmap=plt.cm.jet, alpha=0.5)
         plt.xticks([])

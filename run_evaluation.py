@@ -81,11 +81,30 @@ if __name__ == "__main__":
     print('# knees', res.shape[0])
     print('# progressors', res[res.progressor == 1].shape[0])
     print('# non-progressors', res[res.progressor == 0].shape[0])
+    print('')
+    print('All knees:')
+    print('-------------')
+    stats.roc_curve_bootstrap(res.progressor.values.flatten(),
+                              res.pred.values.flatten(),
+                              n_bootstrap=args.n_bootstrap,
+                              savepath=os.path.join(args.save_dir, f'auc_all_subjects_RS{args.rs_cohort}.pdf'))
 
-    stats.roc_curve_bootstrap('5-fold CV ensemble with TTA',
-                              res.progressor,
-                              res.pred,
-                              n_bootstrap=args.n_bootstrap)
+    print('KL0 at baseline:')
+    print('----------------')
+
+    stats.roc_curve_bootstrap(res[res.kl1 == 0].progressor.values.flatten(),
+                              res[res.kl1 == 0].pred.values.flatten(),
+                              n_bootstrap=args.n_bootstrap,
+                              savepath=os.path.join(args.save_dir, f'auc_kl0_bl_RS{args.rs_cohort}.pdf'))
+
+    print('KL1 at baseline:')
+    print('----------------')
+
+    stats.roc_curve_bootstrap(res[res.kl1 == 1].progressor.values.flatten(),
+                              res[res.kl1 == 1].pred.values.flatten(),
+                              n_bootstrap=args.n_bootstrap,
+                              savepath=os.path.join(args.save_dir, f'auc_kl1_bl_RS{args.rs_cohort}.pdf'))
+
 
 
 

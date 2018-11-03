@@ -77,7 +77,7 @@ if __name__ == "__main__":
     res = pd.DataFrame(data={'ergoid': ergoids, 'side': sides, 'pred': preds})
 
     res = pd.merge(rs_meta, res, on=('ergoid', 'side'))
-    """
+
     print('# subjects', np.unique(res.ergoid).shape[0])
     print('# knees', res.shape[0])
     print('# progressors', res[res.progressor == 1].shape[0])
@@ -105,7 +105,7 @@ if __name__ == "__main__":
                               res[res.kl1 == 1].pred.values.flatten(),
                               n_bootstrap=args.n_bootstrap,
                               savepath=os.path.join(args.save_dir, f'auc_kl1_bl_RS{args.rs_cohort}.pdf'))
-    """
+
     gcam.preds_and_hmaps(rs_result=res[(res.kl1 == 0) | (res.kl1 == 1)],
                          gradcams=gcams,
                          dataset_root=os.path.join(args.data_root, f'RS{args.rs_cohort}', 'localized'),

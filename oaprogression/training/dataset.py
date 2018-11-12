@@ -50,27 +50,6 @@ class OAProgressionDataset(data.Dataset):
         return self.split.shape[0]
 
 
-def make_weights_for_balanced_classes(labels):
-    """
-    https://discuss.pytorch.org/t/balanced-sampling-between-classes-with-torchvision-dataloader/2703/3
-
-    """
-    nclasses = max(labels) + 1
-    count = [0] * nclasses
-
-    for l in labels:
-        count[l] += 1
-    weight_per_class = [0.] * nclasses
-    N = float(len(labels))
-
-    for i in range(nclasses):
-        weight_per_class[i] = N / float(count[i])
-    weight = [0] * len(labels)
-    for idx, val in enumerate(labels):
-        weight[idx] = weight_per_class[val]
-    return weight, weight_per_class
-
-
 def init_metadata():
     # We get should rid of non-progressors from MOST because we can check
     # non-progressors only up to 84 months

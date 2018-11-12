@@ -76,11 +76,11 @@ def init_metadata():
     # non-progressors only up to 84 months
     kvs = GlobalKVS()
 
-    most_meta_full = pd.read_csv(os.path.join(kvs['args'].metadata_root, 'MOST_progression.csv'))
+    most_meta = pd.read_csv(os.path.join(kvs['args'].metadata_root, 'MOST_progression.csv'))
     oai_meta = pd.read_csv(os.path.join(kvs['args'].metadata_root, 'OAI_progression.csv'))
 
-    most_meta = most_meta_full#[most_meta_full.Progressor > 0]
-    kvs.update('metadata', pd.concat((oai_meta, most_meta), axis=0))
+    kvs.update('metadata', oai_meta)
+    kvs.update('metadata_test', most_meta)
 
     gkf = GroupKFold(n_splits=5)
     cv_split = [x for x in gkf.split(kvs['metadata'],
@@ -90,11 +90,17 @@ def init_metadata():
     kvs.update('cv_split_all_folds', cv_split)
     kvs.save_pkl(os.path.join(kvs['args'].snapshots, kvs['snapshot_name'], 'session.pkl'))
 
-    print(colored("==> ", 'green') + f"Combined dataset has "
+    print(colored("==> ", 'green') + f"Train dataset has "
                                      f"{(kvs['metadata'].Progressor == 0).sum()} non-progressed knees")
 
-    print(colored("==> ", 'green')+f"Combined dataset has "
+    print(colored("==> ", 'green')+f"Train dataset has "
                                    f"{(kvs['metadata'].Progressor > 0).sum()} progressed knees")
+
+    print(colored("==> ", 'green') + f"Test dataset has "
+                                     f"{(kvs['metadata_test'].Progressor == 0).sum()} non-progressed knees")
+
+    print(colored("==> ", 'green')+f"Test dataset has "
+                                   f"{(kvs['metadata_test'].Progressor > 0).sum()} progressed knees")
 
 
 def img_labels2solt(inp):
@@ -148,7 +154,7 @@ def init_train_augs():
             slt.ImageAdditiveGaussianNoise(p=0.5, gain_range=0.3),
             slt.RandomRotate(p=1, rotation_range=(-10, 10)),
             slt.CropTransform(crop_size=(300, 300), crop_mode='r'),
-            slt.ImageGammaCorrection(p=0.5, gamma_range=(0.5, 2)),
+            slt.ImageGammaCorrection(p=0.5, gamma_range=(0.5, 1.5)),
             slt.ImageColorTransform(mode='gs2rgb')
         ], interpolation='bicubic', padding='z'),
         unpack_solt_data,

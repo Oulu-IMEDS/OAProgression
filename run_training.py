@@ -48,7 +48,7 @@ if __name__ == "__main__":
             if epoch == kvs['args'].unfreeze_epoch:
                 print(colored('====> ', 'red')+'Unfreezing the layers!')
                 new_lr_drop_milestones = list(map(lambda x: x-kvs['args'].unfreeze_epoch, kvs['args'].lr_drop))
-                optimizer = train_utils.init_optimizer(net.parameters())
+                optimizer.add_param_group({'params': net.module.features.parameters()})
                 scheduler = MultiStepLR(optimizer, milestones=new_lr_drop_milestones, gamma=0.1)
 
             print(colored('====> ', 'red') + 'LR:', scheduler.get_lr())

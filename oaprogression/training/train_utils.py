@@ -55,6 +55,8 @@ def train_epoch(net, optimizer, train_loader):
         loss = loss_prog.mul(kvs['args'].loss_weight) + loss_kl.mul(1 - kvs['args'].loss_weight)
 
         loss.backward()
+        if kvs['args'].clip_grad:
+            torch.nn.utils.clip_grad_norm_(net.parameters(), kvs['args'].clip_grad_norm)
         optimizer.step()
 
         running_loss += loss.item()

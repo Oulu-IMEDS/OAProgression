@@ -134,11 +134,10 @@ def init_loaders(x_train, x_val):
                                        transforms=kvs['val_trf'])
 
     weights, _ = make_weights_for_balanced_classes(x_train['Progressor'].values.astype(int))
-    sampler = WeightedRandomSampler(weights, len(weights))
 
     train_loader = DataLoader(train_dataset, batch_size=kvs['args'].bs,
                               num_workers=kvs['args'].n_threads,
-                              drop_last=True, shuffle=True, #sampler=sampler,
+                              drop_last=True, shuffle=True,
                               worker_init_fn=lambda wid: np.random.seed(np.uint32(torch.initial_seed() + wid)))
 
     val_loader = DataLoader(val_dataset, batch_size=kvs['args'].val_bs,

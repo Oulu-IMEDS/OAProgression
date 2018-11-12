@@ -11,7 +11,7 @@ from tqdm import tqdm
 def eval_batch(sample, features, fc):
     # We don't need gradient to make an inference  for the features
     with torch.no_grad():
-        inputs = sample['I'].to("cuda")
+        inputs = sample['img'].to("cuda")
         bs, ncrops, c, h, w = inputs.size()
         maps = features(inputs.view(-1, c, h, w))
 
@@ -66,11 +66,11 @@ def preds_and_hmaps(rs_result, gradcams, dataset_root, figsize, threshold, savep
     y1 = h // 2 - size[1] // 2
 
     for i, entry in tqdm(rs_result.iterrows(), total=rs_result.shape[0]):
-        if entry.pred < threshold or entry.progressor == 0:
+        if entry.pred < threshold or entry.Progressor == 0:
             continue
-        img = cv2.imread(os.path.join(dataset_root, f'{entry.ergoid}_{entry.side}.png'), 0)
+        img = cv2.imread(os.path.join(dataset_root, f'{entry.ID}_00_{entry.Side}.png'), 0)
 
-        if 'L' == entry.side:
+        if 'L' == entry.Side:
             img = cv2.flip(img, 1)
 
         img = cv2.resize(img, (w, h))
@@ -93,21 +93,21 @@ def preds_and_hmaps(rs_result, gradcams, dataset_root, figsize, threshold, savep
         tmp *= 255
 
         hmaps.append(tmp)
-        ids_rs.append(entry.ergoid)
+        ids_rs.append(entry.ID)
         img = img[y1:y1 + size[0], x1:x1 + size[1]]
 
         plt.figure(figsize=(figsize, figsize))
         plt.subplot(121)
-        plt.title(f'Original Image {entry.ergoid} | Prog. {entry.kl1} -> {entry.kl2}')
+        plt.title(f'Original Image {entry.ID} | Prog. {entry.KL} -> {entry.KL+entry.Prog_increase}')
         plt.imshow(img, cmap=plt.cm.Greys_r)
         plt.xticks([])
         plt.yticks([])
 
         plt.subplot(122)
-        plt.title(f'GradCAM {entry.ergoid}')
+        plt.title(f'GradCAM {entry.ID}')
         plt.imshow(img, cmap=plt.cm.Greys_r)
         plt.imshow(tmp, cmap=plt.cm.jet, alpha=0.5)
         plt.xticks([])
         plt.yticks([])
-        plt.savefig(os.path.join(savepath, f'{entry.ergoid}_{entry.side}.pdf'), bbox_inches='tight')
+        plt.savefig(os.path.join(savepath, f'{entry.ID}_{entry.Side}.pdf'), bbox_inches='tight')
         plt.close()

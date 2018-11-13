@@ -15,7 +15,7 @@ from torchvision import transforms as tv_transforms
 import operator
 
 from oaprogression.training.args import parse_args
-from oaprogression.training.dataset import OAProgressionDataset, make_weights_for_balanced_classes
+from oaprogression.training.dataset import OAProgressionDataset
 from oaprogression.training.dataset import init_train_augs, apply_by_index, img_labels2solt, unpack_solt_data
 from oaprogression.kvs import GlobalKVS, git_info
 
@@ -132,8 +132,6 @@ def init_loaders(x_train, x_val):
     val_dataset = OAProgressionDataset(dataset=kvs['args'].dataset_root,
                                        split=x_val,
                                        transforms=kvs['val_trf'])
-
-    weights, _ = make_weights_for_balanced_classes(x_train['Progressor'].values.astype(int))
 
     train_loader = DataLoader(train_dataset, batch_size=kvs['args'].bs,
                               num_workers=kvs['args'].n_threads,

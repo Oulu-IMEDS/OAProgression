@@ -93,6 +93,8 @@ def build_img_progression_meta(most_src_dir):
 def build_clinical(most_src_dir):
     files = glob.glob(os.path.join(most_src_dir, '*enroll.sas7bdat'))
     files_dict = {file.split('/')[-1].lower(): file for file in files}
-    data_enroll = read_sas7bdata_pd(files_dict['mostv0enroll.sas7bdat'])
-    data_enroll['ID'] = data_enroll.MOSTID
-    return data_enroll[['ID', 'AGE', 'SEX', 'V0BMI']]
+    clinical_data_most = read_sas7bdata_pd(files_dict['mostv0enroll.sas7bdat'])
+    clinical_data_most['ID'] = clinical_data_most.MOSTID
+    clinical_data_most['BMI'] = clinical_data_most['V0BMI']
+
+    return clinical_data_most[['ID', 'AGE', 'SEX', 'BMI']]

@@ -84,6 +84,11 @@ def build_img_progression_meta(oai_src_dir):
 def build_clinical(oai_src_dir):
     data_enrollees = read_sas7bdata_pd(os.path.join(oai_src_dir, 'enrollees.sas7bdat'))
     data_clinical = read_sas7bdata_pd(os.path.join(oai_src_dir, 'allclinical00.sas7bdat'))
-    data_clinical = data_clinical.merge(data_enrollees, on='ID')
-    return data_clinical[['ID', 'V00AGE', 'P02SEX', 'P01BMI']]
+
+    clinical_data_oai = data_clinical.merge(data_enrollees, on='ID')
+    clinical_data_oai['SEX'] = 2 - clinical_data_oai['P02SEX']
+    clinical_data_oai['AGE'] = clinical_data_oai['V00AGE']
+    clinical_data_oai['BMI'] = clinical_data_oai['P01BMI']
+
+    return clinical_data_oai[['ID', 'AGE', 'SEX', 'BMI']]
 

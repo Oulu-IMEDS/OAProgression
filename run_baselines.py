@@ -10,6 +10,7 @@ from oaprogression.evaluation import stats
 if __name__ == "__main__":
     args = baselines.init_args()
     train_folds, metadata_test = baselines.init_metadata(args)
+    os.makedirs(args.save_dir, exist_ok=True)
 
     c_vals = np.logspace(-6, 0, args.n_vals_c)
     for feature_set in [['AGE', ],
@@ -72,24 +73,34 @@ if __name__ == "__main__":
 
         print('CV score:', feature_set, c_vals[opt_c_id], cv_scores[opt_c_id])
 
-        test_res = 0
-        y_test = metadata_test.Progressor.values.copy() > 0
-        X_test_initial = metadata_test[feature_set].values.astype(float).copy()
-        for model_id in range(len(models_best)):
-            mean, std = mean_std_best[model_id]
-            X_test = X_test_initial.copy()
-            X_test -= mean
-            X_test /= std
+        for kl_bl in [-1, 0, 1]:
 
-            test_res += models_best[model_id].predict_proba(X_test)[:, 1]
+            if kl_bl == -1:
+                kl_bl = 'all'
+                X_test_initial = metadata_test
+            else:
+                X_test_initial = metadata_test[metadata_test.KL == kl_bl]
 
-        test_res /= len(models_best)
+            print(f'Baseline KL: [{kl_bl}]')
+            y_test = X_test_initial.Progressor.values.copy() > 0
+            X_test_initial = X_test_initial[feature_set].values.astype(float).copy()
+            test_res = 0
+            for model_id in range(len(models_best)):
+                mean, std = mean_std_best[model_id]
+                X_test = X_test_initial.copy()
+                X_test -= mean
+                X_test /= std
 
-        features_suffix = '_'.join(feature_set)
-        stats.roc_curve_bootstrap(y_test,
-                                  test_res,
-                                  n_bootstrap=args.n_bootstrap,
-                                  savepath=os.path.join(args.save_dir, f'auc_MOST_{features_suffix}.pdf'))
+                test_res += models_best[model_id].predict_proba(X_test)[:, 1]
+
+            test_res /= len(models_best)
+
+            features_suffix = '_'.join(feature_set)
+            stats.roc_curve_bootstrap(y_test,
+                                      test_res,
+                                      n_bootstrap=args.n_bootstrap,
+                                      savepath=os.path.join(args.save_dir,
+                                                            f'auc_MOST_BL_{kl_bl}_{features_suffix}.pdf'))
 
 
 

@@ -23,12 +23,8 @@ def init_metadata(args):
         session_snapshot = pickle.load(f)
 
     clinical_data_oai = pd.read_csv(os.path.join(args.metadata_root, 'OAI_participants.csv'))
-    clinical_data_oai['SEX'] = 2 - clinical_data_oai['P02SEX']
-    clinical_data_oai['AGE'] = clinical_data_oai['V00AGE']
-    clinical_data_oai['BMI'] = clinical_data_oai['P01BMI']
 
     clinical_data_most = pd.read_csv(os.path.join(args.metadata_root, 'MOST_participants.csv'))
-    clinical_data_most['BMI'] = clinical_data_most['V0BMI']
 
     metadata = session_snapshot['metadata'][0]
     metadata = pd.merge(metadata, clinical_data_oai, on='ID')

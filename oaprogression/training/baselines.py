@@ -10,6 +10,8 @@ def init_args():
     parser.add_argument('--snapshots_root', default='')
     parser.add_argument('--snapshot', default='')
     parser.add_argument('--seed', type=int, default=123456)
+    parser.add_argument('--save_dir', default='')
+    parser.add_argument('--n_bootstrap', type=int, default=10000)
     args = parser.parse_args()
 
     return args

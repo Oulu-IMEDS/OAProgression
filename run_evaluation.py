@@ -99,7 +99,7 @@ if __name__ == "__main__":
     stats.roc_curve_bootstrap(res[res.KL == 1].Progressor.values.flatten(),
                               res[res.KL == 1].pred.values.flatten(),
                               n_bootstrap=args.n_bootstrap,
-                              savepath=os.path.join(args.save_dir, f'auc_MOST_DL_0.pdf'))
+                              savepath=os.path.join(args.save_dir, f'auc_MOST_DL_1.pdf'))
 
     gcam.preds_and_hmaps(rs_result=res[(res.KL == 0) | (res.KL == 1)],
                          gradcams=gcams,

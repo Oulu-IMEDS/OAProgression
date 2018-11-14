@@ -9,6 +9,7 @@ def init_args():
     parser.add_argument('--metadata_root', default='')
     parser.add_argument('--snapshots_root', default='')
     parser.add_argument('--snapshot', default='')
+    parser.add_argument('--seed', type=int, default=123456)
     args = parser.parse_args()
 
     return args

@@ -3,4 +3,4 @@ from oaprogression.training import baselines
 
 if __name__ == "__main__":
     args = baselines.init_args()
-    baselines.init_metadata(args)
+    train_folds, metadata_test = baselines.init_metadata(args)

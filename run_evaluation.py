@@ -91,7 +91,7 @@ if __name__ == "__main__":
     stats.roc_curve_bootstrap(res[res.KL == 0].Progressor.values.flatten(),
                               res[res.KL == 0].pred.values.flatten(),
                               n_bootstrap=args.n_bootstrap,
-                              savepath=os.path.join(args.save_dir, f'auc_MOST_DL_kl0_bl.pdf'))
+                              savepath=os.path.join(args.save_dir, f'auc_MOST_DL_0.pdf'))
     print('')
     print('KL1 at baseline:')
     print('----------------')
@@ -99,7 +99,7 @@ if __name__ == "__main__":
     stats.roc_curve_bootstrap(res[res.KL == 1].Progressor.values.flatten(),
                               res[res.KL == 1].pred.values.flatten(),
                               n_bootstrap=args.n_bootstrap,
-                              savepath=os.path.join(args.save_dir, f'auc_MOST_DL_kl1_bl.pdf'))
+                              savepath=os.path.join(args.save_dir, f'auc_MOST_DL_0.pdf'))
 
     gcam.preds_and_hmaps(rs_result=res[(res.KL == 0) | (res.KL == 1)],
                          gradcams=gcams,

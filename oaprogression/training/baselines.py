@@ -12,6 +12,7 @@ def init_args():
     parser.add_argument('--seed', type=int, default=123456)
     parser.add_argument('--save_dir', default='')
     parser.add_argument('--n_bootstrap', type=int, default=10000)
+    parser.add_argument('--n_vals_c', type=int, default=100)
     args = parser.parse_args()
 
     return args
@@ -35,7 +36,7 @@ def init_metadata(args):
     metadata_test = session_snapshot['metadata_test'][0]
     metadata_test = pd.merge(metadata_test, clinical_data_most, on='ID')
 
-    train_folds  = []
+    train_folds = []
     for train_index, val_index in session_snapshot['cv_split_all_folds'][0]:
         train_split = metadata.iloc[train_index]
         val_split = metadata.iloc[val_index]

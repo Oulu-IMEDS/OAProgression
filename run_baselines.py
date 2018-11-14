@@ -11,14 +11,25 @@ if __name__ == "__main__":
     args = baselines.init_args()
     train_folds, metadata_test = baselines.init_metadata(args)
 
-    c_vals = np.logspace(-6, 0, 1000)
-    for feature_set in [['AGE', 'SEX', 'BMI'], ['AGE', 'SEX', 'BMI', 'KL']]:
+    c_vals = np.logspace(-6, 0, args.n_vals_c)
+    for feature_set in [['AGE', ],
+                        ['SEX', ],
+                        ['BMI', ],
+                        ['KL', ],
+                        ['AGE', 'SEX', ],
+                        ['SEX', 'KL'],
+                        ['BMI', 'KL'],
+                        ['AGE', 'SEX', 'BMI'],
+                        ['SEX', 'BMI', 'KL'],
+                        ['AGE', 'SEX', 'BMI', 'KL']]:
         cv_scores = []
         models = []
+        means_stds = []
         for C in c_vals:
             folds_predicts = []
             folds_gt = []
             folds_models = []
+            folds_means_stds = []
             for fold_id, (train_split, val_split) in enumerate(train_folds):
                 X_train = train_split[feature_set].values.astype(float)
                 X_val = val_split[feature_set].values.astype(float)
@@ -48,30 +59,37 @@ if __name__ == "__main__":
                 folds_predicts.extend(p_val.flatten().tolist())
                 folds_gt.extend(y_val.flatten().tolist())
                 folds_models.append(clf)
+                folds_means_stds.append([mean, std])
 
             auc = roc_auc_score(folds_gt, folds_predicts)
             cv_scores.append(auc)
             models.append(folds_models)
+            means_stds.append(folds_means_stds)
 
         opt_c_id = np.argmax(cv_scores)
         models_best = models[opt_c_id]
+        mean_std_best = means_stds[opt_c_id]
+
         print('CV score:', feature_set, c_vals[opt_c_id], cv_scores[opt_c_id])
 
-        X_test = metadata_test[feature_set].values.astype(float)
-        y_test = metadata_test.Progressor.values > 0
-
-        X_test -= mean
-        X_test /= std
-
         test_res = 0
-        for model in models_best:
-            test_res += model.predict_proba(X_test)[:, 1]
+        y_test = metadata_test.Progressor.values.copy() > 0
+        X_test_initial = metadata_test[feature_set].values.astype(float).copy()
+        for model_id in range(len(models_best)):
+            mean, std = mean_std_best[model_id]
+            X_test = X_test_initial.copy()
+            X_test -= mean
+            X_test /= std
+
+            test_res += models_best[model_id].predict_proba(X_test)[:, 1]
+
         test_res /= len(models_best)
 
+        features_suffix = '_'.join(feature_set)
         stats.roc_curve_bootstrap(y_test,
                                   test_res,
                                   n_bootstrap=args.n_bootstrap,
-                                  savepath=os.path.join(args.save_dir, f'auc_all_subjects.pdf'))
+                                  savepath=os.path.join(args.save_dir, f'auc_MOST_{features_suffix}.pdf'))
 
 
 

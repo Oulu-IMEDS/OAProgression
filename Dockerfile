@@ -55,4 +55,4 @@ RUN pip install -e /opt/pkg/
 
 # Copying the files
 RUN cp /opt/pkg/prepare_metadata.py .
-RUN cp /opt/pkg/run_experiments.py .
+RUN cp /opt/pkg/run_training.py .

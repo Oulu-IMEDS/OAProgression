@@ -6,7 +6,7 @@ import pickle
 from tqdm import tqdm
 import numpy as np
 import cv2
-
+import matplotlib.pyplot as plt
 
 from oaprogression.evaluation import tools, stats, gcam
 
@@ -22,8 +22,8 @@ if __name__ == "__main__":
     parser.add_argument('--n_threads', type=int, default=12)
     parser.add_argument('--snapshots_root', default='')
     parser.add_argument('--from_cache', default=False)
-    parser.add_argument('--n_bootstrap', type=int, default=10000)
-    parser.add_argument('--snapshot', default='2018_11_12_16_15')
+    parser.add_argument('--n_bootstrap', type=int, default=2000)
+    parser.add_argument('--snapshot', default='')
     parser.add_argument('--save_dir', default='')
     args = parser.parse_args()
 
@@ -70,6 +70,7 @@ if __name__ == "__main__":
                              'Side': list(map(lambda x: x.split('_')[1], ids)), 'pred': preds})
 
     res = pd.merge(session_snapshot['metadata_test'][0], res, on=('ID', 'Side'))
+    res['Progressor_type'] = res.Progressor.values.copy()
     res.Progressor = res.Progressor > 0
 
     print('# subjects', np.unique(res.ID).shape[0])
@@ -80,6 +81,7 @@ if __name__ == "__main__":
     print('All knees:')
     print('-------------')
 
+    plt.rcParams.update({'font.size': 16})
     stats.roc_curve_bootstrap(res.Progressor.values.flatten(),
                               res.pred.values.flatten(),
                               n_bootstrap=args.n_bootstrap,
@@ -87,7 +89,7 @@ if __name__ == "__main__":
     print('')
     print('KL0 at baseline:')
     print('----------------')
-
+    plt.rcParams.update({'font.size': 16})
     stats.roc_curve_bootstrap(res[res.KL == 0].Progressor.values.flatten(),
                               res[res.KL == 0].pred.values.flatten(),
                               n_bootstrap=args.n_bootstrap,
@@ -95,17 +97,35 @@ if __name__ == "__main__":
     print('')
     print('KL1 at baseline:')
     print('----------------')
-
+    plt.rcParams.update({'font.size': 16})
     stats.roc_curve_bootstrap(res[res.KL == 1].Progressor.values.flatten(),
                               res[res.KL == 1].pred.values.flatten(),
                               n_bootstrap=args.n_bootstrap,
                               savepath=os.path.join(args.save_dir, f'auc_MOST_DL_1.pdf'))
 
-    gcam.preds_and_hmaps(rs_result=res[(res.KL == 0) | (res.KL == 1)],
+    print('')
+    print('KL2 at baseline:')
+    print('----------------')
+    plt.rcParams.update({'font.size': 16})
+    stats.roc_curve_bootstrap(res[res.KL == 2].Progressor.values.flatten(),
+                              res[res.KL == 2].pred.values.flatten(),
+                              n_bootstrap=args.n_bootstrap,
+                              savepath=os.path.join(args.save_dir, f'auc_MOST_DL_2.pdf'))
+
+    print('')
+    print('KL4 at baseline:')
+    print('----------------')
+    plt.rcParams.update({'font.size': 16})
+    stats.roc_curve_bootstrap(res[res.KL == 3].Progressor.values.flatten(),
+                              res[res.KL == 3].pred.values.flatten(),
+                              n_bootstrap=args.n_bootstrap,
+                              savepath=os.path.join(args.save_dir, f'auc_MOST_DL_3.pdf'))
+
+    gcam.preds_and_hmaps(rs_result=res,
                          gradcams=gcams,
                          dataset_root=args.dataset_root,
-                         figsize=16,
-                         threshold=0.8,
+                         figsize=10,
+                         threshold=0.3,
                          savepath=args.save_dir)
 
 

@@ -46,8 +46,8 @@ def roc_curve_bootstrap(y, preds, savepath=None, n_bootstrap=1000, seed=42):
     tprs_lower = mean_tprs - std
     CI_l, CI_h = np.percentile(aucs, 2.5), np.percentile(aucs, 97.5)
 
-    plt.figure(figsize=(6, 6))
-    plt.title(f'AUC {auc:.5f} 95% CI [{CI_l:.5f}-{CI_h:.5f}]')
+    plt.figure(figsize=(8, 8))
+    plt.title(f'AUC {np.round(auc, 2):.2f} 95% CI [{np.round(CI_l, 2):.2f}-{np.round(CI_h, 2):.2f}]')
     plt.fill_between(base_fpr, tprs_lower, tprs_upper, color='grey', alpha=0.2)
     plt.plot(base_fpr, mean_tprs, 'r-')
     plt.plot([0, 1], [0, 1], '--', color='black')

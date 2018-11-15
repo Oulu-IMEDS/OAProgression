@@ -8,6 +8,13 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 
+import torchvision.transforms as tv_transforms
+import solt.transforms as slt
+import solt.core as slc
+import solt.data as sld
+
+from oaprogression.training.dataset import unpack_solt_data, img_labels2solt
+
 def eval_batch(sample, features, fc):
     # We don't need gradient to make an inference  for the features
     with torch.no_grad():
@@ -60,21 +67,34 @@ def preds_and_hmaps(rs_result, gradcams, dataset_root, figsize, threshold, savep
     ids_rs = []
     hmaps = []
 
-    w, h = 310, 310
-    size = (300, 300)
+    w, h = 700, 700 # 140x140mm
+    size = (650, 650) # 130x130mm - were used in the evaluation
     x1 = w // 2 - size[0] // 2
     y1 = h // 2 - size[1] // 2
+
+    gcam_trf = tv_transforms.Compose([
+        img_labels2solt,
+        slc.Stream([
+            slt.PadTransform(pad_to=(700,700), padding='z'),
+            slt.CropTransform(crop_size=(700,700), crop_mode='c'),
+        ], interpolation='bicubic'),
+        unpack_solt_data,
+    ])
 
     for i, entry in tqdm(rs_result.iterrows(), total=rs_result.shape[0]):
         if entry.pred < threshold or entry.Progressor == 0:
             continue
         img = cv2.imread(os.path.join(dataset_root, f'{entry.ID}_00_{entry.Side}.png'), 0)
-
+        
         if 'L' == entry.Side:
             img = cv2.flip(img, 1)
 
-        img = cv2.resize(img, (w, h))
-
+        img = img.reshape((img.shape[0], img.shape[1], 1))
+        img, _, _ = gcam_trf((img, 0, 0))
+        img = img.squeeze()
+        
+        # We had 310x310 image and 5 300x300 crops
+        # Now we map these crops back to the image
         tmp = np.zeros((h, w))
         # Center crop
         tmp[y1:y1 + size[0], x1:x1 + size[1]] += cv2.resize(gradcams[i, 0, :, :], size)
@@ -87,24 +107,23 @@ def preds_and_hmaps(rs_result, gradcams, dataset_root, figsize, threshold, savep
         # Bottom-right crop
         tmp[h - size[0]:h, w - size[1]:w] += cv2.resize(gradcams[i, 4, :, :], size)
 
-        tmp = tmp[y1:y1 + size[0], x1:x1 + size[1]]
         tmp -= tmp.min()
         tmp /= tmp.max()
         tmp *= 255
 
         hmaps.append(tmp)
         ids_rs.append(entry.ID)
-        img = img[y1:y1 + size[0], x1:x1 + size[1]]
+
 
         plt.figure(figsize=(figsize, figsize))
         plt.subplot(121)
-        plt.title(f'Original Image {entry.ID} | Prog. {entry.KL} -> {entry.KL+entry.Prog_increase}')
+        plt.title(f'Original Image {entry.ID}')
         plt.imshow(img, cmap=plt.cm.Greys_r)
         plt.xticks([])
         plt.yticks([])
 
         plt.subplot(122)
-        plt.title(f'GradCAM {entry.ID}')
+        plt.title(f'Prog. {entry.KL} -> {entry.KL+entry.Prog_increase} | {entry.Progressor_type}')
         plt.imshow(img, cmap=plt.cm.Greys_r)
         plt.imshow(tmp, cmap=plt.cm.jet, alpha=0.5)
         plt.xticks([])

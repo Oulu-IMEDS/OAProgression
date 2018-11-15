@@ -74,7 +74,9 @@ def init_loader(metadata, args):
     tta_trf = tv_transforms.Compose([
         img_labels2solt,
         slc.Stream([
-            slt.ResizeTransform((310, 310)),
+            slt.PadTransform(pad_to=(700,700), padding='z'),
+            slt.CropTransform(crop_size=(700,700), crop_mode='c'),
+            slt.ResizeTransform(resize_to=(310, 310), interpolation='bicubic'),
             slt.ImageColorTransform(mode='gs2rgb'),
         ], interpolation='bicubic'),
         unpack_solt_data,

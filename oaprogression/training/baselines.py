@@ -11,7 +11,7 @@ def init_args():
     parser.add_argument('--snapshot', default='')
     parser.add_argument('--seed', type=int, default=123456)
     parser.add_argument('--save_dir', default='')
-    parser.add_argument('--n_bootstrap', type=int, default=10000)
+    parser.add_argument('--n_bootstrap', type=int, default=2000)
     parser.add_argument('--n_vals_c', type=int, default=100)
     args = parser.parse_args()
 

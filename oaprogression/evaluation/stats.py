@@ -61,6 +61,7 @@ def roc_curve_bootstrap(y, preds, savepath=None, n_bootstrap=1000, seed=42):
     if savepath is not None:
         plt.savefig(savepath, bbox_inches='tight')
     plt.show()
+    plt.close()
 
     print('AUC:', np.round(auc, 5))
     print(f'CI [{CI_l:.5f}, {CI_h:.5f}]')

@@ -56,3 +56,5 @@ RUN pip install -e /opt/pkg/
 # Copying the files
 RUN cp /opt/pkg/prepare_metadata.py .
 RUN cp /opt/pkg/run_training.py .
+RUN cp /opt/pkg/run_baselines.py .
+RUN cp /opt/pkg/run_evaluation.py .

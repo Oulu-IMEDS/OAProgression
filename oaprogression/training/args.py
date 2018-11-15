@@ -23,7 +23,7 @@ def parse_args():
     parser.add_argument('--unfreeze_epoch', type=int, default=2)
     parser.add_argument('--dropout_rate', type=float, default=0.5)
     parser.add_argument('--lr', type=float, default=1e-3)
-    parser.add_argument('--lr_drop', default=[10, 15])
+    parser.add_argument('--lr_drop', default=[15,])
     parser.add_argument('--clip_grad', type=bool, default=False)
     parser.add_argument('--clip_grad_norm', type=float, default=1)
     parser.add_argument('--wd', type=float, default=1e-4)

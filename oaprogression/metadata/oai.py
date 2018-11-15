@@ -20,6 +20,7 @@ def build_img_progression_meta(oai_src_dir):
         meta.fillna(-1, inplace=True)
         for c in meta.columns:
             meta[c.upper()] = meta[c]
+        # Removing the TKR at the baseline
         if i == 0:
             meta = meta[meta[f'V{exam_codes[i]}XRKL'] != -1]
             meta = meta[meta[f'V{exam_codes[i]}XRKL'] < 5]
@@ -50,6 +51,10 @@ def build_img_progression_meta(oai_src_dir):
             if ind.any():
                 old_kl = int(knee.KL)
                 new_kl = int(follow_up[ind].KL.values[0])
+                # Skipping the ones who were identified as progressors already
+                if int(knee.ID) in identified_prog:
+                    if identified_prog[int(knee.ID)] == sides[int(knee.SIDE)]:
+                        continue
                 if 0 <= new_kl <= 4:
                     # If not TKR
                     if new_kl != 1 and new_kl > old_kl:

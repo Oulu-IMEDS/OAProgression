@@ -68,7 +68,7 @@ def build_img_progression_meta(most_src_dir):
                         if ID in last_follow_up:
                             non_progressors.append([ID, 'L', KL_bl_l, 0, 0])
                     else:
-                        progressors.append([ID, 'L', KL_bl_l, prog[-2]-KL_bl_r, prog[-1]])
+                        progressors.append([ID, 'L', KL_bl_l, prog[-2]-KL_bl_l, prog[-1]])
 
         # Doing the same thing for the right knee
         if 0 <= KL_bl_r <= 4:

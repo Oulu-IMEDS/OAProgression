@@ -7,13 +7,12 @@ import os
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
-
 import torchvision.transforms as tv_transforms
 import solt.transforms as slt
 import solt.core as slc
-import solt.data as sld
 
 from oaprogression.training.dataset import unpack_solt_data, img_labels2solt
+
 
 def eval_batch(sample, features, fc):
     # We don't need gradient to make an inference  for the features

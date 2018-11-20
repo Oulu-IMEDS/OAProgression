@@ -104,6 +104,24 @@ if __name__ == "__main__":
                               savepath=os.path.join(args.save_dir, f'auc_MOST_DL_1.pdf'))
 
     print('')
+    print('KL0-1 at baseline (no OA):')
+    print('----------------')
+    plt.rcParams.update({'font.size': 16})
+    stats.roc_curve_bootstrap(res[res.KL < 2].Progressor.values.flatten(),
+                              res[res.KL < 2].pred.values.flatten(),
+                              n_bootstrap=args.n_bootstrap,
+                              savepath=os.path.join(args.save_dir, f'auc_MOST_DL_01.pdf'))
+
+    print('')
+    print('KL2-4 at baseline (no OA):')
+    print('----------------')
+    plt.rcParams.update({'font.size': 16})
+    stats.roc_curve_bootstrap(res[res.KL >= 2].Progressor.values.flatten(),
+                              res[res.KL >= 2].pred.values.flatten(),
+                              n_bootstrap=args.n_bootstrap,
+                              savepath=os.path.join(args.save_dir, f'auc_MOST_DL_1234.pdf'))
+
+    print('')
     print('KL2 at baseline:')
     print('----------------')
     plt.rcParams.update({'font.size': 16})

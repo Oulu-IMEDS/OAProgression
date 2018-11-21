@@ -43,9 +43,9 @@ if __name__ == "__main__":
 
     print(" ")
     print("# ======== OAI ======== ")
-    data_stats(oai_meta)
+    data_stats(oai_meta, oai_participants)
     print(" ")
     print("# ======== MOST ======== ")
-    data_stats(most_meta)
+    data_stats(most_meta, most_participants)
 
     

@@ -18,6 +18,7 @@ cv2.setNumThreads(0)
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset_root', default='')
+    parser.add_argument('--metadata_root', default='')
     parser.add_argument('--bs', type=int, default=32)
     parser.add_argument('--n_threads', type=int, default=12)
     parser.add_argument('--snapshots_root', default='')
@@ -73,6 +74,10 @@ if __name__ == "__main__":
     res['Progressor_type'] = res.Progressor.values.copy()
     res.Progressor = res.Progressor > 0
 
+    # Reading the clinical data
+    clinical_most = pd.read_csv(os.path.join(args.metadata_root, 'MOST_participants.csv'))
+    res = pd.merge(res, clinical_most, on='ID')
+    
     print('# subjects', np.unique(res.ID).shape[0])
     print('# knees', res.shape[0])
     print('# progressors', res[res.Progressor == 1].shape[0])
@@ -86,6 +91,15 @@ if __name__ == "__main__":
                               res.pred.values.flatten(),
                               n_bootstrap=args.n_bootstrap,
                               savepath=os.path.join(args.save_dir, f'auc_MOST_DL.pdf'))
+
+    
+    plt.rcParams.update({'font.size': 16})
+    stats.roc_curve_bootstrap(res[res.AGE < 60].Progressor.values.flatten(),
+                              res[res.AGE < 60].pred.values.flatten(),
+                              n_bootstrap=args.n_bootstrap,
+                              savepath=os.path.join(args.save_dir, f'auc_MOST_DL_young.pdf'))
+
+
     print('')
     print('KL0 at baseline:')
     print('----------------')
@@ -94,6 +108,15 @@ if __name__ == "__main__":
                               res[res.KL == 0].pred.values.flatten(),
                               n_bootstrap=args.n_bootstrap,
                               savepath=os.path.join(args.save_dir, f'auc_MOST_DL_0.pdf'))
+    print('')
+    print('KL0 at baseline (young):')
+    print('----------------')
+    plt.rcParams.update({'font.size': 16})
+    stats.roc_curve_bootstrap(res[(res.AGE < 60) & (res.KL==0)].Progressor.values.flatten(),
+                              res[(res.AGE < 60) & (res.KL == 0)].pred.values.flatten(),
+                              n_bootstrap=args.n_bootstrap,
+                              savepath=os.path.join(args.save_dir, f'auc_MOST_DL_0_young.pdf'))
+
     print('')
     print('KL1 at baseline:')
     print('----------------')
@@ -113,14 +136,35 @@ if __name__ == "__main__":
                               savepath=os.path.join(args.save_dir, f'auc_MOST_DL_01.pdf'))
 
     print('')
-    print('KL2-4 at baseline (no OA):')
+    print('KL0-1 at baseline (no OA, young):')
+    print('----------------')
+    plt.rcParams.update({'font.size': 16})
+    stats.roc_curve_bootstrap(res[(res.KL < 2) & (res.AGE < 60)].Progressor.values.flatten(),
+                              res[(res.KL < 2) & (res.AGE < 60)].pred.values.flatten(),
+                              n_bootstrap=args.n_bootstrap,
+                              savepath=os.path.join(args.save_dir, f'auc_MOST_DL_01_young.pdf'))
+
+    
+    print('')
+    print('KL2-4 at baseline (OA):')
     print('----------------')
     plt.rcParams.update({'font.size': 16})
     stats.roc_curve_bootstrap(res[res.KL >= 2].Progressor.values.flatten(),
                               res[res.KL >= 2].pred.values.flatten(),
                               n_bootstrap=args.n_bootstrap,
-                              savepath=os.path.join(args.save_dir, f'auc_MOST_DL_1234.pdf'))
+                              savepath=os.path.join(args.save_dir, f'auc_MOST_DL_234.pdf'))
 
+    print('')
+    print('KL2-4 at baseline (OA, young):')
+    print('----------------')
+    plt.rcParams.update({'font.size': 16})
+    stats.roc_curve_bootstrap(res[(res.KL >= 2) & (res.AGE < 60)].Progressor.values.flatten(),
+                              res[(res.KL >= 2) & (res.AGE < 60)].pred.values.flatten(),
+                              n_bootstrap=args.n_bootstrap,
+                              savepath=os.path.join(args.save_dir, f'auc_MOST_DL_234_young.pdf'))
+
+
+    
     print('')
     print('KL2 at baseline:')
     print('----------------')
@@ -131,21 +175,21 @@ if __name__ == "__main__":
                               savepath=os.path.join(args.save_dir, f'auc_MOST_DL_2.pdf'))
 
     print('')
-    print('KL4 at baseline:')
+    print('KL3 at baseline:')
     print('----------------')
     plt.rcParams.update({'font.size': 16})
     stats.roc_curve_bootstrap(res[res.KL == 3].Progressor.values.flatten(),
                               res[res.KL == 3].pred.values.flatten(),
                               n_bootstrap=args.n_bootstrap,
                               savepath=os.path.join(args.save_dir, f'auc_MOST_DL_3.pdf'))
-
+    """
     gcam.preds_and_hmaps(rs_result=res,
                          gradcams=gcams,
                          dataset_root=args.dataset_root,
                          figsize=10,
                          threshold=0.3,
                          savepath=args.save_dir)
-
+    """
 
 
 

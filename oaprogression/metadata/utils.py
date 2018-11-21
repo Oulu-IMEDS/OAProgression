@@ -14,7 +14,9 @@ def data_stats(dataset, participants):
     dataset = pd.merge(dataset, participants, on='ID')
 
     print('## Unique subjects', np.unique(dataset.ID).shape[0])
-
+    print('## Males', np.unique(dataset[dataset.SEX == 1].ID).shape[0])
+    print('## Females', np.unique(dataset[dataset.SEX == 0].ID).shape[0])
+    
     print('## Mean Age', np.nanmean(participants.AGE))
     print('## STD Age', np.nanstd(participants.AGE))
 

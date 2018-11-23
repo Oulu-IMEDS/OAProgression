@@ -1,6 +1,8 @@
 import os
 import numpy as np
 
+import matplotlib.pyplot as plt
+
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
 
@@ -73,9 +75,12 @@ if __name__ == "__main__":
 
         print('CV score:', feature_set, c_vals[opt_c_id], cv_scores[opt_c_id])
 
-        for kl_bl in [-1, 0, 1]:
+        for kl_bl in [-2, -1, 0, 1]:
 
             if kl_bl == -1:
+                 X_test_initial = metadata_test[metadata_test.KL < 2]
+                 kl_bl='0_1'
+            elif kl_bl == -2:
                 kl_bl = 'all'
                 X_test_initial = metadata_test
             else:
@@ -96,6 +101,7 @@ if __name__ == "__main__":
             test_res /= len(models_best)
 
             features_suffix = '_'.join(feature_set)
+            plt.rcParams.update({'font.size': 16})
             stats.roc_curve_bootstrap(y_test,
                                       test_res,
                                       n_bootstrap=args.n_bootstrap,

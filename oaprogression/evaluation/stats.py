@@ -130,7 +130,6 @@ def fastDeLong(predictions_sorted_transposed, label_1_count, sample_weight):
     else:
         return fastDeLong_weights(predictions_sorted_transposed, label_1_count, sample_weight)
 
-
 def fastDeLong_weights(predictions_sorted_transposed, label_1_count, sample_weight):
     """
     The fast version of DeLong's method for computing the covariance of
@@ -275,7 +274,7 @@ def delong_roc_test(ground_truth, predictions_one, predictions_two):
        predictions_two: predictions of the second model,
           np.array of floats of the probability of being class 1
     """
-    order, label_1_count, _ = compute_ground_truth_statistics(ground_truth)
+    order, label_1_count, _ = compute_ground_truth_statistics(ground_truth, None)
     predictions_sorted_transposed = np.vstack((predictions_one, predictions_two))[:, order]
-    aucs, delongcov = fastDeLong(predictions_sorted_transposed, label_1_count)
+    aucs, delongcov = fastDeLong(predictions_sorted_transposed, label_1_count, None)
     return calc_pvalue(aucs, delongcov)

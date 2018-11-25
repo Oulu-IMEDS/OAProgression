@@ -1,6 +1,6 @@
 import os
 import numpy as np
-
+import pickle
 import matplotlib.pyplot as plt
 
 from sklearn.linear_model import LogisticRegression
@@ -20,11 +20,6 @@ if __name__ == "__main__":
                         ['SEX', ],
                         ['BMI', ],
                         ['KL', ],
-                        ['AGE', 'SEX', ],
-                        ['SEX', 'KL'],
-                        ['BMI', 'KL'],
-                        ['AGE', 'SEX', 'BMI'],
-                        ['SEX', 'BMI', 'KL'],
                         ['AGE', 'SEX', 'BMI', 'KL']]:
         cv_scores = []
         models = []
@@ -89,8 +84,8 @@ if __name__ == "__main__":
 
             print(f'Baseline KL: [{kl_bl}]')
             y_test = X_test_initial.Progressor.values.copy() > 0
-            ids = X_test_initial.ID
-            sides = X_test_initial.Side
+            ids = X_test_initial.ID.values
+            sides = X_test_initial.Side.values
             X_test_initial = X_test_initial[feature_set].values.astype(float).copy()
 
             test_res = 0
@@ -114,8 +109,8 @@ if __name__ == "__main__":
 
             results[f'auc_MOST_BL_{kl_bl}_{features_suffix}'] = (ids, sides, y_test, test_res)
 
-    np.save(os.path.join(args.save_dir, 'results_baselines.npy'), results)
-
+    with open(os.path.join(args.save_dir, 'results_baselines.npy'), 'wb') as f:
+        pickle.dump(results, f)
 
 
 

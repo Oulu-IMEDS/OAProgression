@@ -15,6 +15,7 @@ if __name__ == "__main__":
     os.makedirs(args.save_dir, exist_ok=True)
 
     c_vals = np.logspace(-6, 0, args.n_vals_c)
+    results = {}
     for feature_set in [['AGE', ],
                         ['SEX', ],
                         ['BMI', ],
@@ -88,7 +89,10 @@ if __name__ == "__main__":
 
             print(f'Baseline KL: [{kl_bl}]')
             y_test = X_test_initial.Progressor.values.copy() > 0
+            ids = X_test_initial.ID
+            sides = X_test_initial.Side
             X_test_initial = X_test_initial[feature_set].values.astype(float).copy()
+
             test_res = 0
             for model_id in range(len(models_best)):
                 mean, std = mean_std_best[model_id]
@@ -107,6 +111,10 @@ if __name__ == "__main__":
                                       n_bootstrap=args.n_bootstrap,
                                       savepath=os.path.join(args.save_dir,
                                                             f'auc_MOST_BL_{kl_bl}_{features_suffix}.pdf'))
+
+            results[f'auc_MOST_BL_{kl_bl}_{features_suffix}'] = (ids, sides, y_test, test_res)
+
+    np.save(os.path.join(args.save_dir, 'results_baselines.npy'), results)
 
 
 

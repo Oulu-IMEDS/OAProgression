@@ -8,6 +8,7 @@ from tqdm import tqdm
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
+from sklearn.metrics import precision_recall_curve, roc_curve
 
 from oaprogression.evaluation import tools, stats, gcam
 
@@ -91,14 +92,14 @@ if __name__ == "__main__":
     stats.roc_curve_bootstrap(res.Progressor.values.flatten(),
                               res.pred.values.flatten(),
                               n_bootstrap=args.n_bootstrap,
-                              savepath=os.path.join(args.save_dir, f'auc_MOST_DL.pdf'))
+                              savepath=os.path.join(args.save_dir, f'ROC_MOST_DL.pdf'))
 
     
     plt.rcParams.update({'font.size': 16})
     stats.roc_curve_bootstrap(res[res.AGE < 60].Progressor.values.flatten(),
                               res[res.AGE < 60].pred.values.flatten(),
                               n_bootstrap=args.n_bootstrap,
-                              savepath=os.path.join(args.save_dir, f'auc_MOST_DL_young.pdf'))
+                              savepath=os.path.join(args.save_dir, f'ROC_MOST_DL_young.pdf'))
 
 
     print('')
@@ -108,7 +109,7 @@ if __name__ == "__main__":
     stats.roc_curve_bootstrap(res[res.KL == 0].Progressor.values.flatten(),
                               res[res.KL == 0].pred.values.flatten(),
                               n_bootstrap=args.n_bootstrap,
-                              savepath=os.path.join(args.save_dir, f'auc_MOST_DL_0.pdf'))
+                              savepath=os.path.join(args.save_dir, f'ROC_MOST_DL_0.pdf'))
     print('')
     print('KL0 at baseline (young):')
     print('----------------')
@@ -116,7 +117,7 @@ if __name__ == "__main__":
     stats.roc_curve_bootstrap(res[(res.AGE < 60) & (res.KL == 0)].Progressor.values.flatten(),
                               res[(res.AGE < 60) & (res.KL == 0)].pred.values.flatten(),
                               n_bootstrap=args.n_bootstrap,
-                              savepath=os.path.join(args.save_dir, f'auc_MOST_DL_0_young.pdf'))
+                              savepath=os.path.join(args.save_dir, f'ROC_MOST_DL_0_young.pdf'))
 
     print('')
     print('KL1 at baseline:')
@@ -125,7 +126,7 @@ if __name__ == "__main__":
     stats.roc_curve_bootstrap(res[res.KL == 1].Progressor.values.flatten(),
                               res[res.KL == 1].pred.values.flatten(),
                               n_bootstrap=args.n_bootstrap,
-                              savepath=os.path.join(args.save_dir, f'auc_MOST_DL_1.pdf'))
+                              savepath=os.path.join(args.save_dir, f'ROC_MOST_DL_1.pdf'))
 
     print('')
     print('KL0-1 at baseline (no OA):')
@@ -134,7 +135,7 @@ if __name__ == "__main__":
     stats.roc_curve_bootstrap(res[res.KL < 2].Progressor.values.flatten(),
                               res[res.KL < 2].pred.values.flatten(),
                               n_bootstrap=args.n_bootstrap,
-                              savepath=os.path.join(args.save_dir, f'auc_MOST_DL_01.pdf'))
+                              savepath=os.path.join(args.save_dir, f'ROC_MOST_DL_01.pdf'))
 
     print('')
     print('KL0-1 at baseline (no OA, young):')
@@ -143,7 +144,7 @@ if __name__ == "__main__":
     stats.roc_curve_bootstrap(res[(res.KL < 2) & (res.AGE < 60)].Progressor.values.flatten(),
                               res[(res.KL < 2) & (res.AGE < 60)].pred.values.flatten(),
                               n_bootstrap=args.n_bootstrap,
-                              savepath=os.path.join(args.save_dir, f'auc_MOST_DL_01_young.pdf'))
+                              savepath=os.path.join(args.save_dir, f'ROC_MOST_DL_01_young.pdf'))
 
     
     print('')
@@ -153,7 +154,7 @@ if __name__ == "__main__":
     stats.roc_curve_bootstrap(res[res.KL >= 2].Progressor.values.flatten(),
                               res[res.KL >= 2].pred.values.flatten(),
                               n_bootstrap=args.n_bootstrap,
-                              savepath=os.path.join(args.save_dir, f'auc_MOST_DL_234.pdf'))
+                              savepath=os.path.join(args.save_dir, f'ROC_MOST_DL_234.pdf'))
 
     print('')
     print('KL2-4 at baseline (OA, young):')
@@ -162,7 +163,7 @@ if __name__ == "__main__":
     stats.roc_curve_bootstrap(res[(res.KL >= 2) & (res.AGE < 60)].Progressor.values.flatten(),
                               res[(res.KL >= 2) & (res.AGE < 60)].pred.values.flatten(),
                               n_bootstrap=args.n_bootstrap,
-                              savepath=os.path.join(args.save_dir, f'auc_MOST_DL_234_young.pdf'))
+                              savepath=os.path.join(args.save_dir, f'ROC_MOST_DL_234_young.pdf'))
 
 
     print('')
@@ -172,7 +173,7 @@ if __name__ == "__main__":
     stats.roc_curve_bootstrap(res[res.KL == 2].Progressor.values.flatten(),
                               res[res.KL == 2].pred.values.flatten(),
                               n_bootstrap=args.n_bootstrap,
-                              savepath=os.path.join(args.save_dir, f'auc_MOST_DL_2.pdf'))
+                              savepath=os.path.join(args.save_dir, f'ROC_MOST_DL_2.pdf'))
 
     print('')
     print('KL3 at baseline:')
@@ -181,12 +182,12 @@ if __name__ == "__main__":
     stats.roc_curve_bootstrap(res[res.KL == 3].Progressor.values.flatten(),
                               res[res.KL == 3].pred.values.flatten(),
                               n_bootstrap=args.n_bootstrap,
-                              savepath=os.path.join(args.save_dir, f'auc_MOST_DL_3.pdf'))
+                              savepath=os.path.join(args.save_dir, f'ROC_MOST_DL_3.pdf'))
 
-    with open(os.path.join(args.save_dir, 'results_baselines.npy'), 'rb') as f:
+    with open(os.path.join(args.save_dir, 'results_baselines.pkl'), 'rb') as f:
          baseline_results = pickle.load(f)
 
-    bl_ids, bl_sides, _, bl_pred = baseline_results['auc_MOST_BL_all_AGE_SEX_BMI_KL']
+    bl_ids, bl_sides, _, bl_pred = baseline_results['preds_MOST_BL_all_AGE_SEX_BMI_KL']
     bl_df = pd.DataFrame(data={'ID': bl_ids, 'Side': bl_sides, 'bl_pred': bl_pred})
 
     merged_bl_dl = pd.merge(res, bl_df, on=('ID', 'Side'))
@@ -195,7 +196,14 @@ if __name__ == "__main__":
                                  merged_bl_dl.pred.values.flatten(), \
                                  merged_bl_dl.bl_pred.values.flatten())
     print('P-value (DeLong DL vs Baseline:', 10**logp)
+
+    stats.compare_curves(merged_bl_dl.Progressor.values.astype(float).flatten(), \
+                         merged_bl_dl.bl_pred.values.flatten(), \
+                         merged_bl_dl.pred.values.flatten(), \
+                         savepath_auc=os.path.join(args.save_dir, 'ROC_MOST_DL_bl_superimposed.pdf'),
+                         savepath_pr=os.path.join(args.save_dir, 'PR_MOST_DL_bl_superimposed.pdf'))
     
+
     if args.plot_gcams:
         gcam.preds_and_hmaps(rs_result=res,
                              gradcams=gcams,

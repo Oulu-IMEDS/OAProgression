@@ -1,6 +1,6 @@
 import numpy as np
 from scipy import interp
-from sklearn.metrics import roc_auc_score, roc_curve
+from sklearn.metrics import roc_auc_score, roc_curve, precision_recall_curve
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
@@ -44,8 +44,8 @@ def roc_curve_bootstrap(y, preds, savepath=None, n_bootstrap=1000, seed=42, retu
     tprs = np.array(tprs)
     mean_tprs = np.mean(tprs, 0)
     std = np.std(tprs, axis=0)
-    tprs_upper = np.minimum(mean_tprs + std, 1)
-    tprs_lower = mean_tprs - std
+    tprs_upper = np.minimum(np.percentile(aucs, 97.5, axis=0), 1)
+    tprs_lower = np.percentile(aucs, 2.5, axis=0)
     CI_l, CI_h = np.percentile(aucs, 2.5), np.percentile(aucs, 97.5)
 
     plt.figure(figsize=(8, 8))
@@ -70,6 +70,45 @@ def roc_curve_bootstrap(y, preds, savepath=None, n_bootstrap=1000, seed=42, retu
     if return_curve:
         return auc, CI_l, CI_h, base_fpr, tprs_lower, tprs_upper, mean_tprs
     return auc, CI_l, CI_h
+
+
+def compare_curves(y, preds1, preds2, savepath_auc=None, savepath_pr=None):
+    plt.figure(figsize=(8, 8))
+    fpr, tpr, _ = roc_curve(y, preds1)
+    plt.plot(fpr, tpr, 'b-')
+
+    fpr, tpr, _ = roc_curve(y, preds2)
+    plt.plot(fpr, tpr, 'r-')
+    plt.plot([0, 1], [0, 1], '-', color='black')
+
+    plt.xlim([0, 1])
+    plt.ylim([0, 1])
+    plt.grid()
+    plt.xlabel('False positive rate')
+    plt.ylabel('True positive rate')
+    plt.tight_layout()
+    if savepath_auc:
+        plt.savefig(savepath_auc, bbox_inches='tight')
+    plt.show()
+    plt.close()
+
+    plt.figure(figsize=(8, 8))
+    precision, recall, _ = precision_recall_curve(y, preds1)
+    plt.plot(precision, recall, 'b-')
+
+    precision, recall, _ = precision_recall_curve(y, preds2)
+    plt.plot(precision, recall, 'r-')
+
+    plt.xlim([0, 1])
+    plt.ylim([0, 1])
+    plt.grid()
+    plt.xlabel('Recall')
+    plt.ylabel('Precision')
+    plt.tight_layout()
+    if savepath_pr:
+        plt.savefig(savepath_pr, bbox_inches='tight')
+    plt.show()
+    plt.close()
 
 
 # AUC comparison adapted from https://github.com/yandexdataschool/roc_comparison

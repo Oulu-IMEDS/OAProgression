@@ -105,11 +105,11 @@ if __name__ == "__main__":
                                       test_res,
                                       n_bootstrap=args.n_bootstrap,
                                       savepath=os.path.join(args.save_dir,
-                                                            f'auc_MOST_BL_{kl_bl}_{features_suffix}.pdf'))
+                                                            f'ROC_MOST_BL_{kl_bl}_{features_suffix}.pdf'))
 
-            results[f'auc_MOST_BL_{kl_bl}_{features_suffix}'] = (ids, sides, y_test, test_res)
+            results[f'preds_MOST_BL_{kl_bl}_{features_suffix}'] = (ids, sides, y_test, test_res)
 
-    with open(os.path.join(args.save_dir, 'results_baselines.npy'), 'wb') as f:
+    with open(os.path.join(args.save_dir, 'results_baselines.pkl'), 'wb') as f:
         pickle.dump(results, f)
 
 

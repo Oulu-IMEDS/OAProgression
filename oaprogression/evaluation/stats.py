@@ -7,7 +7,7 @@ from tqdm import tqdm
 import scipy.stats
 
 
-def roc_curve_bootstrap(y, preds, savepath=None, n_bootstrap=1000, seed=42):
+def roc_curve_bootstrap(y, preds, savepath=None, n_bootstrap=1000, seed=42, return_curve=False):
     """Evaluates ROC curve using bootstrapping
 
     Also reports confidence intervals and prints them.
@@ -26,7 +26,6 @@ def roc_curve_bootstrap(y, preds, savepath=None, n_bootstrap=1000, seed=42):
         Random seed
 
     """
-    auc = roc_auc_score(y, preds)
     np.random.seed(seed)
     aucs = []
     tprs = []
@@ -41,6 +40,7 @@ def roc_curve_bootstrap(y, preds, savepath=None, n_bootstrap=1000, seed=42):
         tpr[0] = 0.0
         tprs.append(tpr)
 
+    auc = np.mean(aucs)
     tprs = np.array(tprs)
     mean_tprs = np.mean(tprs, 0)
     std = np.std(tprs, axis=0)
@@ -67,6 +67,8 @@ def roc_curve_bootstrap(y, preds, savepath=None, n_bootstrap=1000, seed=42):
 
     print('AUC:', np.round(auc, 5))
     print(f'CI [{CI_l:.5f}, {CI_h:.5f}]')
+    if return_curve:
+        return auc, CI_l, CI_h, base_fpr, tprs_lower, tprs_upper, mean_tprs
     return auc, CI_l, CI_h
 
 

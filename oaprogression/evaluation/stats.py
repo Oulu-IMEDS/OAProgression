@@ -1,16 +1,17 @@
 import numpy as np
 from scipy import interp
-from sklearn.metrics import roc_auc_score, roc_curve, precision_recall_curve
+from sklearn.metrics import roc_auc_score, roc_curve, precision_recall_curve, average_precision_score
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 import scipy.stats
 
 
-def roc_curve_bootstrap(y, preds, savepath=None, n_bootstrap=1000, seed=42, return_curve=False):
-    """Evaluates ROC curve using bootstrapping
 
-    Also reports confidence intervals and prints them.
+def calc_bootstrapped_roc(y, preds, n_bootstrap, seed, alpha=95):
+    """Calculates the ROC curve and estimates the confidence bands for true positive rate
+
+    Also calculates the Area Under the ROC curve and estimate the confidence intervals for it.
 
     Parameters
     ----------
@@ -24,6 +25,8 @@ def roc_curve_bootstrap(y, preds, savepath=None, n_bootstrap=1000, seed=42, retu
         Number of bootstrap samples to draw
     seed : int
         Random seed
+    alpha : float
+        Confidence intervals width
 
     """
     np.random.seed(seed)
@@ -44,10 +47,98 @@ def roc_curve_bootstrap(y, preds, savepath=None, n_bootstrap=1000, seed=42, retu
     tprs = np.array(tprs)
     mean_tprs = np.mean(tprs, 0)
     std = np.std(tprs, axis=0)
-    tprs_upper = np.minimum(np.percentile(aucs, 97.5, axis=0), 1)
-    tprs_lower = np.percentile(aucs, 2.5, axis=0)
-    CI_l, CI_h = np.percentile(aucs, 2.5), np.percentile(aucs, 97.5)
 
+    
+    tprs_upper = np.minimum(np.percentile(aucs, alpha + (100 - alpha) // 2, axis=0), 1)
+    tprs_lower = np.percentile(aucs, (100 - alpha) // 2, axis=0)
+    CI_l, CI_h = np.percentile(aucs, (100 - alpha) // 2), np.percentile(aucs, alpha + (100 - alpha) // 2)
+
+    return auc, CI_l, CI_h, tprs_upper, tprs_lower, base_fpr, mean_tprs
+
+
+def calc_curve_bootstrap(curve, metric, y, preds, n_bootstrap, seed, y_at_zero, stratified=True, alpha=95):
+    """
+    Parameters
+    ----------
+    curve : function
+        Fucntion, which computes the curve. 
+    metric : fucntion
+        Metric to compute, e.g. AUC for ROC curve or AP for PR curve
+    y : numpy.array
+        Ground truth
+    preds : numpy.array
+        Predictions
+    savepath: str
+        Where to save the figure with ROC curve
+    n_bootstrap:
+        Number of bootstrap samples to draw
+    seed : int
+        Random seed
+    y_at_zero : float
+        Value of Y-axis for base value in X-axis. In case of ROC curves, this indicates TPR and should be 0. 
+        In case of PR curve, it indicates the precison with zero recall and should be 1.
+    alpha : float
+        Confidence intervals width
+
+    """
+
+    np.random.seed(seed)
+    metric_vals = []
+    curves = []
+    ind_pos = np.where(y == 1)[0]
+    ind_neg = np.where(y == 0)[0]
+    
+    base_curve_vals = np.linspace(0, 1, 1001)
+    for _ in tqdm(range(n_bootstrap), total=n_bootstrap, desc='Bootstrap:'):
+        if stratified:
+            ind_pos_bs = np.random.choice(ind_pos, ind_pos.shape[0])
+            ind_neg_bs = np.random.choice(ind_neg, ind_neg.shape[0])
+            ind = np.hstack((ind_pos_bs, ind_neg))
+        else:
+            ind = np.random.choice(y.shape[0], y.shape[0])
+        
+        if y[ind].sum() == 0:
+            continue
+        metric_vals.append(metric(y[ind], preds[ind]))
+        x_curve_vals, y_curve_vals, thresholds = curve(y[ind], preds[ind])
+        y_curve_vals = interp(base_curve_vals, x_curve_vals, y_curve_vals)
+        y_curve_vals[0] = y_at_zero
+        curves.append(y_curve_vals)
+
+    metric_val = np.mean(metric_vals)
+    tprs = np.array(curves)
+    mean_curve = np.mean(curves, 0)
+    std = np.std(curves, axis=0)
+
+    
+    curves_upper = np.minimum(np.percentile(curves, alpha + (100 - alpha) // 2, axis=0), 1)
+    curves_lower = np.percentile(curves, (100 - alpha) // 2, axis=0)
+    CI_l, CI_h = np.percentile(metric_vals, (100 - alpha) // 2), np.percentile(metric_vals, alpha + (100 - alpha) // 2)
+
+    return metric_val, CI_l, CI_h, curves_upper, curves_lower, base_curve_vals, mean_curve
+
+def roc_curve_bootstrap(y, preds, savepath=None, n_bootstrap=1000, seed=42, return_curve=False):
+    """Evaluates ROC curve using bootstrapping
+
+    Also reports confidence intervals and prints them.
+
+    Parameters
+    ----------
+    y : numpy.array
+        Ground truth
+    preds : numpy.array
+        Predictions
+    savepath: str
+        Where to save the figure with ROC curve
+    n_bootstrap:
+        Number of bootstrap samples to draw
+    seed : int
+        Random seed
+
+    """
+    auc, CI_l, CI_h, tprs_upper, tprs_lower, base_fpr, mean_tprs = calc_curve_bootstrap(roc_curve, roc_auc_score, y, preds, n_bootstrap, \
+                                                                                        seed, 0, stratified=False, alpha=95)
+    
     plt.figure(figsize=(8, 8))
     plt.title(f'AUC {np.round(auc, 2):.2f} 95% CI [{np.round(CI_l, 2):.2f}-{np.round(CI_h, 2):.2f}]')
     plt.fill_between(base_fpr, tprs_lower, tprs_upper, color='grey', alpha=0.2)
@@ -72,12 +163,16 @@ def roc_curve_bootstrap(y, preds, savepath=None, n_bootstrap=1000, seed=42, retu
     return auc, CI_l, CI_h
 
 
-def compare_curves(y, preds1, preds2, savepath_auc=None, savepath_pr=None):
+def compare_curves(y, preds1, preds2, savepath_roc=None, savepath_pr=None, n_bootstrap=2000, seed=42):
     plt.figure(figsize=(8, 8))
-    fpr, tpr, _ = roc_curve(y, preds1)
+    auc, CI_l, CI_h, tprs_upper, tprs_lower, fpr, tpr = calc_curve_bootstrap(roc_curve, roc_auc_score, y, preds1, n_bootstrap, \
+                                                                             seed, 0, stratified=False, alpha=95)
+    print(f'AUC (method 1): {np.round(auc, 2):.2f} | 95% CI [{np.round(CI_l, 2):.2f},{np.round(CI_h, 2):.2f}]')
     plt.plot(fpr, tpr, 'b-')
 
-    fpr, tpr, _ = roc_curve(y, preds2)
+    auc, CI_l, CI_h, tprs_upper, tprs_lower, fpr, tpr = calc_curve_bootstrap(roc_curve, roc_auc_score, y, preds2, n_bootstrap, \
+                                                                             seed, 0, stratified=False, alpha=95)
+    print(f'AUC (method 2): {np.round(auc, 2):.2f} | 95% CI [{np.round(CI_l, 2):.2f},{np.round(CI_h, 2):.2f}]')
     plt.plot(fpr, tpr, 'r-')
     plt.plot([0, 1], [0, 1], '-', color='black')
 
@@ -87,16 +182,21 @@ def compare_curves(y, preds1, preds2, savepath_auc=None, savepath_pr=None):
     plt.xlabel('False positive rate')
     plt.ylabel('True positive rate')
     plt.tight_layout()
-    if savepath_auc:
-        plt.savefig(savepath_auc, bbox_inches='tight')
+    if savepath_roc:
+        plt.savefig(savepath_roc, bbox_inches='tight')
     plt.show()
     plt.close()
 
     plt.figure(figsize=(8, 8))
-    precision, recall, _ = precision_recall_curve(y, preds1)
-    plt.plot(precision, recall, 'b-')
 
-    precision, recall, _ = precision_recall_curve(y, preds2)
+    AP, CI_l, CI_h, PR_upper, PR_lower, recall, precision = calc_curve_bootstrap(precision_recall_curve, average_precision_score, y, preds1, n_bootstrap, \
+                                                                                 seed, 1, stratified=True, alpha=95)
+    print(f'AP (method 1): {np.round(AP, 2):.2f} | 95% CI [{np.round(CI_l, 2):.2f},{np.round(CI_h, 2):.2f}]')
+    
+    plt.plot(precision, recall, 'b-')
+    AP, CI_l, CI_h, PR_upper, PR_lower, recall, precision = calc_curve_bootstrap(precision_recall_curve, average_precision_score, y, preds2, n_bootstrap, \
+                                                                                 seed, 1, stratified=True, alpha=95)
+    print(f'AP (method 2): {np.round(AP, 2):.2f} | 95% CI [{np.round(CI_l, 2):.2f},{np.round(CI_h, 2):.2f}]')
     plt.plot(precision, recall, 'r-')
 
     plt.xlim([0, 1])

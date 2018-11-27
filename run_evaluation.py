@@ -94,6 +94,8 @@ if __name__ == "__main__":
                               n_bootstrap=args.n_bootstrap,
                               savepath=os.path.join(args.save_dir, f'ROC_MOST_DL.pdf'))
 
+    print('All knees (young):')
+    print('-------------')
     
     plt.rcParams.update({'font.size': 16})
     stats.roc_curve_bootstrap(res[res.AGE < 60].Progressor.values.flatten(),
@@ -200,7 +202,7 @@ if __name__ == "__main__":
     stats.compare_curves(merged_bl_dl.Progressor.values.astype(float).flatten(), \
                          merged_bl_dl.bl_pred.values.flatten(), \
                          merged_bl_dl.pred.values.flatten(), \
-                         savepath_auc=os.path.join(args.save_dir, 'ROC_MOST_DL_bl_superimposed.pdf'),
+                         savepath_roc=os.path.join(args.save_dir, 'ROC_MOST_DL_bl_superimposed.pdf'),
                          savepath_pr=os.path.join(args.save_dir, 'PR_MOST_DL_bl_superimposed.pdf'))
     
 

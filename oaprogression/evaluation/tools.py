@@ -1,12 +1,10 @@
-import pandas as pd
-
 import glob
-import copy
-
+import torch.nn.functional as F
 import cv2
 import os
+import numpy as np
 
-from oaprogression.training import model
+from sklearn.metrics import roc_auc_score, cohen_kappa_score, confusion_matrix, mean_squared_error, f1_score, average_precision_score
 
 from functools import partial
 
@@ -18,6 +16,8 @@ from torch import nn
 import torchvision.transforms as tv_transforms
 from torch.utils.data import DataLoader
 from torch.utils.data.sampler import SequentialSampler
+
+from oaprogression.training import model
 from oaprogression.training import session as session
 from oaprogression.training.dataset import OAProgressionDataset, unpack_solt_data, img_labels2solt, apply_by_index
 
@@ -44,7 +44,7 @@ def five_crop(img, size):
     return torch.stack((c_cr, ul_cr, ur_cr, bl_cr, br_cr))
 
 
-def init_fold(fold_id, session_snapshot, args):
+def init_fold(fold_id, session_snapshot, args, return_fc_kl=False):
     net = model.KneeNet(session_snapshot['args'][0].backbone, 0.5)
     snapshot_name = glob.glob(os.path.join(args.snapshots_root, args.snapshot, f'fold_{fold_id}*.pth'))[0]
 
@@ -58,6 +58,13 @@ def init_fold(fold_id, session_snapshot, args):
 
     features.eval()
     fc.eval()
+
+    if return_fc_kl:
+        fc_kl = nn.DataParallel(net.classifier_kl[-1])
+        fc_kl.to('cuda')
+        fc_kl.eval()
+
+        return features, fc, fc_kl
 
     return features, fc
 
@@ -74,8 +81,8 @@ def init_loader(metadata, args):
     tta_trf = tv_transforms.Compose([
         img_labels2solt,
         slc.Stream([
-            slt.PadTransform(pad_to=(700,700), padding='z'),
-            slt.CropTransform(crop_size=(700,700), crop_mode='c'),
+            slt.PadTransform(pad_to=(700, 700), padding='z'),
+            slt.CropTransform(crop_size=(700, 700), crop_mode='c'),
             slt.ResizeTransform(resize_to=(310, 310), interpolation='bicubic'),
             slt.ImageColorTransform(mode='gs2rgb'),
         ], interpolation='bicubic'),
@@ -94,3 +101,55 @@ def init_loader(metadata, args):
                         num_workers=args.n_threads)
 
     return loader
+
+
+def eval_batch(sample, features, fc_prog, fc_kl=None):
+    with torch.no_grad():
+        inputs = sample['img'].to("cuda")
+        bs, ncrops, c, h, w = inputs.size()
+        maps = features(inputs.view(-1, c, h, w))
+        maps_avg = F.adaptive_avg_pool2d(maps, 1).view(maps.size(0), -1)
+        out_prog = F.softmax(fc_prog(maps_avg), 1).view(bs, ncrops, -1).mean(1)
+
+        if fc_kl is not None:
+            out_kl = F.softmax(fc_kl(maps_avg), 1).view(bs, ncrops, -1).mean(1)
+            return out_prog.to("cpu").numpy(), out_kl.to("cpu").numpy()
+
+        return out_prog.to("cpu").numpy()
+
+
+def calc_metrics(gt_progression, gt_kl, preds_progression, preds_kl):
+    # Computing Validation metrics
+    preds_progression_bin = preds_progression[:, 1:].sum(1)
+    preds_kl_bin = preds_kl[:, 1:].sum(1)
+
+    cm_prog = confusion_matrix(gt_progression, preds_progression.argmax(1))
+    cm_kl = confusion_matrix(gt_kl, preds_kl.argmax(1))
+
+    kappa_prog = cohen_kappa_score(gt_progression, preds_progression.argmax(1), weights="quadratic")
+    acc_prog = np.mean(cm_prog.diagonal().astype(float) / cm_prog.sum(axis=1))
+    mse_prog = mean_squared_error(gt_progression, preds_progression.argmax(1))
+    auc_prog = roc_auc_score(gt_progression > 0, preds_progression_bin)
+    f1_prog = f1_score(gt_progression > 0, preds_progression_bin > 0.5)
+    ap_prog = average_precision_score(gt_progression > 0, preds_progression_bin)
+
+    kappa_kl = cohen_kappa_score(gt_kl, preds_kl.argmax(1), weights="quadratic")
+    acc_kl = np.mean(cm_kl.diagonal().astype(float) / cm_kl.sum(axis=1))
+    mse_kl = mean_squared_error(gt_kl, preds_kl.argmax(1))
+    auc_oa = roc_auc_score(gt_kl > 1, preds_kl_bin)
+
+    res = dict()
+    res['auc_prog'] = auc_prog
+    res['kappa_prog'] = kappa_prog
+    res['acc_prog'] = acc_prog
+    res['mse_prog'] = mse_prog
+    res['auc_oa'] = auc_oa
+    res['kappa_kl'] = kappa_kl
+    res['acc_kl'] = acc_kl
+    res['mse_kl'] = mse_kl
+    res['cm_prog'] = cm_prog
+    res['cm_kl'] = cm_kl
+    res['f1_score_prog'] = f1_prog
+    res['ap_prog'] = ap_prog
+
+    return res

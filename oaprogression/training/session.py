@@ -7,7 +7,6 @@ from functools import partial
 from tensorboardX import SummaryWriter
 import torch
 from torch.utils.data import DataLoader
-from torch.utils.data.sampler import WeightedRandomSampler
 
 import solt.transforms as slt
 import solt.core as slc

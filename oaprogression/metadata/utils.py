@@ -11,7 +11,7 @@ def read_sas7bdata_pd(fname):
     return pd.DataFrame(data[1:], columns=data[0])
 
 def data_stats(dataset, participants):
-    dataset = pd.merge(dataset, participants, on='ID')
+    dataset = pd.merge(dataset, participants, on=('ID', 'Side'))
 
     print('## Unique subjects', np.unique(dataset.ID).shape[0])
     print('## Males', np.unique(dataset[dataset.SEX == 1].ID).shape[0])

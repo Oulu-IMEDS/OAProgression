@@ -97,4 +97,27 @@ def build_clinical(most_src_dir):
     clinical_data_most['ID'] = clinical_data_most.MOSTID
     clinical_data_most['BMI'] = clinical_data_most['V0BMI']
 
+    
+    clinical_data_most_left = clinical_data_most.copy()
+    clinical_data_most_right = clinical_data_most.copy()
+
+    # Making side-wise metadata
+    clinical_data_most_left['Side'] = 'L'
+    clinical_data_most_right['Side'] = 'R'
+
+    # Injury (ever had)
+    clinical_data_most_left['INJ'] = clinical_data_most_left['V0LAL']
+    clinical_data_most_right['INJ'] = clinical_data_most_right['V0LAR']
+
+    # Surgery (ever had)
+    clinical_data_most_left['SURG'] = clinical_data_most_left['V0SURGL']
+    clinical_data_most_right['SURG'] = clinical_data_most_right['V0SURGR']
+
+    # Total WOMAC score
+    clinical_data_most_left['WOMAC'] = clinical_data_most_left['V0WOTOTL']
+    clinical_data_most_right['WOMAC'] = clinical_data_most_right['V0WOTOTR']
+
+    clinical_data_most = pd.concat((clinical_data_most_left, clinical_data_most_right))
+
+    
     return clinical_data_most[['ID', 'AGE', 'SEX', 'BMI']]

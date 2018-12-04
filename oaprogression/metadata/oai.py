@@ -91,9 +91,32 @@ def build_clinical(oai_src_dir):
     data_clinical = read_sas7bdata_pd(os.path.join(oai_src_dir, 'allclinical00.sas7bdat'))
 
     clinical_data_oai = data_clinical.merge(data_enrollees, on='ID')
+
+    # Age, Sex, BMI
     clinical_data_oai['SEX'] = 2 - clinical_data_oai['P02SEX']
     clinical_data_oai['AGE'] = clinical_data_oai['V00AGE']
     clinical_data_oai['BMI'] = clinical_data_oai['P01BMI']
 
-    return clinical_data_oai[['ID', 'AGE', 'SEX', 'BMI']]
+    clinical_data_oai_left = clinical_data_oai.copy()
+    clinical_data_oai_right = clinical_data_oai.copy()
+
+    # Making side-wise metadata
+    clinical_data_oai_left['Side'] = 'L'
+    clinical_data_oai_right['Side'] = 'R'
+
+    # Injury (ever had)
+    clinical_data_oai_left['INJ'] = clinical_data_oai_left['P01INJL']
+    clinical_data_oai_right['INJ'] = clinical_data_oai_right['P01INJR']
+
+    # Surgery (ever had)
+    clinical_data_oai_left['SURG'] = clinical_data_oai_left['P01KSURGL']
+    clinical_data_oai_right['SURG'] = clinical_data_oai_right['P01KSURGR']
+
+    # Total WOMAC score
+    clinical_data_oai_left['WOMAC'] = clinical_data_oai_left['V00WOMTSL']
+    clinical_data_oai_right['WOMAC'] = clinical_data_oai_right['V00WOMTSR']
+
+    clinical_data_oai = pd.concat((clinical_data_oai_left, clinical_data_oai_right))
+
+    return clinical_data_oai[['ID', 'Side', 'AGE', 'SEX', 'BMI', 'INJ', 'SURG', 'W_PAIN']]
 

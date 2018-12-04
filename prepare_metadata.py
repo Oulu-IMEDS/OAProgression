@@ -47,5 +47,3 @@ if __name__ == "__main__":
     print(" ")
     print("# ======== MOST ======== ")
     data_stats(most_meta, most_participants)
-
-    

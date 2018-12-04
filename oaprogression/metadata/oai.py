@@ -117,6 +117,6 @@ def build_clinical(oai_src_dir):
     clinical_data_oai_right['WOMAC'] = clinical_data_oai_right['V00WOMTSR']
 
     clinical_data_oai = pd.concat((clinical_data_oai_left, clinical_data_oai_right))
-
-    return clinical_data_oai[['ID', 'Side', 'AGE', 'SEX', 'BMI', 'INJ', 'SURG', 'W_PAIN']]
+    clinical_data_oai.ID = clinical_data_oai.ID.values.astype(int)
+    return clinical_data_oai[['ID', 'Side', 'AGE', 'SEX', 'BMI', 'INJ', 'SURG', 'WOMAC']]
 

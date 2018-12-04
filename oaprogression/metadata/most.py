@@ -119,5 +119,4 @@ def build_clinical(most_src_dir):
 
     clinical_data_most = pd.concat((clinical_data_most_left, clinical_data_most_right))
 
-    
-    return clinical_data_most[['ID', 'AGE', 'SEX', 'BMI']]
+    return clinical_data_most[['ID', 'Side', 'AGE', 'SEX', 'BMI', 'INJ', 'SURG', 'WOMAC']]

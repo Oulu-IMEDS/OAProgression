@@ -63,9 +63,9 @@ if __name__ == "__main__":
                                  'kl_pred_4': preds_kl[:, 4]
                                  })
 
-        res.to_csv(os.path.join(args.save_dir, 'oof_results.csv'), index=None)
+        res.to_pickle(os.path.join(args.save_dir, 'oof_results.pkl'))
     else:
-        res = pd.read_csv(os.path.join(args.save_dir, 'oof_results.csv'))
+        res = pd.read_pickle(os.path.join(args.save_dir, 'oof_results.pkl'))
 
     metadata = session_snapshot['metadata'][0]
     metadata.ID = metadata.ID.astype(str)

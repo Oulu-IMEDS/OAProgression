@@ -8,6 +8,17 @@ docker build -t oaprog_img .
 
 echo "====> Working on the snapshot $SNAPSHOT"
 
+# If you run it first time - remove the option "--from_cache".
+nvidia-docker run -it --name oa_prog_evaluation --rm \
+	      -v $WRKDIR:/workdir/:rw \
+	      -v $OAI_MOST_IMG_SRC:/data/:ro --ipc=host \
+	      oaprog_img python -u run_oof_inference.py --snapshots /workdir/snapshots \
+	      --snapshot $SNAPSHOT \
+	      --dataset_root /data/ \
+	      --save_dir /workdir/Results \
+	      --metadata_root /workdir/Metadata \
+          --from_cache True
+
 nvidia-docker run -it --name oa_prog_baselines_eval --rm \
 	      -v $WRKDIR:/workdir/:rw --ipc=host \
 	      oaprog_img python -u run_baselines.py --snapshots_root /workdir/snapshots --snapshot $SNAPSHOT --metadata_root /workdir/Metadata --save_dir /workdir/Results
@@ -16,5 +27,10 @@ nvidia-docker run -it --name oa_prog_baselines_eval --rm \
 nvidia-docker run -it --name oa_prog_evaluation --rm \
 	      -v $WRKDIR:/workdir/:rw \
 	      -v $OAI_MOST_IMG_SRC:/data/:ro --ipc=host \
-	      oaprog_img python -u run_evaluation.py --snapshots /workdir/snapshots --snapshot $SNAPSHOT --dataset_root /data/ --save_dir /workdir/Results --metadata_root /workdir/Metadata
+	      oaprog_img python -u run_evaluation.py --snapshots /workdir/snapshots \
+	      --snapshot $SNAPSHOT \
+	      --dataset_root /data/ \
+	      --save_dir /workdir/Results \
+	      --metadata_root /workdir/Metadata \
+	      --from_cache True
 

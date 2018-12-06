@@ -33,9 +33,12 @@ def build_img_progression_meta(oai_src_dir):
     bad_ids = [9076900, 9466244]  # couldn't annotate these images, seem to be broken
     id_set_last_fu = set(KL_files[-1].ID.values.astype(int).tolist())  # Subjects present at all FU
 
+    for follow_up_id in range(1, len(KL_files)):
+        KL_files[follow_up_id] = KL_files[follow_up_id].set_index(['ID', 'SIDE'])
+
     # looking for progressors
     progressors = []
-    identified_prog = {}
+    identified_prog = set()
     sides = [None, 'R', 'L']
     for _, knee in tqdm(KL_files[0].iterrows(), total=KL_files[0].shape[0], desc='Processing OAI:'):
         if int(knee.ID) in bad_ids:
@@ -45,37 +48,33 @@ def build_img_progression_meta(oai_src_dir):
                 continue
         for follow_up_id in range(1, len(KL_files)):
             follow_up = KL_files[follow_up_id]
-            follow_up = follow_up.set_index(['ID', 'SIDE'])
             ind = follow_up.index.isin([(knee.ID, knee.SIDE)])
             # If the patient is present during the follow-up
             if ind.any():
                 old_kl = int(knee.KL)
                 new_kl = int(follow_up[ind].KL.values[0])
                 # Skipping the ones who were identified as progressors already
-                if int(knee.ID) in identified_prog:
-                    if identified_prog[int(knee.ID)] == sides[int(knee.SIDE)]:
+                if (int(knee.ID), sides[int(knee.SIDE)]) in identified_prog:
                         continue
                 if 0 <= new_kl <= 4:
                     # If not TKR
                     if new_kl != 1 and new_kl > old_kl:
                         progressors.append([int(knee.ID), sides[int(knee.SIDE)], old_kl, new_kl-old_kl, follow_up_id])
-                        identified_prog.update({int(knee.ID): sides[int(knee.SIDE)]})
+                        identified_prog.update({(int(knee.ID), sides[int(knee.SIDE)]), })
                 else:
                     # Adding only the TKR cases here
                     if new_kl == -1:
                         # We will denote it as 5
                         progressors.append([int(knee.ID), sides[int(knee.SIDE)], old_kl, 5-old_kl, follow_up_id])
-                        identified_prog.update({int(knee.ID): sides[int(knee.SIDE)]})
+                        identified_prog.update({(int(knee.ID), sides[int(knee.SIDE)]), })
 
     # Looking for non-progressors
     non_progressors = []
     for _, knee in tqdm(KL_files[0].iterrows(), total=KL_files[0].shape[0]):
-        if int(knee.ID) in identified_prog:
-            if identified_prog[int(knee.ID)] == sides[int(knee.SIDE)]:
-                continue
+        if (int(knee.ID), sides[int(knee.SIDE)]) in identified_prog:
+            continue
         if int(knee.ID) not in id_set_last_fu:
             continue
-
         if int(knee.ID) in bad_ids:
             continue
 

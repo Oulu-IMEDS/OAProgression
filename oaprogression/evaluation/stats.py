@@ -18,8 +18,6 @@ def calc_curve_bootstrap(curve, metric, y, preds, n_bootstrap, seed, stratified=
         Ground truth
     preds : numpy.array
         Predictions
-    savepath: str
-        Where to save the figure with ROC curve
     n_bootstrap:
         Number of bootstrap samples to draw
     seed : int
@@ -124,7 +122,7 @@ def compare_curves(y, preds1, preds2, savepath_roc=None, savepath_pr=None, n_boo
     plt.close()
 
     plt.figure(figsize=(8, 8))
-
+    plt.axhline(y=y.sum()/y.shape[0], color='black', linestyle='--')
     AP, ci_l, ci_h, precision, recall = calc_curve_bootstrap(precision_recall_curve, average_precision_score, y,
                                                              preds1, n_bootstrap, seed, stratified=True, alpha=95)
     print(f'AP (method 1): {np.round(AP, 2):.2f} | 95% CI [{np.round(ci_l, 2):.2f},{np.round(ci_h, 2):.2f}]')

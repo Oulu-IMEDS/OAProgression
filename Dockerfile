@@ -40,9 +40,11 @@ RUN conda install -y pytorch=0.4.1 torchvision cuda91 -c pytorch -n oaprog
 COPY requirements.txt requirements.txt
 ENV PATH /opt/conda/envs/oaprog/bin:$PATH
 RUN pip install pip -U -v && pip install -r requirements.txt
+
 # Installing the other deps
 RUN conda install -y numpy=1.15.2 scipy=1.0.1 matplotlib -n oaprog
 RUN conda install -y opencv=3.4.1 -c conda-forge -n oaprog
+RUN conda install -y lightgbm=2.2.1 -c conda-forge -n oaprog
 
 # Fixing the matplotlib backend issues
 RUN mkdir -p /root/.config/matplotlib/

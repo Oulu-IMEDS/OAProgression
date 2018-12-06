@@ -137,7 +137,9 @@ def log_metrics(boardlogger, train_loss, val_loss, gt_progression, preds_progres
     print(colored('====> ', 'green') + f'Train loss: {train_loss:.5f}')
     print(colored('====> ', 'green') + f'Validation loss: {val_loss:.5f}')
     print(colored('====> ', 'green') + f'Validation AUC [prog]: {res["auc_prog"]:.5f}')
-    print(colored('====> ', 'green') + f'Validation F1 [prog]: {res["f1_score_prog"]:.5f}')
+    print(colored('====> ', 'green') + f'Validation F1 @ 0.3 [prog]: {res["f1_score_03_prog"]:.5f}')
+    print(colored('====> ', 'green') + f'Validation F1 @ 0.4 [prog]: {res["f1_score_04_prog"]:.5f}')
+    print(colored('====> ', 'green') + f'Validation F1 @ 0.5 [prog]: {res["f1_score_05_prog"]:.5f}')
     print(colored('====> ', 'green') + f'Validation AP [prog]: {res["ap_prog"]:.5f}')
 
     print(colored('====> ', 'green') + f'Validation AUC [oa]: {res["auc_oa"]:.5f}')

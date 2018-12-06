@@ -55,7 +55,7 @@ if __name__ == "__main__":
             val_out = train_utils.validate_epoch(net, val_loader)
             val_loss, val_ids, gt_progression, preds_progression, gt_kl, preds_kl = val_out
             train_utils.log_metrics(writers[fold_id], train_loss, val_loss,
-                                gt_progression, preds_progression, gt_kl, preds_kl)
+                                    gt_progression, preds_progression, gt_kl, preds_kl)
 
-            session.save_checkpoint(net, 'auc_prog', 'gt')
+            session.save_checkpoint(net, 'ap_prog', 'gt')
             scheduler.step()

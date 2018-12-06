@@ -78,7 +78,7 @@ if __name__ == "__main__":
 
     # Reading the clinical data
     clinical_most = pd.read_csv(os.path.join(args.metadata_root, 'MOST_participants.csv'))
-    res = pd.merge(res, clinical_most, on='ID')
+    res = pd.merge(res, clinical_most, on=('ID', 'Side'))
 
     print('# subjects', np.unique(res.ID).shape[0])
     print('# knees', res.shape[0])
@@ -102,7 +102,6 @@ if __name__ == "__main__":
                               res[res.AGE < 60].pred.values.flatten(),
                               n_bootstrap=args.n_bootstrap,
                               savepath=os.path.join(args.save_dir, f'ROC_MOST_DL_young.pdf'))
-
 
     print('')
     print('KL0 at baseline:')
@@ -148,7 +147,6 @@ if __name__ == "__main__":
                               n_bootstrap=args.n_bootstrap,
                               savepath=os.path.join(args.save_dir, f'ROC_MOST_DL_01_young.pdf'))
 
-    
     print('')
     print('KL2-4 at baseline (OA):')
     print('----------------')
@@ -166,7 +164,6 @@ if __name__ == "__main__":
                               res[(res.KL >= 2) & (res.AGE < 60)].pred.values.flatten(),
                               n_bootstrap=args.n_bootstrap,
                               savepath=os.path.join(args.save_dir, f'ROC_MOST_DL_234_young.pdf'))
-
 
     print('')
     print('KL2 at baseline:')
@@ -187,7 +184,7 @@ if __name__ == "__main__":
                               savepath=os.path.join(args.save_dir, f'ROC_MOST_DL_3.pdf'))
 
     with open(os.path.join(args.save_dir, 'results_baselines.pkl'), 'rb') as f:
-         baseline_results = pickle.load(f)
+        baseline_results = pickle.load(f)
 
     bl_ids, bl_sides, _, bl_pred = baseline_results['preds_MOST_BL_all_AGE_SEX_BMI_KL']
     bl_df = pd.DataFrame(data={'ID': bl_ids, 'Side': bl_sides, 'bl_pred': bl_pred})
@@ -204,7 +201,6 @@ if __name__ == "__main__":
                          merged_bl_dl.pred.values.flatten(), \
                          savepath_roc=os.path.join(args.save_dir, 'ROC_MOST_DL_bl_superimposed.pdf'),
                          savepath_pr=os.path.join(args.save_dir, 'PR_MOST_DL_bl_superimposed.pdf'))
-    
 
     if args.plot_gcams:
         gcam.preds_and_hmaps(rs_result=res,

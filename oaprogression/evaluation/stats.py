@@ -1,5 +1,4 @@
 import numpy as np
-from scipy import interp
 from sklearn.metrics import roc_auc_score, roc_curve, precision_recall_curve, average_precision_score
 import matplotlib.pyplot as plt
 from tqdm import tqdm
@@ -7,61 +6,12 @@ from tqdm import tqdm
 import scipy.stats
 
 
-
-def calc_bootstrapped_roc(y, preds, n_bootstrap, seed, alpha=95):
-    """Calculates the ROC curve and estimates the confidence bands for true positive rate
-
-    Also calculates the Area Under the ROC curve and estimate the confidence intervals for it.
-
-    Parameters
-    ----------
-    y : numpy.array
-        Ground truth
-    preds : numpy.array
-        Predictions
-    savepath: str
-        Where to save the figure with ROC curve
-    n_bootstrap:
-        Number of bootstrap samples to draw
-    seed : int
-        Random seed
-    alpha : float
-        Confidence intervals width
-
-    """
-    np.random.seed(seed)
-    aucs = []
-    tprs = []
-    base_fpr = np.linspace(0, 1, 1001)
-    for _ in tqdm(range(n_bootstrap), total=n_bootstrap, desc='Bootstrap:'):
-        ind = np.random.choice(y.shape[0], y.shape[0])
-        if y[ind].sum() == 0:
-            continue
-        aucs.append(roc_auc_score(y[ind], preds[ind]))
-        fpr, tpr, _ = roc_curve(y[ind], preds[ind])
-        tpr = interp(base_fpr, fpr, tpr)
-        tpr[0] = 0.0
-        tprs.append(tpr)
-
-    auc = np.mean(aucs)
-    tprs = np.array(tprs)
-    mean_tprs = np.mean(tprs, 0)
-    std = np.std(tprs, axis=0)
-
-    
-    tprs_upper = np.minimum(np.percentile(aucs, alpha + (100 - alpha) // 2, axis=0), 1)
-    tprs_lower = np.percentile(aucs, (100 - alpha) // 2, axis=0)
-    CI_l, CI_h = np.percentile(aucs, (100 - alpha) // 2), np.percentile(aucs, alpha + (100 - alpha) // 2)
-
-    return auc, CI_l, CI_h, tprs_upper, tprs_lower, base_fpr, mean_tprs
-
-
-def calc_curve_bootstrap(curve, metric, y, preds, n_bootstrap, seed, y_at_zero, stratified=True, alpha=95):
+def calc_curve_bootstrap(curve, metric, y, preds, n_bootstrap, seed, stratified=True, alpha=95):
     """
     Parameters
     ----------
     curve : function
-        Fucntion, which computes the curve. 
+        Function, which computes the curve.
     metric : fucntion
         Metric to compute, e.g. AUC for ROC curve or AP for PR curve
     y : numpy.array
@@ -74,9 +24,6 @@ def calc_curve_bootstrap(curve, metric, y, preds, n_bootstrap, seed, y_at_zero, 
         Number of bootstrap samples to draw
     seed : int
         Random seed
-    y_at_zero : float
-        Value of Y-axis for base value in X-axis. In case of ROC curves, this indicates TPR and should be 0. 
-        In case of PR curve, it indicates the precison with zero recall and should be 1.
     alpha : float
         Confidence intervals width
 
@@ -84,38 +31,28 @@ def calc_curve_bootstrap(curve, metric, y, preds, n_bootstrap, seed, y_at_zero, 
 
     np.random.seed(seed)
     metric_vals = []
-    curves = []
     ind_pos = np.where(y == 1)[0]
     ind_neg = np.where(y == 0)[0]
-    
-    base_curve_vals = np.linspace(0, 1, 1001)
+
     for _ in tqdm(range(n_bootstrap), total=n_bootstrap, desc='Bootstrap:'):
         if stratified:
             ind_pos_bs = np.random.choice(ind_pos, ind_pos.shape[0])
             ind_neg_bs = np.random.choice(ind_neg, ind_neg.shape[0])
-            ind = np.hstack((ind_pos_bs, ind_neg))
+            ind = np.hstack((ind_pos_bs, ind_neg_bs))
         else:
             ind = np.random.choice(y.shape[0], y.shape[0])
         
         if y[ind].sum() == 0:
             continue
         metric_vals.append(metric(y[ind], preds[ind]))
-        x_curve_vals, y_curve_vals, thresholds = curve(y[ind], preds[ind])
-        y_curve_vals = interp(base_curve_vals, x_curve_vals, y_curve_vals)
-        y_curve_vals[0] = y_at_zero
-        curves.append(y_curve_vals)
 
     metric_val = np.mean(metric_vals)
-    tprs = np.array(curves)
-    mean_curve = np.mean(curves, 0)
-    std = np.std(curves, axis=0)
+    x_curve_vals, y_curve_vals, _ = curve(y, preds)
+    ci_l = np.percentile(metric_vals, (100 - alpha) // 2)
+    ci_h = np.percentile(metric_vals, alpha + (100 - alpha) // 2)
 
-    
-    curves_upper = np.minimum(np.percentile(curves, alpha + (100 - alpha) // 2, axis=0), 1)
-    curves_lower = np.percentile(curves, (100 - alpha) // 2, axis=0)
-    CI_l, CI_h = np.percentile(metric_vals, (100 - alpha) // 2), np.percentile(metric_vals, alpha + (100 - alpha) // 2)
+    return metric_val, ci_l, ci_h, x_curve_vals, y_curve_vals
 
-    return metric_val, CI_l, CI_h, curves_upper, curves_lower, base_curve_vals, mean_curve
 
 def roc_curve_bootstrap(y, preds, savepath=None, n_bootstrap=1000, seed=42, return_curve=False):
     """Evaluates ROC curve using bootstrapping
@@ -136,13 +73,12 @@ def roc_curve_bootstrap(y, preds, savepath=None, n_bootstrap=1000, seed=42, retu
         Random seed
 
     """
-    auc, CI_l, CI_h, tprs_upper, tprs_lower, base_fpr, mean_tprs = calc_curve_bootstrap(roc_curve, roc_auc_score, y, preds, n_bootstrap, \
-                                                                                        seed, 0, stratified=False, alpha=95)
+    auc, ci_l, ci_h, fpr, tpr = calc_curve_bootstrap(roc_curve, roc_auc_score, y, preds,
+                                                     n_bootstrap, seed, stratified=False, alpha=95)
     
     plt.figure(figsize=(8, 8))
-    plt.title(f'AUC {np.round(auc, 2):.2f} 95% CI [{np.round(CI_l, 2):.2f}-{np.round(CI_h, 2):.2f}]')
-    plt.fill_between(base_fpr, tprs_lower, tprs_upper, color='grey', alpha=0.2)
-    plt.plot(base_fpr, mean_tprs, 'r-')
+    plt.title(f'AUC {np.round(auc, 2):.2f} 95% CI [{np.round(ci_l, 2):.2f}-{np.round(ci_h, 2):.2f}]')
+    plt.plot(fpr, tpr, 'r-')
     plt.plot([0, 1], [0, 1], '--', color='black')
 
     plt.xlim([0, 1])
@@ -157,22 +93,22 @@ def roc_curve_bootstrap(y, preds, savepath=None, n_bootstrap=1000, seed=42, retu
     plt.close()
 
     print('AUC:', np.round(auc, 5))
-    print(f'CI [{CI_l:.5f}, {CI_h:.5f}]')
+    print(f'CI [{ci_l:.5f}, {ci_h:.5f}]')
     if return_curve:
-        return auc, CI_l, CI_h, base_fpr, tprs_lower, tprs_upper, mean_tprs
-    return auc, CI_l, CI_h
+        return auc, ci_l, ci_h, fpr, tpr
+    return auc, ci_l, ci_h
 
 
 def compare_curves(y, preds1, preds2, savepath_roc=None, savepath_pr=None, n_bootstrap=2000, seed=42):
     plt.figure(figsize=(8, 8))
-    auc, CI_l, CI_h, tprs_upper, tprs_lower, fpr, tpr = calc_curve_bootstrap(roc_curve, roc_auc_score, y, preds1, n_bootstrap, \
-                                                                             seed, 0, stratified=False, alpha=95)
-    print(f'AUC (method 1): {np.round(auc, 2):.2f} | 95% CI [{np.round(CI_l, 2):.2f},{np.round(CI_h, 2):.2f}]')
+    auc, ci_l, ci_h, fpr, tpr = calc_curve_bootstrap(roc_curve, roc_auc_score, y, preds1, n_bootstrap,
+                                                     seed, stratified=False, alpha=95)
+    print(f'AUC (method 1): {np.round(auc, 2):.2f} | 95% CI [{np.round(ci_l, 2):.2f},{np.round(ci_h, 2):.2f}]')
     plt.plot(fpr, tpr, 'b-')
 
-    auc, CI_l, CI_h, tprs_upper, tprs_lower, fpr, tpr = calc_curve_bootstrap(roc_curve, roc_auc_score, y, preds2, n_bootstrap, \
-                                                                             seed, 0, stratified=False, alpha=95)
-    print(f'AUC (method 2): {np.round(auc, 2):.2f} | 95% CI [{np.round(CI_l, 2):.2f},{np.round(CI_h, 2):.2f}]')
+    auc, ci_l, ci_h, fpr, tpr = calc_curve_bootstrap(roc_curve, roc_auc_score, y, preds2, n_bootstrap,
+                                                     seed, stratified=False, alpha=95)
+    print(f'AUC (method 2): {np.round(auc, 2):.2f} | 95% CI [{np.round(ci_l, 2):.2f},{np.round(ci_h, 2):.2f}]')
     plt.plot(fpr, tpr, 'r-')
     plt.plot([0, 1], [0, 1], '-', color='black')
 
@@ -189,15 +125,15 @@ def compare_curves(y, preds1, preds2, savepath_roc=None, savepath_pr=None, n_boo
 
     plt.figure(figsize=(8, 8))
 
-    AP, CI_l, CI_h, PR_upper, PR_lower, recall, precision = calc_curve_bootstrap(precision_recall_curve, average_precision_score, y, preds1, n_bootstrap, \
-                                                                                 seed, 1, stratified=True, alpha=95)
-    print(f'AP (method 1): {np.round(AP, 2):.2f} | 95% CI [{np.round(CI_l, 2):.2f},{np.round(CI_h, 2):.2f}]')
+    AP, ci_l, ci_h, precision, recall = calc_curve_bootstrap(precision_recall_curve, average_precision_score, y,
+                                                             preds1, n_bootstrap, seed, stratified=True, alpha=95)
+    print(f'AP (method 1): {np.round(AP, 2):.2f} | 95% CI [{np.round(ci_l, 2):.2f},{np.round(ci_h, 2):.2f}]')
     
-    plt.plot(precision, recall, 'b-')
-    AP, CI_l, CI_h, PR_upper, PR_lower, recall, precision = calc_curve_bootstrap(precision_recall_curve, average_precision_score, y, preds2, n_bootstrap, \
-                                                                                 seed, 1, stratified=True, alpha=95)
-    print(f'AP (method 2): {np.round(AP, 2):.2f} | 95% CI [{np.round(CI_l, 2):.2f},{np.round(CI_h, 2):.2f}]')
-    plt.plot(precision, recall, 'r-')
+    plt.plot(recall, precision, 'b-')
+    AP, ci_l, ci_h, precision, recall = calc_curve_bootstrap(precision_recall_curve, average_precision_score, y,
+                                                             preds2, n_bootstrap, seed,  stratified=True, alpha=95)
+    print(f'AP (method 2): {np.round(AP, 2):.2f} | 95% CI [{np.round(ci_l, 2):.2f},{np.round(ci_h, 2):.2f}]')
+    plt.plot(recall, precision, 'r-')
 
     plt.xlim([0, 1])
     plt.ylim([0, 1])
@@ -270,6 +206,7 @@ def fastDeLong(predictions_sorted_transposed, label_1_count, sample_weight):
         return fastDeLong_no_weights(predictions_sorted_transposed, label_1_count)
     else:
         return fastDeLong_weights(predictions_sorted_transposed, label_1_count, sample_weight)
+
 
 def fastDeLong_weights(predictions_sorted_transposed, label_1_count, sample_weight):
     """

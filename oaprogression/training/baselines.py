@@ -30,7 +30,7 @@ def init_metadata(args):
     metadata = pd.merge(metadata, clinical_data_oai, on='ID')
 
     metadata_test = session_snapshot['metadata_test'][0]
-    metadata_test = pd.merge(metadata_test, clinical_data_most, on='ID')
+    metadata_test = pd.merge(metadata_test, clinical_data_most, on=('ID', 'Side'))
 
     train_folds = []
     for train_index, val_index in session_snapshot['cv_split_all_folds'][0]:

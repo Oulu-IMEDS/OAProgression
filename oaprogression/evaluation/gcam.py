@@ -41,7 +41,7 @@ def eval_batch(sample, features, fc):
     probs = out.to("cpu").detach().numpy()
 
     # Using simple one hot encoder to create a fake gradient
-    ohe = OneHotEncoder(sparse=False, n_values=out.size(1))
+    ohe = OneHotEncoder(sparse=False, categories=[range(out.size(1))])
     # Creating the fake gradient (read the paper for details)
     index = np.argmax(probs, axis=1).reshape(-1, 1)
     fake_grad = torch.from_numpy(ohe.fit_transform(index)).float().to('cuda')
@@ -74,8 +74,8 @@ def preds_and_hmaps(rs_result, gradcams, dataset_root, figsize, threshold, savep
     gcam_trf = tv_transforms.Compose([
         img_labels2solt,
         slc.Stream([
-            slt.PadTransform(pad_to=(700,700), padding='z'),
-            slt.CropTransform(crop_size=(700,700), crop_mode='c'),
+            slt.PadTransform(pad_to=(700, 700), padding='z'),
+            slt.CropTransform(crop_size=(700, 700), crop_mode='c'),
         ], interpolation='bicubic'),
         unpack_solt_data,
     ])
@@ -112,7 +112,6 @@ def preds_and_hmaps(rs_result, gradcams, dataset_root, figsize, threshold, savep
 
         hmaps.append(tmp)
         ids_rs.append(entry.ID)
-
 
         plt.figure(figsize=(figsize, figsize))
         plt.subplot(121)

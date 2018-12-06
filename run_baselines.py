@@ -51,7 +51,7 @@ if __name__ == "__main__":
                 X_val -= mean
                 X_val /= std
 
-                clf = LogisticRegression(C=C, random_state=args.seed)
+                clf = LogisticRegression(C=C, random_state=args.seed, solver='lbfgs')
                 clf.fit(X_train, y_train)
                 p_val = clf.predict_proba(X_val)[:, 1]
 

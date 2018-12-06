@@ -123,33 +123,20 @@ def calc_metrics(gt_progression, gt_kl, preds_progression, preds_kl):
     preds_progression_bin = preds_progression[:, 1:].sum(1)
     preds_kl_bin = preds_kl[:, 1:].sum(1)
 
-    cm_prog = confusion_matrix(gt_progression, preds_progression.argmax(1))
-    cm_kl = confusion_matrix(gt_kl, preds_kl.argmax(1))
-
-    kappa_prog = cohen_kappa_score(gt_progression, preds_progression.argmax(1), weights="quadratic")
-    acc_prog = np.mean(cm_prog.diagonal().astype(float) / cm_prog.sum(axis=1))
-    mse_prog = mean_squared_error(gt_progression, preds_progression.argmax(1))
-    auc_prog = roc_auc_score(gt_progression > 0, preds_progression_bin)
-    f1_prog = f1_score(gt_progression > 0, preds_progression_bin > 0.5)
-    ap_prog = average_precision_score(gt_progression > 0, preds_progression_bin)
-
-    kappa_kl = cohen_kappa_score(gt_kl, preds_kl.argmax(1), weights="quadratic")
-    acc_kl = np.mean(cm_kl.diagonal().astype(float) / cm_kl.sum(axis=1))
-    mse_kl = mean_squared_error(gt_kl, preds_kl.argmax(1))
-    auc_oa = roc_auc_score(gt_kl > 1, preds_kl_bin)
-
     res = dict()
-    res['auc_prog'] = auc_prog
-    res['kappa_prog'] = kappa_prog
-    res['acc_prog'] = acc_prog
-    res['mse_prog'] = mse_prog
-    res['auc_oa'] = auc_oa
-    res['kappa_kl'] = kappa_kl
-    res['acc_kl'] = acc_kl
-    res['mse_kl'] = mse_kl
-    res['cm_prog'] = cm_prog
-    res['cm_kl'] = cm_kl
-    res['f1_score_prog'] = f1_prog
-    res['ap_prog'] = ap_prog
+    res['cm_prog'] = confusion_matrix(gt_progression, preds_progression.argmax(1))
+    res['cm_kl'] = confusion_matrix(gt_kl, preds_kl.argmax(1))
+    res['auc_prog'] = roc_auc_score(gt_progression > 0, preds_progression_bin)
+    res['kappa_prog'] = cohen_kappa_score(gt_progression, preds_progression.argmax(1), weights="quadratic")
+    res['acc_prog'] = np.mean(res['cm_prog'].diagonal().astype(float) / res['cm_prog'].sum(axis=1))
+    res['mse_prog'] = mean_squared_error(gt_progression, preds_progression.argmax(1))
+    res['auc_oa'] = roc_auc_score(gt_kl > 1, preds_kl_bin)
+    res['kappa_kl'] = cohen_kappa_score(gt_kl, preds_kl.argmax(1), weights="quadratic")
+    res['acc_kl'] = np.mean(res['cm_kl'].diagonal().astype(float) / res['cm_kl'].sum(axis=1))
+    res['mse_kl'] = mean_squared_error(gt_kl, preds_kl.argmax(1))
+    res['f1_score_03_prog'] = f1_score(gt_progression > 0, preds_progression_bin > 0.3)
+    res['f1_score_04_prog'] = f1_score(gt_progression > 0, preds_progression_bin > 0.5)
+    res['f1_score_05_prog'] = f1_score(gt_progression > 0, preds_progression_bin > 0.6)
+    res['ap_prog'] = average_precision_score(gt_progression > 0, preds_progression_bin)
 
     return res

@@ -19,4 +19,9 @@ nvidia-docker run -it --name=oa_prog_data_preparation --rm \
 nvidia-docker run -it --name oa_prog_training --rm \
 	      -v $WRKDIR:/workdir/:rw \
 	      -v $OAI_MOST_IMG_SRC:/data/:ro --ipc=host \
-	      oaprog_img python -u run_training.py --snapshots /workdir/snapshots --logs /workdir/logs --dataset_root /data/ --metadata_root /workdir/Metadata
+	      oaprog_img python -u run_training.py \
+	      --snapshots /workdir/snapshots \
+	      --logs /workdir/logs \
+	      --dataset_root /data/ \
+	      --metadata_root /workdir/Metadata \
+	      --n_epochs 10

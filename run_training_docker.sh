@@ -24,4 +24,4 @@ nvidia-docker run -it --name oa_prog_training --rm \
 	      --logs /workdir/logs \
 	      --dataset_root /data/ \
 	      --metadata_root /workdir/Metadata \
-	      --n_epochs 10
+	      --n_epochs 20

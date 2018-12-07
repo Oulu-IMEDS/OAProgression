@@ -20,7 +20,8 @@ if __name__ == "__main__":
                         ['SEX', ],
                         ['BMI', ],
                         ['KL', ],
-                        ['AGE', 'SEX', 'BMI', 'KL']]:
+                        ['AGE', 'SEX', 'BMI', 'KL'],
+                        ['AGE', 'SEX', 'BMI', 'KL', 'SURG', 'INJ', 'WOMAC']]:
         cv_scores = []
         models = []
         means_stds = []
@@ -86,6 +87,8 @@ if __name__ == "__main__":
             y_test = X_test_initial.Progressor.values.copy() > 0
             ids = X_test_initial.ID.values
             sides = X_test_initial.Side.values
+            # Using mean imputation for logreg
+            X_test_initial.fillna(X_test_initial.mean(), inplace=True)
             X_test_initial = X_test_initial[feature_set].values.astype(float).copy()
 
             test_res = 0

@@ -16,10 +16,7 @@ if __name__ == "__main__":
 
     c_vals = np.logspace(-6, 0, args.n_vals_c)
     results = {}
-    for feature_set in [['AGE', ],
-                        ['SEX', ],
-                        ['BMI', ],
-                        ['KL', ],
+    for feature_set in [['AGE', 'SEX', 'BMI'],
                         ['AGE', 'SEX', 'BMI', 'KL'],
                         ['AGE', 'SEX', 'BMI', 'KL', 'SURG', 'INJ', 'WOMAC']]:
         cv_scores = []
@@ -72,45 +69,33 @@ if __name__ == "__main__":
 
         print('CV score:', feature_set, c_vals[opt_c_id], cv_scores[opt_c_id])
 
-        for kl_bl in [-2, -1, 0, 1]:
+        y_test = metadata_test.Progressor.values.copy() > 0
+        ids = metadata_test.ID.values
+        sides = metadata_test.Side.values
+        # Using mean imputation for logreg
+        metadata_test.fillna(metadata_test.mean(), inplace=True)
+        X_test_initial = metadata_test[feature_set].values.astype(float).copy()
 
-            if kl_bl == -1:
-                 X_test_initial = metadata_test[metadata_test.KL < 2]
-                 kl_bl='0_1'
-            elif kl_bl == -2:
-                kl_bl = 'all'
-                X_test_initial = metadata_test
-            else:
-                X_test_initial = metadata_test[metadata_test.KL == kl_bl]
+        test_res = 0
+        for model_id in range(len(models_best)):
+            mean, std = mean_std_best[model_id]
+            X_test = X_test_initial.copy()
+            X_test -= mean
+            X_test /= std
 
-            print(f'Baseline KL: [{kl_bl}]')
-            y_test = X_test_initial.Progressor.values.copy() > 0
-            ids = X_test_initial.ID.values
-            sides = X_test_initial.Side.values
-            # Using mean imputation for logreg
-            X_test_initial.fillna(X_test_initial.mean(), inplace=True)
-            X_test_initial = X_test_initial[feature_set].values.astype(float).copy()
+            test_res += models_best[model_id].predict_proba(X_test)[:, 1]
 
-            test_res = 0
-            for model_id in range(len(models_best)):
-                mean, std = mean_std_best[model_id]
-                X_test = X_test_initial.copy()
-                X_test -= mean
-                X_test /= std
+        test_res /= len(models_best)
 
-                test_res += models_best[model_id].predict_proba(X_test)[:, 1]
+        features_suffix = '_'.join(feature_set)
+        plt.rcParams.update({'font.size': 16})
+        stats.roc_curve_bootstrap(y_test,
+                                  test_res,
+                                  n_bootstrap=args.n_bootstrap,
+                                  savepath=os.path.join(args.save_dir,
+                                                        f'ROC_MOST_BL_all_{features_suffix}.pdf'))
 
-            test_res /= len(models_best)
-
-            features_suffix = '_'.join(feature_set)
-            plt.rcParams.update({'font.size': 16})
-            stats.roc_curve_bootstrap(y_test,
-                                      test_res,
-                                      n_bootstrap=args.n_bootstrap,
-                                      savepath=os.path.join(args.save_dir,
-                                                            f'ROC_MOST_BL_{kl_bl}_{features_suffix}.pdf'))
-
-            results[f'preds_MOST_BL_{kl_bl}_{features_suffix}'] = (ids, sides, y_test, test_res)
+        results[f'preds_MOST_BL_all_{features_suffix}'] = (ids, sides, y_test, test_res)
 
     with open(os.path.join(args.save_dir, 'results_baselines.pkl'), 'wb') as f:
         pickle.dump(results, f)

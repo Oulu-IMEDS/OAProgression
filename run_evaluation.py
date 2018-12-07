@@ -36,37 +36,46 @@ if __name__ == "__main__":
     loader = tools.init_loader(session_snapshot['metadata_test'][0], args)
 
     gradcam_maps_all = 0
-    res = 0
+    res_kl = 0
+    res_prog = 0
+    ids = None
     if not args.from_cache:
         for fold_id in range(session_snapshot['args'][0].n_folds):
-            features, fc = tools.init_fold(fold_id, session_snapshot, args)
+            features, fc, fc_kl = tools.init_fold(fold_id, session_snapshot, args, return_fc_kl=True)
 
-            preds = []
+            preds_prog_fold = []
+            preds_kl_fold = []
             gradcam_maps_fold = []
             ids = []
             sides = []
             for batch_id, sample in enumerate(tqdm(loader, total=len(loader), desc='Prediction from fold {}'.format(fold_id))):
-                gcam_batch, probs_not_summed = gcam.eval_batch(sample, features, fc)
+                gcam_batch, probs_prog, probs_kl = gcam.eval_batch(sample, features, fc, fc_kl)
                 gradcam_maps_fold.append(gcam_batch)
-                preds.append(probs_not_summed)
+                preds_prog_fold.append(probs_prog)
+                preds_kl_fold.append(probs_kl)
                 ids.extend(sample['ID_SIDE'])
                 gc.collect()
 
-            preds = np.vstack(preds)
+            preds_prog_fold = np.vstack(preds_prog_fold)
+            preds_kl_fold = np.vstack(preds_kl_fold)
             gradcam_maps_all += np.vstack(gradcam_maps_fold)
-            res += preds
+
+            res_kl += preds_kl_fold
+            res_prog += preds_prog_fold
             gc.collect()
 
-        res /= 5.
+        res_kl /= 5.
+        res_prog /= 5.
         np.savez_compressed(os.path.join(args.save_dir, 'results.npz'),
                             gradcam_maps_all=gradcam_maps_all,
-                            preds=res,
+                            preds_kl=res_kl,
+                            preds_prog=res_prog,
                             ids=ids)
 
     data = np.load(os.path.join(args.save_dir, 'results.npz'))
 
     gcams = data['gradcam_maps_all']
-    preds = data['preds'][:, 1:].sum(1)
+    preds = data['preds_prog'][:, 1:].sum(1)
     ids = data['ids']
 
     res = pd.DataFrame(data={'ID': list(map(lambda x: x.split('_')[0], ids)),

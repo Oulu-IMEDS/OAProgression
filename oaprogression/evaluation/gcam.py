@@ -14,17 +14,20 @@ import solt.core as slc
 from oaprogression.training.dataset import unpack_solt_data, img_labels2solt
 
 
-def eval_batch(sample, features, fc):
+def eval_batch(sample, features, fc, fc_kl=None):
     # We don't need gradient to make an inference  for the features
     with torch.no_grad():
         inputs = sample['img'].to("cuda")
         bs, ncrops, c, h, w = inputs.size()
         maps = features(inputs.view(-1, c, h, w))
+        maps_avg = F.adaptive_avg_pool2d(maps, 1).view(maps.size(0), -1)
+        if fc_kl is not None:
+            out_kl = F.softmax(fc_kl(maps_avg), 1).view(bs, ncrops, -1).mean(1)
 
     fc.zero_grad()
     # Registering a hook to get the gradients
     grads = []
-    maps_avg = F.adaptive_avg_pool2d(maps, 1).view(maps.size(0), -1)
+
     # First we should attach the variable back to the graph
     maps_avg.requires_grad = True
     # Now registering the backward hook
@@ -59,6 +62,8 @@ def eval_batch(sample, features, fc):
         gcam_batch = F.relu(weighted_A).view(bs, ncrops, -1, maps.size(-2), maps.size(-1)).sum(2)
         gcam_batch = gcam_batch.to('cpu').numpy()
 
+    if fc_kl is not None:
+        return gcam_batch, probs_not_summed, out_kl
     return gcam_batch, probs_not_summed
 
 

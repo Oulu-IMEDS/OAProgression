@@ -1,14 +1,12 @@
 import os
+
 if int(os.getenv('USE_AGG', 0)) == 1:
     import matplotlib
     matplotlib.use('Agg')
 
-import numpy as np
 import pickle
-
 import matplotlib.pyplot as plt
-
-from sklearn.metrics import roc_auc_score, average_precision_score
+from sklearn.metrics import average_precision_score
 
 from oaprogression.training import baselines
 from oaprogression.evaluation import stats
@@ -20,19 +18,20 @@ if __name__ == "__main__":
 
     results = {}
     for feature_set in [['AGE', 'SEX', 'BMI'],
-                        ['KL',],
+                        ['KL', ],
                         ['AGE', 'SEX', 'BMI', 'KL'],
                         ['AGE', 'SEX', 'BMI', 'KL', 'SURG', 'INJ', 'WOMAC']]:
-        models_best, mean_std_best, cv_scores = baselines.build_logreg_model(train_folds, feature_set, seed, args.n_vals_c, average_precision_score)
+
+        models_best, mean_std_best, cv_scores = baselines.build_logreg_model(train_folds, feature_set, seed,
+                                                                             args.n_vals_c, average_precision_score)
         print('CV score:', feature_set, cv_scores)
+        test_res = baselines.eval_logreg(metadata_test, feature_set, models_best, mean_std_best)
+        features_suffix = '_'.join(feature_set)
+        plt.rcParams.update({'font.size': 16})
 
         y_test = metadata_test.Progressor.values.copy() > 0
         ids = metadata_test.ID.values
         sides = metadata_test.Side.values
-
-        test_res = baselines.eval_logreg(metadata_test, feature_set, models_best, mean_std_best)
-        features_suffix = '_'.join(feature_set)
-        plt.rcParams.update({'font.size': 16})
         stats.roc_curve_bootstrap(y_test,
                                   test_res,
                                   n_bootstrap=args.n_bootstrap,

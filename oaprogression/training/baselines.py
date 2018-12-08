@@ -5,12 +5,14 @@ import pandas as pd
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 
+
 def init_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--metadata_root', default='')
     parser.add_argument('--snapshots_root', default='')
     parser.add_argument('--snapshot', default='')
     parser.add_argument('--save_dir', default='')
+    parser.add_argument('--lgbm_hyperopt_trials', type=int, default=500)
     parser.add_argument('--n_bootstrap', type=int, default=2000)
     parser.add_argument('--n_vals_c', type=int, default=100)
     args = parser.parse_args()
@@ -27,7 +29,7 @@ def init_metadata(args):
     clinical_data_most = pd.read_csv(os.path.join(args.metadata_root, 'MOST_participants.csv'))
 
     metadata = session_snapshot['metadata'][0]
-    metadata = pd.merge(metadata, clinical_data_oai, on='ID')
+    metadata = pd.merge(metadata, clinical_data_oai, on=('ID', 'Side'))
 
     metadata_test = session_snapshot['metadata_test'][0]
     metadata_test = pd.merge(metadata_test, clinical_data_most, on=('ID', 'Side'))
@@ -40,6 +42,7 @@ def init_metadata(args):
         train_folds.append((train_split, val_split))
 
     return train_folds, metadata_test, session_snapshot['args'][0].seed
+
 
 def build_logreg_model(train_folds, feature_set, seed, n_vals_c, metric):
     cv_scores = []
@@ -109,3 +112,5 @@ def eval_logreg(metadata_test, feature_set, models_best, mean_std_best):
         
     test_res /= len(models_best)
     return test_res
+
+

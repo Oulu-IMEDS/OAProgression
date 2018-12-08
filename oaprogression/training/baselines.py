@@ -91,3 +91,21 @@ def build_logreg_model(train_folds, feature_set, seed, n_vals_c, metric):
     models_best = models[opt_c_id]
     mean_std_best = means_stds[opt_c_id]
     return models_best, mean_std_best, cv_scores[opt_c_id]
+
+
+def eval_logreg(metadata_test, feature_set, models_best, mean_std_best):
+    X_test_initial = metadata_test[feature_set].copy()
+    # Using mean imputation for logreg        
+    X_test_initial.fillna(X_test_initial.mean(), inplace=True)
+    X_test_initial = X_test_initial.values.astype(float)
+    test_res = 0
+    for model_id in range(len(models_best)):
+        mean, std = mean_std_best[model_id]
+        X_test = X_test_initial.copy()
+        X_test -= mean
+        X_test /= std
+        
+        test_res += models_best[model_id].predict_proba(X_test)[:, 1]
+        
+    test_res /= len(models_best)
+    return test_res

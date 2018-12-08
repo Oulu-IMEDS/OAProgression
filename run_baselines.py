@@ -29,21 +29,8 @@ if __name__ == "__main__":
         y_test = metadata_test.Progressor.values.copy() > 0
         ids = metadata_test.ID.values
         sides = metadata_test.Side.values
-        # Using mean imputation for logreg
-        metadata_test.fillna(metadata_test.mean(), inplace=True)
-        X_test_initial = metadata_test[feature_set].values.astype(float).copy()
 
-        test_res = 0
-        for model_id in range(len(models_best)):
-            mean, std = mean_std_best[model_id]
-            X_test = X_test_initial.copy()
-            X_test -= mean
-            X_test /= std
-
-            test_res += models_best[model_id].predict_proba(X_test)[:, 1]
-
-        test_res /= len(models_best)
-
+        test_res = baselines.eval_logreg(metadata_test, feature_set, models_best, mean_std_best)
         features_suffix = '_'.join(feature_set)
         plt.rcParams.update({'font.size': 16})
         stats.roc_curve_bootstrap(y_test,

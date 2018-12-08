@@ -140,3 +140,33 @@ def calc_metrics(gt_progression, gt_kl, preds_progression, preds_kl):
     res['ap_prog'] = average_precision_score(gt_progression > 0, preds_progression_bin)
 
     return res
+
+
+def eval_models(metadata_test, feature_set, models_best,
+                mean_std_best=None,
+                impute=True,
+                model_type='sklearn'):
+    x_test_initial = metadata_test[feature_set].copy()
+    # Using mean imputation if necessary
+    if impute:
+        x_test_initial.fillna(x_test_initial.mean(), inplace=True)
+
+        x_test_initial = x_test_initial.values.astype(float)
+    test_res = 0
+    for model_id in range(len(models_best)):
+        x_test = x_test_initial.copy()
+        if mean_std_best is not None and model_type != 'lgbm':
+            mean, std = mean_std_best[model_id]
+            x_test -= mean
+            x_test /= std
+
+        clf_prog = models_best[model_id]
+        if model_type == 'sklearn':
+            test_res += clf_prog.predict_proba(x_test)[:, 1]
+        elif model_type == 'lgbm':
+            test_res += clf_prog.predict(x_test, clf_prog.best_iteration)
+        else:
+            raise ValueError
+
+    test_res /= len(models_best)
+    return test_res

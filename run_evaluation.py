@@ -1,5 +1,4 @@
 import os
-import pickle
 import gc
 import argparse
 import pandas as pd
@@ -8,7 +7,6 @@ from tqdm import tqdm
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
-from sklearn.metrics import precision_recall_curve, roc_curve
 
 from oaprogression.evaluation import tools, stats, gcam
 

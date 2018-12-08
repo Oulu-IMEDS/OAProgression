@@ -20,19 +20,22 @@ def init_args():
     return args
 
 
+def init_metadata_test(args):
+    clinical_data_most = pd.read_csv(os.path.join(args.metadata_root, 'MOST_participants.csv'))
+    metadata_test = pd.read_csv(os.path.join(args.metadata_root, 'MOST_progression.csv'))
+    return pd.merge(metadata_test, clinical_data_most, on=('ID', 'Side'))
+
+
 def init_metadata(args):
     with open(os.path.join(args.snapshots_root, args.snapshot, 'session.pkl'), 'rb') as f:
         session_snapshot = pickle.load(f)
 
     clinical_data_oai = pd.read_csv(os.path.join(args.metadata_root, 'OAI_participants.csv'))
 
-    clinical_data_most = pd.read_csv(os.path.join(args.metadata_root, 'MOST_participants.csv'))
-
     metadata = session_snapshot['metadata'][0]
     metadata = pd.merge(metadata, clinical_data_oai, on=('ID', 'Side'))
 
-    metadata_test = session_snapshot['metadata_test'][0]
-    metadata_test = pd.merge(metadata_test, clinical_data_most, on=('ID', 'Side'))
+    metadata_test = init_metadata_test(args)
 
     train_folds = []
     for train_index, val_index in session_snapshot['cv_split_all_folds'][0]:
@@ -94,36 +97,4 @@ def build_logreg_model(train_folds, feature_set, seed, n_vals_c, metric):
     models_best = models[opt_c_id]
     mean_std_best = means_stds[opt_c_id]
     return models_best, mean_std_best, cv_scores[opt_c_id]
-
-
-def eval_models(metadata_test, feature_set, models_best,
-                mean_std_best=None,
-                impute=True,
-                model_type='sklearn'):
-
-    x_test_initial = metadata_test[feature_set].copy()
-    # Using mean imputation if necessary
-    if impute:
-        x_test_initial.fillna(x_test_initial.mean(), inplace=True)
-
-        x_test_initial = x_test_initial.values.astype(float)
-    test_res = 0
-    for model_id in range(len(models_best)):
-        x_test = x_test_initial.copy()
-        if mean_std_best is not None and model_type != 'lgbm':
-            mean, std = mean_std_best[model_id]
-            x_test -= mean
-            x_test /= std
-
-        clf_prog = models_best[model_id]
-        if model_type == 'sklearn':
-            test_res += clf_prog.predict_proba(x_test)[:, 1]
-        elif model_type == 'lgbm':
-            test_res += clf_prog.predict(x_test, clf_prog.best_iteration)
-        else:
-            raise ValueError
-        
-    test_res /= len(models_best)
-    return test_res
-
 

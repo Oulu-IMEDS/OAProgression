@@ -4,6 +4,7 @@ from hyperopt import hp, fmin, tpe, STATUS_OK, Trials, space_eval
 from functools import partial
 import numpy as np
 from tqdm import tqdm
+import warnings
 
 
 def fit_lgb(params, train_folds, feature_set, metric, return_oof_res=False, return_models=False):
@@ -12,8 +13,11 @@ def fit_lgb(params, train_folds, feature_set, metric, return_oof_res=False, retu
     for fold_id, (train_split, val_split) in enumerate(train_folds):  # Going through the prepared fold splits
         d_train_prog = lgb.Dataset(train_split[feature_set], label=train_split.Progressor.values > 0)
         d_val_prog = lgb.Dataset(val_split[feature_set], label=val_split.Progressor.values > 0)
-
-        clf_prog = lgb.train(params, d_train_prog, valid_sets=(d_train_prog, d_val_prog), verbose_eval=False)
+        with warnings.catch_warnings():
+            # LGBM throws annoying messages, because we do not set the number
+            # of iterations as a parameter
+            warnings.simplefilter("ignore")
+            clf_prog = lgb.train(params, d_train_prog, valid_sets=(d_train_prog, d_val_prog), verbose_eval=False)
 
         preds_prog = clf_prog.predict(val_split[feature_set], num_iteration=clf_prog.best_iteration)
 

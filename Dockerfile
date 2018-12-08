@@ -61,3 +61,4 @@ RUN cp /opt/pkg/run_logreg_baselines.py .
 RUN cp /opt/pkg/run_lgbm_baselines.py .
 RUN cp /opt/pkg/run_evaluation.py .
 RUN cp /opt/pkg/run_oof_inference.py .
+RUN cp /opt/pkg/run_second_level_model.py .

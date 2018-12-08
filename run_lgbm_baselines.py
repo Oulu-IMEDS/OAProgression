@@ -10,7 +10,8 @@ from sklearn.metrics import average_precision_score
 
 from oaprogression.training.lgbm_tools import optimize_lgbm_hyperopt, fit_lgb
 from oaprogression.training import baselines
-from oaprogression.evaluation import stats
+from oaprogression.evaluation import stats, tools
+
 
 if __name__ == "__main__":
     args = baselines.init_args()
@@ -19,6 +20,7 @@ if __name__ == "__main__":
 
     results = {}
     for feature_set in [['AGE', 'SEX', 'BMI'],
+                        ['AGE', 'SEX', 'BMI', 'SURG', 'INJ', 'WOMAC'],
                         ['AGE', 'SEX', 'BMI', 'KL'],
                         ['AGE', 'SEX', 'BMI', 'KL', 'SURG', 'INJ', 'WOMAC']]:
 
@@ -30,8 +32,8 @@ if __name__ == "__main__":
                                                    feature_set, average_precision_score, True, True)
 
         print('CV score:', feature_set, ap_score)
-        test_res = baselines.eval_models(metadata_test, feature_set, models_best, mean_std_best=None,
-                                         impute=False, model_type='lgbm')
+        test_res = tools.eval_models(metadata_test, feature_set, models_best, mean_std_best=None,
+                                     impute=False, model_type='lgbm')
 
         features_suffix = '_'.join(feature_set)
         plt.rcParams.update({'font.size': 16})

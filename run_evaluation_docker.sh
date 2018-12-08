@@ -9,7 +9,7 @@ docker build -t oaprog_img .
 echo "====> Working on the snapshot $SNAPSHOT"
 
 # If you run it first time - remove the option "--from_cache".
-nvidia-docker run -it --name oa_prog_evaluation --rm \
+nvidia-docker run -it --name oa_progression_oof_inference --rm \
 	      -v $WRKDIR:/workdir/:rw \
 	      -v $OAI_MOST_IMG_SRC:/data/:ro --ipc=host \
 	      oaprog_img python -u run_oof_inference.py --snapshots /workdir/snapshots \
@@ -18,8 +18,9 @@ nvidia-docker run -it --name oa_prog_evaluation --rm \
 	      --save_dir /workdir/Results \
 	      --metadata_root /workdir/Metadata \
           --from_cache True
+
 # Running the "easy baseline" based on logreg
-nvidia-docker run -it --name oa_prog_baselines_eval --rm \
+nvidia-docker run -it --name oa_prog_lgb_baselines_eval --rm \
 	      -v $WRKDIR:/workdir/:rw --ipc=host \
 	      oaprog_img python -u run_logreg_baselines.py \
 	      --snapshots_root /workdir/snapshots \
@@ -28,7 +29,7 @@ nvidia-docker run -it --name oa_prog_baselines_eval --rm \
 	      --save_dir /workdir/Results
 
 # Running the more complex baseline based on LightGBM and bayesian hyper-parameters tuning
-nvidia-docker run -it --name oa_prog_baselines_eval --rm \
+nvidia-docker run -it --name oa_prog_lgb_baselines_eval --rm \
 	      -v $WRKDIR:/workdir/:rw --ipc=host \
 	      oaprog_img python -u run_lgbm_baselines.py \
 	      --snapshots_root /workdir/snapshots \
@@ -47,3 +48,11 @@ nvidia-docker run -it --name oa_prog_evaluation --rm \
 	      --metadata_root /workdir/Metadata \
 	      --from_cache True
 
+# Running the stacked predictions
+nvidia-docker run -it --name oa_prog_stacking_eval --rm \
+	      -v $WRKDIR:/workdir/:rw --ipc=host \
+	      oaprog_img python -u run_second_level_model.py \
+	      --snapshots_root /workdir/snapshots \
+	      --snapshot $SNAPSHOT \
+	      --metadata_root /workdir/Metadata \
+	      --save_dir /workdir/Results

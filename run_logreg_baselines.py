@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import average_precision_score
 
 from oaprogression.training import baselines
-from oaprogression.evaluation import stats
+from oaprogression.evaluation import stats, tools
 
 if __name__ == "__main__":
     args = baselines.init_args()
@@ -19,13 +19,14 @@ if __name__ == "__main__":
     results = {}
     for feature_set in [['AGE', 'SEX', 'BMI'],
                         ['KL', ],
+                        ['AGE', 'SEX', 'BMI', 'SURG', 'INJ', 'WOMAC'],
                         ['AGE', 'SEX', 'BMI', 'KL'],
                         ['AGE', 'SEX', 'BMI', 'KL', 'SURG', 'INJ', 'WOMAC']]:
 
         models_best, mean_std_best, cv_scores = baselines.build_logreg_model(train_folds, feature_set, seed,
                                                                              args.n_vals_c, average_precision_score)
         print('CV score:', feature_set, cv_scores)
-        test_res = baselines.eval_models(metadata_test, feature_set, models_best, mean_std_best)
+        test_res = tools.eval_models(metadata_test, feature_set, models_best, mean_std_best)
         features_suffix = '_'.join(feature_set)
         plt.rcParams.update({'font.size': 16})
 

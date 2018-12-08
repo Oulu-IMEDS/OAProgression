@@ -18,10 +18,23 @@ nvidia-docker run -it --name oa_prog_evaluation --rm \
 	      --save_dir /workdir/Results \
 	      --metadata_root /workdir/Metadata \
           --from_cache True
-
+# Running the "easy baseline" based on logreg
 nvidia-docker run -it --name oa_prog_baselines_eval --rm \
 	      -v $WRKDIR:/workdir/:rw --ipc=host \
-	      oaprog_img python -u run_baselines.py --snapshots_root /workdir/snapshots --snapshot $SNAPSHOT --metadata_root /workdir/Metadata --save_dir /workdir/Results
+	      oaprog_img python -u run_logreg_baselines.py \
+	      --snapshots_root /workdir/snapshots \
+	      --snapshot $SNAPSHOT \
+	      --metadata_root /workdir/Metadata \
+	      --save_dir /workdir/Results
+
+# Running the more complex baseline based on LightGBM and bayesian hyper-parameters tuning
+nvidia-docker run -it --name oa_prog_baselines_eval --rm \
+	      -v $WRKDIR:/workdir/:rw --ipc=host \
+	      oaprog_img python -u run_lgbm_baselines.py \
+	      --snapshots_root /workdir/snapshots \
+	      --snapshot $SNAPSHOT \
+	      --metadata_root /workdir/Metadata \
+	      --save_dir /workdir/Results
 
 # If you run it first time - remove the option "--from_cache".
 nvidia-docker run -it --name oa_prog_evaluation --rm \

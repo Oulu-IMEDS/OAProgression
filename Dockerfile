@@ -44,7 +44,6 @@ RUN pip install pip -U -v && pip install -r requirements.txt
 # Installing the other deps
 RUN conda install -y numpy=1.15.2 scipy=1.0.1 matplotlib -n oaprog
 RUN conda install -y opencv=3.4.1 -c conda-forge -n oaprog
-RUN conda install -y lightgbm=2.2.1 -c conda-forge -n oaprog
 
 # Fixing the matplotlib backend issues
 RUN mkdir -p /root/.config/matplotlib/
@@ -58,6 +57,7 @@ RUN pip install -e /opt/pkg/
 # Copying the files
 RUN cp /opt/pkg/prepare_metadata.py .
 RUN cp /opt/pkg/run_training.py .
-RUN cp /opt/pkg/run_baselines.py .
+RUN cp /opt/pkg/run_logreg_baselines.py .
+RUN cp /opt/pkg/run_lgbm_baselines.py .
 RUN cp /opt/pkg/run_evaluation.py .
 RUN cp /opt/pkg/run_oof_inference.py .

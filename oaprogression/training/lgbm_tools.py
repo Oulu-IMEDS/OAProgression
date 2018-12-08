@@ -20,7 +20,7 @@ def fit_lgb(params, train_folds, feature_set, metric, return_oof_res=False, retu
         res = pd.DataFrame(data={'ID': val_split.ID.values, 'Side': val_split.Side.values, 'prog_pred': preds_prog,
                                  'Progressor': val_split.Progressor.values > 0})
         oof_results.append(res)
-        clfs.append(clfs)
+        clfs.append(clf_prog)
 
     oof_results = pd.concat(oof_results)
     res = list()
@@ -65,12 +65,12 @@ def eval_lgb_objective(space, train_folds, feature_set, metric, callback=None):
     return {'loss': 1 - res, 'status': STATUS_OK}
 
 
-def optimize_lgbm_hyperopt(train_folds, feature_set, metric, seed, hyperopt_trials=5000):
+def optimize_lgbm_hyperopt(train_folds, feature_set, metric, seed, hyperopt_trials=100):
     trials = Trials()
     pbar = tqdm(total=hyperopt_trials, desc="Hyperopt:")
     param_space = init_lgbm_param_grid(seed)
     best = fmin(fn=partial(eval_lgb_objective, train_folds=train_folds,
-                           feature_set=feature_set, metric=metric, callback=lambda : pbar.update()),
+                           feature_set=feature_set, metric=metric, callback=lambda: pbar.update()),
                 space=param_space,
                 algo=tpe.suggest,
                 max_evals=hyperopt_trials,

@@ -59,6 +59,6 @@ RUN cp /opt/pkg/scripts/prepare_metadata.py .
 RUN cp /opt/pkg/scripts/run_training.py .
 RUN cp /opt/pkg/scripts/run_logreg_baselines.py .
 RUN cp /opt/pkg/scripts/run_lgbm_baselines.py .
-RUN cp /opt/pkg/scripts/run_evaluation.py .
+RUN cp /opt/pkg/scripts/run_dl_evaluation.py .
 RUN cp /opt/pkg/scripts/run_oof_inference.py .
 RUN cp /opt/pkg/scripts/run_second_level_model.py .

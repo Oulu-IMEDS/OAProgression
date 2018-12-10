@@ -76,7 +76,7 @@ if __name__ == "__main__":
     results = {}
     for feature_set in [['AGE', 'SEX', 'BMI', 'SURG', 'INJ', 'WOMAC', 'kl_pred_0', 'kl_pred_1', 'kl_pred_2',
                          'kl_pred_3', 'kl_pred_4', 'prog_pred_0', 'prog_pred_1', 'prog_pred_2'],
-                        ['AGE', 'SEX', 'BMI', 'KL', 'SURG', 'INJ', 'WOMAC','kl_pred_0', 'kl_pred_1', 'kl_pred_2',
+                        ['AGE', 'SEX', 'BMI', 'KL', 'SURG', 'INJ', 'WOMAC', 'kl_pred_0', 'kl_pred_1', 'kl_pred_2',
                          'kl_pred_3', 'kl_pred_4', 'prog_pred_0', 'prog_pred_1', 'prog_pred_2']]:
 
         best_params, trials = optimize_lgbm_hyperopt(train_folds, feature_set,
@@ -104,7 +104,7 @@ if __name__ == "__main__":
 
         results[f'preds_MOST_BL_all_{features_suffix}'] = (ids, sides, y_test, test_res)
 
-    with open(os.path.join(args.save_dir, 'results_baselines_lgbm_stacking.pkl'), 'wb') as f:
+    with open(os.path.join(args.save_dir, 'results_lgbm_stacking.pkl'), 'wb') as f:
         pickle.dump(results, f)
 
 

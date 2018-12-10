@@ -20,7 +20,7 @@ nvidia-docker run -it --name oa_progression_oof_inference --rm \
           --from_cache True
 
 # Running the "easy baseline" based on logreg
-nvidia-docker run -it --name oa_prog_lgb_baselines_eval --rm \
+nvidia-docker run -it --name oa_prog_logreg_baselines_eval --rm \
 	      -v $WRKDIR:/workdir/:rw --ipc=host \
 	      oaprog_img python -u run_logreg_baselines.py \
 	      --snapshots_root /workdir/snapshots \
@@ -41,7 +41,7 @@ nvidia-docker run -it --name oa_prog_lgb_baselines_eval --rm \
 nvidia-docker run -it --name oa_prog_evaluation --rm \
 	      -v $WRKDIR:/workdir/:rw \
 	      -v $OAI_MOST_IMG_SRC:/data/:ro --ipc=host \
-	      oaprog_img python -u run_evaluation.py --snapshots /workdir/snapshots \
+	      oaprog_img python -u run_dl_evaluation.py --snapshots /workdir/snapshots \
 	      --snapshot $SNAPSHOT \
 	      --dataset_root /data/ \
 	      --save_dir /workdir/Results \

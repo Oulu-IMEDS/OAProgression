@@ -22,6 +22,8 @@ def calc_curve_bootstrap(curve, metric, y, preds, n_bootstrap, seed, stratified=
         Number of bootstrap samples to draw
     seed : int
         Random seed
+    stratified : bool
+        Whether to do a stratified bootstrapping
     alpha : float
         Confidence intervals width
 
@@ -100,12 +102,12 @@ def roc_curve_bootstrap(y, preds, savepath=None, n_bootstrap=1000, seed=42, retu
 def compare_curves(y, preds1, preds2, savepath_roc=None, savepath_pr=None, n_bootstrap=2000, seed=42):
     plt.figure(figsize=(8, 8))
     auc, ci_l, ci_h, fpr, tpr = calc_curve_bootstrap(roc_curve, roc_auc_score, y, preds1, n_bootstrap,
-                                                     seed, stratified=False, alpha=95)
+                                                     seed, stratified=True, alpha=95)
     print(f'AUC (method 1): {np.round(auc, 2):.2f} | 95% CI [{np.round(ci_l, 2):.2f},{np.round(ci_h, 2):.2f}]')
     plt.plot(fpr, tpr, 'b-')
 
     auc, ci_l, ci_h, fpr, tpr = calc_curve_bootstrap(roc_curve, roc_auc_score, y, preds2, n_bootstrap,
-                                                     seed, stratified=False, alpha=95)
+                                                     seed, stratified=True, alpha=95)
     print(f'AUC (method 2): {np.round(auc, 2):.2f} | 95% CI [{np.round(ci_l, 2):.2f},{np.round(ci_h, 2):.2f}]')
     plt.plot(fpr, tpr, 'r-')
     plt.plot([0, 1], [0, 1], '-', color='black')

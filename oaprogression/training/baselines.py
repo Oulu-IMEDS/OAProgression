@@ -14,7 +14,7 @@ def init_args():
     parser.add_argument('--save_dir', default='')
     parser.add_argument('--lgbm_hyperopt_trials', type=int, default=500)
     parser.add_argument('--n_bootstrap', type=int, default=2000)
-    parser.add_argument('--n_vals_c', type=int, default=100)
+    parser.add_argument('--n_vals_c', type=int, default=300)
     args = parser.parse_args()
 
     return args
@@ -51,7 +51,7 @@ def build_logreg_model(train_folds, feature_set, seed, n_vals_c, metric):
     cv_scores = []
     models = []
     means_stds = []
-    c_vals = np.logspace(-6, 0, n_vals_c)
+    c_vals = np.logspace(-6, 2, n_vals_c)
     for C in c_vals:  # Enumerating the regularizer weight
         folds_predicts = []
         folds_gt = []

@@ -83,20 +83,6 @@ if __name__ == "__main__":
     res['Progressor_type'] = res.Progressor.values.copy()
     res.Progressor = res.Progressor > 0
 
-    print('# subjects', np.unique(res.ID).shape[0])
-    print('# knees', res.shape[0])
-    print('# progressors', res[res.Progressor == 1].shape[0])
-    print('# non-progressors', res[res.Progressor == 0].shape[0])
-    print('')
-    print('All knees:')
-    print('-------------')
-
-    plt.rcParams.update({'font.size': 16})
-    stats.roc_curve_bootstrap(res.Progressor.values.flatten(),
-                              res.pred.values.flatten(),
-                              n_bootstrap=args.n_bootstrap,
-                              savepath=os.path.join(args.save_dir, f'ROC_MOST_DL.pdf'))
-
     if args.plot_gcams:
         gcam.preds_and_hmaps(rs_result=res,
                              gradcams=gcams,

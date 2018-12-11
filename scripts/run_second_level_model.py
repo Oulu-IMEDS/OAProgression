@@ -96,12 +96,6 @@ if __name__ == "__main__":
         y_test = metadata_test.Progressor.values.copy() > 0
         ids = metadata_test.ID.values
         sides = metadata_test.Side.values
-        stats.roc_curve_bootstrap(y_test,
-                                  test_res,
-                                  n_bootstrap=args.n_bootstrap,
-                                  savepath=os.path.join(args.save_dir,
-                                                        f'ROC_MOST_BL_all_{features_suffix}_lgbm.pdf'))
-
         results[f'preds_MOST_BL_all_{features_suffix}'] = (ids, sides, y_test, test_res)
 
     with open(os.path.join(args.save_dir, 'results_lgbm_stacking.pkl'), 'wb') as f:

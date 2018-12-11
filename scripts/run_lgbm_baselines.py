@@ -1,6 +1,6 @@
 import os
 
-if int(os.getenv('USE_AGG', 0)) == 1:
+if int(os.getenv('USE_AGG', 1)) == 1:
     import matplotlib
     matplotlib.use('Agg')
 
@@ -36,17 +36,10 @@ if __name__ == "__main__":
                                      impute=False, model_type='lgbm')
 
         features_suffix = '_'.join(feature_set)
-        plt.rcParams.update({'font.size': 16})
 
         y_test = metadata_test.Progressor.values.copy() > 0
         ids = metadata_test.ID.values
         sides = metadata_test.Side.values
-        stats.roc_curve_bootstrap(y_test,
-                                  test_res,
-                                  n_bootstrap=args.n_bootstrap,
-                                  savepath=os.path.join(args.save_dir,
-                                                        f'ROC_MOST_BL_all_{features_suffix}_lgbm.pdf'))
-
         results[f'preds_MOST_BL_all_{features_suffix}'] = (ids, sides, y_test, test_res)
 
     with open(os.path.join(args.save_dir, 'results_baselines_lgbm.pkl'), 'wb') as f:

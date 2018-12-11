@@ -3,8 +3,11 @@ import torch.nn.functional as F
 import cv2
 import os
 import numpy as np
-
+import pandas as pd
 from sklearn.metrics import roc_auc_score, cohen_kappa_score, confusion_matrix, mean_squared_error, f1_score, average_precision_score
+from sklearn.metrics import roc_curve, precision_recall_curve
+
+import matplotlib.pyplot as plt
 
 from functools import partial
 
@@ -20,7 +23,7 @@ from torch.utils.data.sampler import SequentialSampler
 from oaprogression.training import model
 from oaprogression.training import session as session
 from oaprogression.training.dataset import OAProgressionDataset, unpack_solt_data, img_labels2solt, apply_by_index
-
+from oaprogression.evaluation import stats
 
 cv2.ocl.setUseOpenCL(False)
 cv2.setNumThreads(0)
@@ -170,3 +173,61 @@ def eval_models(metadata_test, feature_set, models_best,
 
     test_res /= len(models_best)
     return test_res
+
+
+def pkl2df(fname):
+    data_dict = pd.read_pickle(fname)
+    res = {}
+    for key in data_dict:
+        res[key] = pd.DataFrame(data={'ID': data_dict[key][0],
+                                      'Side': data_dict[key][1],
+                                      'Progressor': data_dict[key][2],
+                                      'Prediction': data_dict[key][3]})
+    return res
+
+
+def init_auc_pr_plot(y):
+    plt.rcParams.update({'font.size': 13})
+    fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(16, 8))
+
+    axs[0].plot([0, 1], [0, 1], '--', color='black')
+    axs[0].set_xlim([0, 1])
+    axs[0].set_ylim([0, 1])
+    axs[0].grid()
+    axs[0].set_xlabel('False positive rate')
+    axs[0].set_ylabel('True positive rate')
+    axs[0].set_title('ROC curve')
+    
+    axs[1].axhline(y=y.sum()/y.shape[0], linestyle='--', color='black')
+    axs[1].set_xlim([0, 1])
+    axs[1].set_ylim([0, 1])
+    axs[1].grid()
+    axs[1].set_xlabel('Recall')
+    axs[1].set_ylabel('Precision')
+    axs[1].set_title('Precision-Recall curve')
+    
+    return fig, axs
+
+
+def compute_and_plot_curves(tmp_df, axs, key=None, legend=True, color=None, n_bootstrap=2000, seed=12345):
+    auc, ci_l, ci_h, fpr, tpr = stats.calc_curve_bootstrap(roc_curve, roc_auc_score, tmp_df.Progressor,
+                                                           tmp_df.Prediction, n_bootstrap, seed, stratified=True, alpha=95)
+
+    if key is None:
+        key=''
+    if color is None:
+        axs[0].plot(fpr, tpr, label=key+f' ({np.round(auc,2)} [{np.round(ci_l, 2)}, {np.round(ci_h, 2)}])')
+    else:
+        axs[0].plot(fpr, tpr, label=key+f' ({np.round(auc,2)} [{np.round(ci_l, 2)}, {np.round(ci_h, 2)}])', color=color)
+    if legend:
+        axs[0].legend()
+    
+    ap, ci_l, ci_h, precision, recall = stats.calc_curve_bootstrap(precision_recall_curve, average_precision_score, tmp_df.Progressor,
+                                                                   tmp_df.Prediction, n_bootstrap, seed, stratified=True, alpha=95)
+
+    if color is None:
+        axs[1].plot(recall, precision, label=key+f' ({np.round(ap,2)} [{np.round(ci_l, 2)}, {np.round(ci_h, 2)}])')
+    else:
+        axs[1].plot(recall, precision, label=key+f' ({np.round(ap,2)} [{np.round(ci_l, 2)}, {np.round(ci_h, 2)}])', color=color)
+    if legend:
+        axs[1].legend()

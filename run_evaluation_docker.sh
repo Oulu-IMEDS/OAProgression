@@ -56,3 +56,10 @@ nvidia-docker run -it --name oa_prog_stacking_eval --rm \
 	      --snapshot $SNAPSHOT \
 	      --metadata_root /workdir/Metadata \
 	      --save_dir /workdir/Results
+
+# Generating the plots
+nvidia-docker run -it --name oa_prog_eval --rm \
+	      -v $WRKDIR:/workdir/:rw --ipc=host \
+	      oaprog_img python -u run_models_comparison.py \
+	      --metadata_root /workdir/Metadata \
+	      --results_dir /workdir/Results

@@ -24,7 +24,7 @@ We used 3xGTX1080Ti NVIDIA cards to train our models, so, please make sure that 
 
 1. Set-up the metadata, localized ROI and workdir paths in `run_training_docker.sh`. Do the same for `run_evaluation_docker.sh`
 2. Execute `run_training_docker.sh`
-3. Execute `run_evaluation_docker.sj`
+3. Execute `run_evaluation_docker.sh`
 
 Eventually, these scripts will generate a snapshot, containing 5 models from each cross-validation fold. You can monitor the process using tensorboard (needs to be run independently), or look at the training logs later, after the experiments. They will be generated in the `WRKDIR` (look at the `run_training_docker.sh`.
 

@@ -3,8 +3,9 @@
 *Codes for paper and the pre-trained models.*
 
 (c) Aleksei Tiulpin, University of Oulu, 2018.
-
-<img src="https://github.com/mipt-oulu/oaprogression/blob/master/docs/schema.png" width="600"/> 
+<center>
+<img src="https://github.com/mipt-oulu/oaprogression/blob/master/docs/schema.png" width="750"/> 
+</center>
 
 ## About
 

@@ -4,7 +4,7 @@
 
 (c) Aleksei Tiulpin, University of Oulu, 2018.
 
-<img src="https://github.com/mipt-oulu/oaprogression/blob/master/docs/schema.png" width="260"/> 
+<img src="https://github.com/mipt-oulu/oaprogression/blob/master/docs/schema.png" width="600"/> 
 
 ## About
 

@@ -7,7 +7,7 @@
 ## About
 
 <center>
-<img src="https://github.com/mipt-oulu/oaprogression/blob/master/docs/schema.png" width="800"/> 
+<img src="https://github.com/mipt-oulu/oaprogression/blob/master/docs/schema.png" width="900"/> 
 </center>
 
 This repository contains the full codes to reproduce the training process in the paper. To train the model from scratch, you need to obtain the DICOM images from MOST and OAI datasets. You also need to get the corresponding metadata (downloadable from the website. More instructions on getting the data are provided in [documentation](docs/DATASETS.md). The metadata, required for annotation of these images is available at [our websie](http://mipt-ml.oulu.fi/datasets/OAProgression).

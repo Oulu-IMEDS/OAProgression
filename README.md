@@ -1,4 +1,4 @@
-# Osteoarthritis Progression Prediction from Plain Radiographs: Data from OAI and MOST studies
+# Personalized Osteoarthritis Progression Prediction using Machine Learning 
 
 *Codes for paper and the pre-trained models.*
 

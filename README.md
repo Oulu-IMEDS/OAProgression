@@ -4,9 +4,11 @@
 
 (c) Aleksei Tiulpin, University of Oulu, 2018.
 
+<img src="https://github.com/mipt-oulu/oaprogression/docs/schema.png" width="260"/> 
+
 ## About
 
-This repository contains the full codes to reproduce the training process in the paper. To train the model from scratch, you need to obtain the DICOM images from MOST and OAI datasets. You also need to get the corresponding metadata.
+This repository contains the full codes to reproduce the training process in the paper. To train the model from scratch, you need to obtain the DICOM images from MOST and OAI datasets. You also need to get the corresponding metadata (downloadable from the website. More instructions on getting the data are provided in [documentation](docs/DATASETS.md). The metadata, required for annotation of these images is available at [our websie](http://mipt-ml.oulu.fi/datasets/OAProgression).
 
 ## Installation, training and evaluation
 
@@ -14,44 +16,15 @@ This repository contains the full codes to reproduce the training process in the
 
 To run this project, we used `Ubuntu 16.04`, `Docker` and also `nvidia-docker`. These are the only software dependencies you will need. Please, install these and you are set.
 
-For training we used 3xGTX1080Ti NVIDIA cards, so, please make sure that you have enough memory for minibatches allocation.
+We used 3xGTX1080Ti NVIDIA cards to train our models, so, please make sure that you have enough memory for minibatches allocation. We assume, that 2xGTX1080Ti will also be sufficient.
 
+### Reproducing the experiemnts
 
-### Imaging and clinical data preparation for MOST and OAI data
-
-1. Download the SAS data from OAI website: https://ndar.nih.gov/oai/full_downloads.html (select `X-RAY ASSESSMENTS - SAS`).
-2. Download the OAI subjects and clinical assessments data (select `GENERAL - SAS` and `ALL CLINICAL - SAS`), and place `enrollees.sas7bdat` and `allclinical00.sas7bdat`.
-3. Place clinical and subject data into the folder downloaded in 1.
-4. Copy MOST metadata into some folder and place `MOST_names.csv` there as well.
-
-TBC
-
-### Retraining
-
-1. Set-up the metadata, localized ROI and workdir paths in `run_training_docker.sh`
+1. Set-up the metadata, localized ROI and workdir paths in `run_training_docker.sh`. Do the same for `run_evaluation_docker.sh`
 2. Execute `run_training_docker.sh`
+3. Execute `run_evaluation_docker.sj`
 
-After sometime, the script will create a snapshot located in the specified workdir. Remember the name of this snapshot.
-
-### Running the baselines evaluation
-
-1. Specify the paths in `run_baselines_docker.sh` similarly as was done for `run_training_docker.sh`.
-Do not forget to specify the snapshot paths for the model you have just trained and the name of the snapshot.
-This is needed to use exectly the same cross-validation splits.
-2. Execute `run_baselines_docker.sh`.
-
-This script will generate multiple plots in the `$WRKDIR/Results`, which we used in the article.
-
-### Running the neural networks
-
-1. Similarly to the previous section, modify `run_evaluation_docker.sh` and specify all the paths.
-2. Run `run_evaluation_docker.sh`
-
-This script will generate multiple plots in the `$WRKDIR/Results`, which were also used in the paper.
-
-## Testing on your own images
-
-TBC
+Eventually, these scripts will generate a snapshot, containing 5 models from each cross-validation fold. You can monitor the process using tensorboard (needs to be run independently), or look at the training logs later, after the experiments. They will be generated in the `WRKDIR` (look at the `run_training_docker.sh`.
 
 ## License
 

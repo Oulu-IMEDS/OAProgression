@@ -44,6 +44,7 @@ RUN pip install pip -U -v && pip install -r requirements.txt
 # Installing the other deps
 RUN conda install -y numpy=1.15.2 scipy=1.0.1 matplotlib -n oaprog
 RUN conda install -y opencv=3.4.1 -c conda-forge -n oaprog
+RUN conda install -y statsmodels=0.9.0 -n oaprog
 
 # Fixing the matplotlib backend issues
 RUN mkdir -p /root/.config/matplotlib/

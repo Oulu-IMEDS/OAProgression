@@ -4,6 +4,7 @@ import os
 import pandas as pd
 import numpy as np
 from sklearn.linear_model import LogisticRegression
+import statsmodels.api as sm
 
 
 def init_args():
@@ -47,46 +48,57 @@ def init_metadata(args):
     return train_folds, metadata_test, session_snapshot['args'][0].seed
 
 
-def build_logreg_model(train_folds, feature_set, seed, n_vals_c, metric):
+def build_logreg_model(train_folds, feature_set, seed, n_vals_c, metric, regularization=False):
     cv_scores = []
     models = []
     means_stds = []
     c_vals = np.logspace(-6, 2, n_vals_c)
+    if not regularization:
+        c_vals = [None, ]
     for C in c_vals:  # Enumerating the regularizer weight
         folds_predicts = []
         folds_gt = []
         folds_models = []
         folds_means_stds = []
+
         for fold_id, (train_split, val_split) in enumerate(train_folds):  # Going through the prepared fold splits
+            train_split = train_split.copy()
+            val_split = train_split.copy()
+
+            train_split.dropna(inplace=True)
+            val_split.dropna(inplace=True)
+
+            train_split.Progressor = train_split.Progressor.values > 0
+            val_split.Progressor = val_split.Progressor.values > 0
+
             X_train = train_split[feature_set].values.astype(float)
             X_val = val_split[feature_set].values.astype(float)
-            
-            y_train = train_split.Progressor.values > 0
-            y_val = val_split.Progressor.values > 0
-            
-            y_train = y_train[~np.isnan(X_train).any(1)]
-            X_train = X_train[~np.isnan(X_train).any(1)]
-            
-            y_val = y_val[~np.isnan(X_val).any(1)]
-            X_val = X_val[~np.isnan(X_val).any(1)]
-            
+
             mean = np.mean(X_train, 0)
             std = np.std(X_train, 0)
-            
+
             X_train -= mean
             X_train /= std
-            
+
             X_val -= mean
             X_val /= std
 
-            clf = LogisticRegression(C=C, random_state=seed, solver='lbfgs')
-            clf.fit(X_train, y_train)
-            p_val = clf.predict_proba(X_val)[:, 1]
+            train_split[feature_set] = X_train
+            val_split[feature_set] = X_val
 
-            folds_predicts.extend(p_val.flatten().tolist())
-            folds_gt.extend(y_val.flatten().tolist())
-            folds_models.append(clf)
+            if not regularization:
+                model = sm.Logit(train_split.Progressor.values, sm.add_constant(X_train))
+                clf = model.fit(disp=0)
+                p_val = clf.predict(sm.add_constant(X_val)).flatten().tolist()
+            else:
+                clf = LogisticRegression(C=C, random_state=seed, solver='lbfgs')
+                clf.fit(X_train, train_split.Progressor.values)
+                p_val = clf.predict_proba(X_val)[:, 1].flatten().tolist()
+
             folds_means_stds.append([mean, std])
+            folds_predicts.extend(p_val)
+            folds_gt.extend(val_split.Progressor.values.flatten().tolist())
+            folds_models.append(clf)
 
         auc = metric(folds_gt, folds_predicts)
         cv_scores.append(auc)
@@ -96,5 +108,5 @@ def build_logreg_model(train_folds, feature_set, seed, n_vals_c, metric):
     opt_c_id = np.argmax(cv_scores)
     models_best = models[opt_c_id]
     mean_std_best = means_stds[opt_c_id]
-    return models_best, mean_std_best, cv_scores[opt_c_id]
+    return models_best, mean_std_best, np.array(folds_gt), np.array(folds_predicts)
 

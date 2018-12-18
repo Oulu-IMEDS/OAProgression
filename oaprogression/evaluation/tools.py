@@ -24,6 +24,7 @@ from oaprogression.training import model
 from oaprogression.training import session as session
 from oaprogression.training.dataset import OAProgressionDataset, unpack_solt_data, img_labels2solt, apply_by_index
 from oaprogression.evaluation import stats
+import statsmodels.api as sm
 
 cv2.ocl.setUseOpenCL(False)
 cv2.setNumThreads(0)
@@ -153,8 +154,8 @@ def eval_models(metadata_test, feature_set, models_best,
     # Using mean imputation if necessary
     if impute:
         x_test_initial.fillna(x_test_initial.mean(), inplace=True)
-
         x_test_initial = x_test_initial.values.astype(float)
+
     test_res = 0
     for model_id in range(len(models_best)):
         x_test = x_test_initial.copy()
@@ -162,12 +163,13 @@ def eval_models(metadata_test, feature_set, models_best,
             mean, std = mean_std_best[model_id]
             x_test -= mean
             x_test /= std
-
         clf_prog = models_best[model_id]
         if model_type == 'sklearn':
             test_res += clf_prog.predict_proba(x_test)[:, 1]
         elif model_type == 'lgbm':
             test_res += clf_prog.predict(x_test, clf_prog.best_iteration)
+        elif model_type == 'statsmodels':
+            test_res += clf_prog.predict(sm.add_constant(x_test)).flatten()
         else:
             raise ValueError
 

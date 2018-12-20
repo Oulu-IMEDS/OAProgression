@@ -76,6 +76,19 @@ if __name__ == "__main__":
     plt.show()
     plt.close(fig)
 
+    fig, axs = init_auc_pr_plot(dl_preds.Progressor.values)
+    for key in models:
+        if key != 'logreg_kl':
+            continue
+        
+        tmp_df = models[key]
+        key = key.split('logreg')[1]
+        key = ' '.join(key.split('_')).upper()
+        compute_and_plot_curves(tmp_df, axs, key=key, legend=True)
+    plt.savefig(os.path.join(args.results_dir, 'KL_grade_baseline.pdf'), bbox_inches='tight')
+    plt.show()
+    plt.close(fig)
+    
     print(colored('====> ', 'green') + 'LightGBM baselines')
     fig, axs = init_auc_pr_plot(dl_preds.Progressor.values)
     for key in models:

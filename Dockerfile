@@ -64,3 +64,4 @@ RUN cp /opt/pkg/scripts/run_dl_evaluation.py .
 RUN cp /opt/pkg/scripts/run_oof_inference.py .
 RUN cp /opt/pkg/scripts/run_second_level_model.py .
 RUN cp /opt/pkg/scripts/run_models_comparison.py .
+RUN cp /opt/pkg/scripts/run_models_comparison_kl_01.py .

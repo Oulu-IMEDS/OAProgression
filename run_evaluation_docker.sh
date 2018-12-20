@@ -63,3 +63,10 @@ nvidia-docker run -it --name oa_prog_eval --rm \
 	      oaprog_img python -u run_models_comparison.py \
 	      --metadata_root /workdir/Metadata \
 	      --results_dir /workdir/Results
+
+# Generating the plots
+nvidia-docker run -it --name oa_prog_eval --rm \
+	      -v $WRKDIR:/workdir/:rw --ipc=host \
+	      oaprog_img python -u run_models_comparison_kl_01.py \
+	      --metadata_root /workdir/Metadata \
+	      --results_dir /workdir/Results

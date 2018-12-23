@@ -46,7 +46,7 @@ nvidia-docker run -it --name oa_prog_evaluation --rm \
 	      --dataset_root /data/ \
 	      --save_dir /workdir/Results \
 	      --metadata_root /workdir/Metadata \
-	      --from_cache True
+	      --from_cache True --plot_gcams True
 
 # Running the stacked predictions
 nvidia-docker run -it --name oa_prog_stacking_eval --rm \

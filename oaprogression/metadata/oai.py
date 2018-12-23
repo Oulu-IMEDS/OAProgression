@@ -2,6 +2,7 @@ import pandas as pd
 from tqdm import tqdm
 import os
 from oaprogression.metadata.utils import read_sas7bdata_pd
+import numpy as np
 
 
 def build_img_progression_meta(oai_src_dir):
@@ -17,6 +18,8 @@ def build_img_progression_meta(oai_src_dir):
         meta = read_sas7bdata_pd(os.path.join(oai_src_dir,
                                               'Semi-Quant Scoring_SAS',
                                               f'kxr_sq_bu{exam_codes[i]}.sas7bdat'))
+        # Dropping the data from multiple projects
+        meta.drop_duplicates(subset=['ID', 'SIDE'], inplace=True)
         meta.fillna(-1, inplace=True)
         for c in meta.columns:
             meta[c.upper()] = meta[c]
@@ -25,7 +28,6 @@ def build_img_progression_meta(oai_src_dir):
             meta = meta[meta[f'V{exam_codes[i]}XRKL'] != -1]
             meta = meta[meta[f'V{exam_codes[i]}XRKL'] < 5]
         meta = meta[meta[f'V{exam_codes[i]}XRKL'] <= 4]
-        meta.drop_duplicates(subset=['ID', 'SIDE'], inplace=True)
 
         meta['KL'] = meta[f'V{exam_codes[i]}XRKL']
         KL_files.append(meta[['ID', 'SIDE', 'KL']])

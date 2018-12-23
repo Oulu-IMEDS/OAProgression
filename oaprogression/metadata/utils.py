@@ -27,8 +27,15 @@ def data_stats(dataset, participants):
     
     print('## Knees', dataset.ID.shape[0])
 
-    print('## Knees (left)', dataset[dataset.Side == 'L'].ID.shape[0])
-    print('## Knees (right)', dataset[dataset.Side == 'R'].ID.shape[0])
+    print('## Knees (left non-progressors)',
+          dataset[(dataset.Side == 'L') & (dataset.Progressor.values == 0)].ID.shape[0])
+    print('## Knees (right non-progressors)',
+          dataset[(dataset.Side == 'R') & (dataset.Progressor.values == 0)].ID.shape[0])
+
+    print('## Knees (left progressors)',
+          dataset[(dataset.Side == 'L') & (dataset.Progressor.values > 0)].ID.shape[0])
+    print('## Knees (right progressors)',
+          dataset[(dataset.Side == 'R') & (dataset.Progressor.values > 0)].ID.shape[0])
 
     print('## Knees non-progressors', (dataset.Progressor.values == 0).sum())
     print('## Knees progressors', (dataset.Progressor.values > 0).sum())

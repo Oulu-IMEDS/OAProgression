@@ -106,7 +106,7 @@ if __name__ == "__main__":
 
     print(colored('====> ', 'green') + 'Plain CNN vs strongest baseline')
     fig, axs = init_auc_pr_plot(dl_preds.Progressor.values)
-    for key, color, legend in zip(['lgbm_age_sex_bmi_kl_surg_inj_womac', 'dl'], ['blue', 'red'], ['GBM (AGE, SEX, BMI, KL, SURG, INJ, WOMAC)', 'CNN']):        
+    for key, color, legend in zip(['lgbm_age_sex_bmi_kl_surg_inj_womac', 'dl'], ['blue', 'red'], ['GBM ref.', 'CNN']):        
         tmp_df = models[key]
         compute_and_plot_curves(tmp_df, axs, key=legend, legend=True, color=color)
         
@@ -120,9 +120,9 @@ if __name__ == "__main__":
 
     print(colored('====> ', 'green') + 'Plain CNN vs logreg baseline')
     fig, axs = init_auc_pr_plot(dl_preds.Progressor.values)
-    for key, color in zip(['logreg_age_sex_bmi_kl_surg_inj_womac', 'dl'], ['blue', 'red']):        
+    for key, color, legend in zip(['logreg_age_sex_bmi_kl_surg_inj_womac', 'dl'], ['blue', 'red'], ['LR ref.', 'CNN']):        
         tmp_df = models[key]
-        compute_and_plot_curves(tmp_df, axs, legend=False, color=color)
+        compute_and_plot_curves(tmp_df, axs, key=legend, legend=True, color=color)
     plt.savefig(os.path.join(args.results_dir, 'DL_vs_simple_baselines.pdf'), bbox_inches='tight')
     plt.show()
     plt.close(fig)
@@ -133,7 +133,7 @@ if __name__ == "__main__":
 
     print(colored('====> ', 'green') + 'Best combination model vs strongest baseline (KL used)')
     fig, axs = init_auc_pr_plot(dl_preds.Progressor.values)
-    for key, color, legend in zip(['lgbm_age_sex_bmi_kl_surg_inj_womac', 'lgbm_stacking_kl'], ['blue', 'red'], ['GBM (AGE, SEX, BMI, KL, SURG, INJ, WOMAC)', 'GBM stacking (CNN, AGE, SEX, BMI, KL, SURG, INJ, WOMAC)']):        
+    for key, color, legend in zip(['lgbm_age_sex_bmi_kl_surg_inj_womac', 'lgbm_stacking_kl'], ['blue', 'red'], ['GBM ref.', 'Stacking w. KL']):        
         tmp_df = models[key]
         compute_and_plot_curves(tmp_df, axs, key=legend, legend=True, color=color)        
     plt.savefig(os.path.join(args.results_dir, 'Combined_vs_strongest_baseline.pdf'), bbox_inches='tight')
@@ -146,7 +146,7 @@ if __name__ == "__main__":
 
     print(colored('====> ', 'green') + 'Combination model w/o KL vs strongest baseline')
     fig, axs = init_auc_pr_plot(dl_preds.Progressor.values)
-    for key, color, legend in zip(['lgbm_age_sex_bmi_kl_surg_inj_womac', 'lgbm_stacking_no_kl'], ['blue', 'red'], ['GBM (AGE, SEX, BMI, KL, SURG, INJ, WOMAC)', 'GBM stacking (CNN, AGE, SEX, BMI, SURG, INJ, WOMAC)']):        
+    for key, color, legend in zip(['lgbm_age_sex_bmi_kl_surg_inj_womac', 'lgbm_stacking_no_kl'], ['blue', 'red'], ['GBM ref.', 'Stacking w/o KL']):        
         tmp_df = models[key]
         compute_and_plot_curves(tmp_df, axs, key=legend, legend=True, color=color)
         
@@ -159,9 +159,9 @@ if __name__ == "__main__":
 
     print(colored('====> ', 'green') + 'Combined w/o KL vs simple baseline (KL used)')
     fig, axs = init_auc_pr_plot(dl_preds.Progressor.values)
-    for key, color in zip(['logreg_age_sex_bmi_kl_surg_inj_womac', 'lgbm_stacking_no_kl'], ['blue', 'red']):        
+    for key, color, legend in zip(['logreg_age_sex_bmi_kl_surg_inj_womac', 'lgbm_stacking_no_kl'], ['blue', 'red'], ['LR ref.', 'Stacking w/o KL']):        
         tmp_df = models[key]
-        compute_and_plot_curves(tmp_df, axs, legend=False, color=color)
+        compute_and_plot_curves(tmp_df, axs, key=legend, legend=True, color=color)
         
     plt.savefig(os.path.join(args.results_dir, 'Combined_automatic_vs_simple_baselines.pdf'), bbox_inches='tight')
     plt.show()

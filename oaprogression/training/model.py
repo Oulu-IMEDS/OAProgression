@@ -1,6 +1,5 @@
 import pretrainedmodels
 from torch import nn
-from torchvision import models
 
 
 class FCViewer(nn.Module):
@@ -9,10 +8,12 @@ class FCViewer(nn.Module):
 
 
 class PretrainedModel(nn.Module):
-    def __init__(self, backbone, drop, ncls):
+    def __init__(self, backbone, drop, ncls, pretrained=True):
         super().__init__()
-        model = pretrainedmodels.__dict__[backbone](num_classes=1000, pretrained='imagenet')
-
+        if pretrained:
+            model = pretrainedmodels.__dict__[backbone](num_classes=1000, pretrained='imagenet')
+        else:
+            model = pretrainedmodels.__dict__[backbone](num_classes=1000, pretrained=None)
         self.encoder = list(model.children())[:-2]
 
         self.encoder.append(nn.AdaptiveAvgPool2d(1))
@@ -40,9 +41,9 @@ class KneeNet(nn.Module):
 
     """
 
-    def __init__(self, backbone_net, drop):
+    def __init__(self, backbone_net, drop, pretrained=True):
         super(KneeNet, self).__init__()
-        backbone = PretrainedModel(backbone_net, 1, 1)
+        backbone = PretrainedModel(backbone_net, 1, 1, pretrained)
 
         self.features = backbone.encoder
 

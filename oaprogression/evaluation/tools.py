@@ -49,7 +49,7 @@ def five_crop(img, size):
 
 
 def init_fold(fold_id, session_snapshot, args, return_fc_kl=False):
-    net = model.KneeNet(session_snapshot['args'][0].backbone, 0.5)
+    net = model.KneeNet(session_snapshot['args'][0].backbone, 0.5, False)
     snapshot_name = glob.glob(os.path.join(args.snapshots_root, args.snapshot, f'fold_{fold_id}*.pth'))[0]
 
     net.load_state_dict(torch.load(snapshot_name))

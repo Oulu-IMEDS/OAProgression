@@ -16,7 +16,12 @@ def build_img_progression_meta(most_src_dir):
     files_dict = {file.split('/')[-1].lower(): file for file in files}
     most_names = np.loadtxt(os.path.join(most_src_dir, 'MOST_names.csv'), dtype=str)
     data = read_sas7bdata_pd(os.path.join(most_src_dir, 'mostv01235xray.sas7bdat')).fillna(-1)
+    most_outcomes = read_sas7bdata_pd(os.path.join(most_src_dir, 'mostoutcomes.sas7bdat')).fillna(-1)
+    tkr_l = most_outcomes[most_outcomes['V99ELKRINDEX'] > 0][['MOSTID', 'V99ELKRINDEX']]
+    tkr_r = most_outcomes[most_outcomes['V99ERKRINDEX'] > 0][['MOSTID', 'V99ERKRINDEX']]
     data.set_index('MOSTID', inplace=True)
+    tkr_l.set_index('MOSTID', inplace=True)
+    tkr_r.set_index('MOSTID', inplace=True)
     pa_10_bl_ids = set([fname[:5] for fname in most_names if ('V0' in fname and 'PA10' in fname)])
 
     enrolled = {}
@@ -52,15 +57,23 @@ def build_img_progression_meta(most_src_dir):
         if 0 <= KL_bl_l <= 4:
             if len(tmp_l) > 0:
                 # We exclude missing values and also "grades" 9 and 8
-                if sum(list(map(lambda x: x[3] == -1 or x[3] == 8 or x[3] == 9, tmp_l))) == 0:
+                if sum(list(map(lambda x: x[3] == -1 or x[3] == 9, tmp_l))) == 0:
                     prog = None
                     # going through the follow-up grades
-                    for point in tmp_r:
+                    for point in tmp_l:
                         # if we notice a progression case, we stop looking and store the
                         # visit id where we stopped
-                        if point[-2] > KL_bl_l and point[-2] != 1 and point[-2] <= 4 and point[-2] != 1.9:
-                            prog = point
-                            break
+                        if KL_bl_l < point[-2] < 9 and point[-2] != 1 and point[-2] != 1.9:
+                            # This additional check is needed,
+                            # because 8 can mean that the image could have been bad
+                            if point[-2] == 8:
+                                if ID in tkr_l.index:
+                                    if tkr_l.loc[ID].V99ELKRINDEX == point[-1]:
+                                        prog = point
+                                        break
+                            else:
+                                prog = point
+                                break
                     # Checking whether the case is a progressor
                     if prog is None:
                         # To ignore the patients who dropped during the study, we
@@ -73,12 +86,23 @@ def build_img_progression_meta(most_src_dir):
         # Doing the same thing for the right knee
         if 0 <= KL_bl_r <= 4:
             if len(tmp_r) > 0:
-                if sum(list(map(lambda x: x[3] == -1 or x[3] == 8 or x[3] == 9, tmp_r))) == 0:
+                if sum(list(map(lambda x: x[3] == -1 or x[3] == 9, tmp_r))) == 0:
                     prog = None
                     for point in tmp_r:
-                        if point[-2] > KL_bl_r and point[-2] != 1 and point[-2] <= 4 and point[-2] != 1.9:
-                            prog = point
-                            break
+                        # if we notice a progression case, we stop looking and store the
+                        # visit id where we stopped
+                        if KL_bl_r < point[-2] < 9 and point[-2] != 1 and point[-2] != 1.9:
+                            # This additional check is needed,
+                            # because 8 can mean that the image could have been bad
+                            if point[-2] == 8:
+                                if ID in tkr_r.index:
+                                    if tkr_r.loc[ID].V99ERKRINDEX == point[-1]:
+                                        prog = point
+                                        break
+                            else:
+                                prog = point
+                                break
+
                     if prog is None:
                         if ID in last_follow_up:
                             non_progressors.append([ID, 'R', KL_bl_r, 0, 0])
@@ -97,7 +121,6 @@ def build_clinical(most_src_dir):
     clinical_data_most['ID'] = clinical_data_most.MOSTID
     clinical_data_most['BMI'] = clinical_data_most['V0BMI']
 
-    
     clinical_data_most_left = clinical_data_most.copy()
     clinical_data_most_right = clinical_data_most.copy()
 

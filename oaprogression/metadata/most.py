@@ -106,8 +106,6 @@ def build_img_progression_meta(most_src_dir):
                             else:
                                 prog = point
                                 break
-                    if ID == 'M1946':
-                        print(tmp_r)
                     if prog is None:
                         if ID in last_follow_up:
                             non_progressors.append([ID, 'R', KL_bl_r, 0, 0])

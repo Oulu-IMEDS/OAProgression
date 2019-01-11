@@ -8,7 +8,7 @@ docker build -t oaprog_img .
 
 echo "====> Working on the snapshot $SNAPSHOT"
 
- If you run it first time - remove the option "--from_cache".
+# If you run it first time - remove the option "--from_cache".
 nvidia-docker run -it --name oa_progression_oof_inference --rm \
 	      -v $WRKDIR:/workdir/:rw \
 	      -v $OAI_MOST_IMG_SRC:/data/:ro --ipc=host \

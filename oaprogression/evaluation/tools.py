@@ -212,8 +212,10 @@ def init_auc_pr_plot(y):
 
 
 def compute_and_plot_curves(tmp_df, axs, key=None, legend=True, color=None, n_bootstrap=2000, seed=12345):
-    auc, ci_l, ci_h, fpr, tpr = stats.calc_curve_bootstrap(roc_curve, roc_auc_score, tmp_df.Progressor,
-                                                           tmp_df.Prediction, n_bootstrap, seed, stratified=True, alpha=95)
+    auc, ci_l, ci_h, fpr, tpr = stats.calc_curve_bootstrap(roc_curve, roc_auc_score,
+                                                           tmp_df.Progressor.values.astype(int),
+                                                           tmp_df.Prediction.values.astype(float),
+                                                           n_bootstrap, seed, stratified=True, alpha=95)
 
     if key is None:
         key=''
@@ -224,8 +226,10 @@ def compute_and_plot_curves(tmp_df, axs, key=None, legend=True, color=None, n_bo
     if legend:
         axs[0].legend()
     
-    ap, ci_l, ci_h, precision, recall = stats.calc_curve_bootstrap(precision_recall_curve, average_precision_score, tmp_df.Progressor,
-                                                                   tmp_df.Prediction, n_bootstrap, seed, stratified=True, alpha=95)
+    ap, ci_l, ci_h, precision, recall = stats.calc_curve_bootstrap(precision_recall_curve, average_precision_score,
+                                                                   tmp_df.Progressor.values.astype(int),
+                                                                   tmp_df.Prediction.values.astype(float),
+                                                                   n_bootstrap, seed, stratified=True, alpha=95)
 
     if color is None:
         axs[1].plot(recall, precision, label=key+f' ({np.round(ap,2)} [{np.round(ci_l, 2)}, {np.round(ci_h, 2)}])')
@@ -236,13 +240,17 @@ def compute_and_plot_curves(tmp_df, axs, key=None, legend=True, color=None, n_bo
 
 
 def compute_curves_and_metrics(model_name, tmp_df, n_bootstrap=2000, seed=12345):
-    auc, ci_l, ci_h, fpr, tpr = stats.calc_curve_bootstrap(roc_curve, roc_auc_score, tmp_df.Progressor.values.astype(float),
-                                                           tmp_df.Prediction.values.astype(float), n_bootstrap, seed, stratified=True, alpha=95)
+    auc, ci_l, ci_h, fpr, tpr = stats.calc_curve_bootstrap(roc_curve, roc_auc_score,
+                                                           tmp_df.Progressor.values.astype(int),
+                                                           tmp_df.Prediction.values.astype(float),
+                                                           n_bootstrap, seed, stratified=True, alpha=95)
 
     print(f'{model_name} | AUC: {np.round(auc,2)} [{np.round(ci_l, 2)}, {np.round(ci_h, 2)}]')
 
-    ap, ci_l, ci_h, precision, recall = stats.calc_curve_bootstrap(precision_recall_curve, average_precision_score, tmp_df.Progressor.values.astype(float),
-                                                                   tmp_df.Prediction.values.astype(float), n_bootstrap, seed, stratified=True, alpha=95)
+    ap, ci_l, ci_h, precision, recall = stats.calc_curve_bootstrap(precision_recall_curve, average_precision_score,
+                                                                   tmp_df.Progressor.values.astype(int),
+                                                                   tmp_df.Prediction.values.astype(float),
+                                                                   n_bootstrap, seed, stratified=True, alpha=95)
 
     print(f'{model_name} | AP: {np.round(ap,2)} [{np.round(ci_l, 2)}, {np.round(ci_h, 2)}]')
 

@@ -31,7 +31,8 @@ if __name__ == "__main__":
                                   'Side': list(map(lambda x: x.split('_')[1], ids)),
                                   'Prediction': preds_prog[:, 1:].sum(1)})
     
-    dl_preds = pd.merge(dl_preds,  pd.read_csv(os.path.join(args.metadata_root, 'MOST_progression.csv')), on=('ID', 'Side'))
+    dl_preds = pd.merge(dl_preds,  pd.read_csv(os.path.join(args.metadata_root, 'MOST_progression.csv')),
+                        on=('ID', 'Side'))
     dl_preds['Progressor'] = dl_preds['Progressor'] > 0
     dl_preds = dl_preds[['ID', 'Side', 'Progressor', 'Prediction']]
 
@@ -170,7 +171,4 @@ if __name__ == "__main__":
     logp = stats.delong_roc_test(tmp.Progressor, tmp.Prediction_dl, tmp.Prediction_lgb)
     print('P-value (DeLong AUC test):', 10**logp)
 
-    
-    
-    
-    
+

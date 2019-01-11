@@ -8,7 +8,7 @@ docker build -t oaprog_img .
 
 echo "====> Working on the snapshot $SNAPSHOT"
 
-# If you run it first time - remove the option "--from_cache".
+ If you run it first time - remove the option "--from_cache".
 nvidia-docker run -it --name oa_progression_oof_inference --rm \
 	      -v $WRKDIR:/workdir/:rw \
 	      -v $OAI_MOST_IMG_SRC:/data/:ro --ipc=host \
@@ -17,7 +17,7 @@ nvidia-docker run -it --name oa_progression_oof_inference --rm \
 	      --dataset_root /data/ \
 	      --save_dir /workdir/Results \
 	      --metadata_root /workdir/Metadata \
-          --from_cache True
+         --from_cache True
 
 # Running the "easy baseline" based on logreg
 nvidia-docker run -it --name oa_prog_logreg_baselines_eval --rm \
@@ -46,7 +46,8 @@ nvidia-docker run -it --name oa_prog_evaluation --rm \
 	      --dataset_root /data/ \
 	      --save_dir /workdir/Results \
 	      --metadata_root /workdir/Metadata \
-	      --from_cache True --plot_gcams True
+	      --plot_gcams True
+	      #--from_cache True --plot_gcams True
 
 # Running the stacked predictions
 nvidia-docker run -it --name oa_prog_stacking_eval --rm \
@@ -58,14 +59,14 @@ nvidia-docker run -it --name oa_prog_stacking_eval --rm \
 	      --save_dir /workdir/Results
 
 # Generating the plots
-nvidia-docker run -it --name oa_prog_eval --rm \
+nvidia-docker run -it --name oa_prog_eval_cmp --rm \
 	      -v $WRKDIR:/workdir/:rw --ipc=host \
 	      oaprog_img python -u run_models_comparison.py \
 	      --metadata_root /workdir/Metadata \
 	      --results_dir /workdir/Results
 
 # Generating the plots
-nvidia-docker run -it --name oa_prog_eval --rm \
+nvidia-docker run -it --name oa_prog_eval_kl01_cmp --rm \
 	      -v $WRKDIR:/workdir/:rw --ipc=host \
 	      oaprog_img python -u run_models_comparison_kl_01.py \
 	      --metadata_root /workdir/Metadata \

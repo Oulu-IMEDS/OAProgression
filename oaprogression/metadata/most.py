@@ -17,8 +17,13 @@ def build_img_progression_meta(most_src_dir):
     most_names = np.loadtxt(os.path.join(most_src_dir, 'MOST_names.csv'), dtype=str)
     data = read_sas7bdata_pd(os.path.join(most_src_dir, 'mostv01235xray.sas7bdat')).fillna(-1)
     most_outcomes = read_sas7bdata_pd(os.path.join(most_src_dir, 'mostoutcomes.sas7bdat')).fillna(-1)
+    ids_alive = most_outcomes[most_outcomes.V99EDINDEX == -1][['MOSTID']]
+    # Excluding the people who died
+    data = pd.merge(ids_alive, data)
+    # Helpful for further i
     tkr_l = most_outcomes[most_outcomes['V99ELKRINDEX'] > 0][['MOSTID', 'V99ELKRINDEX']]
     tkr_r = most_outcomes[most_outcomes['V99ERKRINDEX'] > 0][['MOSTID', 'V99ERKRINDEX']]
+
     data.set_index('MOSTID', inplace=True)
     tkr_l.set_index('MOSTID', inplace=True)
     tkr_r.set_index('MOSTID', inplace=True)
@@ -29,6 +34,7 @@ def build_img_progression_meta(most_src_dir):
         print(f'==> Reading MOST {visit} visit')
         ds = read_sas7bdata_pd(files_dict[f'mostv{visit}enroll.sas7bdat'])
         ds = ds[ds['V{}PA'.format(visit)] == 1]  # Filtering out the cases when X-rays wern't taken
+        ds = pd.merge(ids_alive, ds)
         id_set = set(ds.MOSTID.values.tolist())
         enrolled[visit] = id_set
 
@@ -66,11 +72,10 @@ def build_img_progression_meta(most_src_dir):
                         if KL_bl_l < point[-2] < 9 and point[-2] != 1 and point[-2] != 1.9:
                             # This additional check is needed,
                             # because 8 can mean that the image could have been bad
-                            if point[-2] == 8:
-                                if ID in tkr_l.index:
-                                    if tkr_l.loc[ID].V99ELKRINDEX == point[-1]:
-                                        prog = point
-                                        break
+                            if point[-2] == 8 and ID in tkr_l.index:
+                                if tkr_l.loc[ID].V99ELKRINDEX == point[-1]:
+                                    prog = point
+                                    break
                             else:
                                 prog = point
                                 break
@@ -94,15 +99,15 @@ def build_img_progression_meta(most_src_dir):
                         if KL_bl_r < point[-2] < 9 and point[-2] != 1 and point[-2] != 1.9:
                             # This additional check is needed,
                             # because 8 can mean that the image could have been bad
-                            if point[-2] == 8:
-                                if ID in tkr_r.index:
-                                    if tkr_r.loc[ID].V99ERKRINDEX == point[-1]:
-                                        prog = point
-                                        break
+                            if point[-2] == 8 and ID in tkr_r.index:
+                                if tkr_r.loc[ID].V99ERKRINDEX == point[-1]:
+                                    prog = point
+                                    break
                             else:
                                 prog = point
                                 break
-
+                    if ID == 'M1946':
+                        print(tmp_r)
                     if prog is None:
                         if ID in last_follow_up:
                             non_progressors.append([ID, 'R', KL_bl_r, 0, 0])

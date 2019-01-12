@@ -27,6 +27,7 @@ def build_img_progression_meta(most_src_dir):
     data.set_index('MOSTID', inplace=True)
     tkr_l.set_index('MOSTID', inplace=True)
     tkr_r.set_index('MOSTID', inplace=True)
+    # we can use it for exclusion of all the images which are not PA10 @ V0
     pa_10_bl_ids = set([fname[:5] for fname in most_names if ('V0' in fname and 'PA10' in fname)])
 
     enrolled = {}
@@ -44,8 +45,8 @@ def build_img_progression_meta(most_src_dir):
     non_progressors = []
 
     for ID in tqdm(enrolled[0], total=len(enrolled[0]), desc='Processing MOST:'):
-        if ID not in pa_10_bl_ids:
-            continue
+        #if ID not in pa_10_bl_ids:
+        #    continue
         tmp_l = []
         tmp_r = []
 
@@ -60,7 +61,8 @@ def build_img_progression_meta(most_src_dir):
                 tmp_l.append([ID, 'L', KL_bl_l, KL_l, visit_id])
                 tmp_r.append([ID, 'R', KL_bl_r, KL_r, visit_id])
 
-        if 0 <= KL_bl_l <= 4:
+        # KL4 subjects are end-stage and do not progress. TKR can be made by other reasons
+        if 0 <= KL_bl_l < 4:
             if len(tmp_l) > 0:
                 # We exclude missing values and also "grades" 9 and 8
                 if sum(list(map(lambda x: x[3] == -1 or x[3] == 9, tmp_l))) == 0:
@@ -84,12 +86,13 @@ def build_img_progression_meta(most_src_dir):
                         # To ignore the patients who dropped during the study, we
                         # make sure that they were examined at the last follow-up
                         if ID in last_follow_up:
+                            assert subj['V{0}X{1}{2}'.format(5, 'L', 'KL')] == subj['V{0}X{1}{2}'.format(0, 'L', 'KL')]
                             non_progressors.append([ID, 'L', KL_bl_l, 0, 0])
                     else:
                         progressors.append([ID, 'L', KL_bl_l, prog[-2]-KL_bl_l, prog[-1]])
 
         # Doing the same thing for the right knee
-        if 0 <= KL_bl_r <= 4:
+        if 0 <= KL_bl_r < 4:
             if len(tmp_r) > 0:
                 if sum(list(map(lambda x: x[3] == -1 or x[3] == 9, tmp_r))) == 0:
                     prog = None
@@ -108,6 +111,7 @@ def build_img_progression_meta(most_src_dir):
                                 break
                     if prog is None:
                         if ID in last_follow_up:
+                            assert subj['V{0}X{1}{2}'.format(5, 'R', 'KL')] == subj['V{0}X{1}{2}'.format(0, 'R', 'KL')]
                             non_progressors.append([ID, 'R', KL_bl_r, 0, 0])
                     else:
                         progressors.append([ID, 'R', KL_bl_r, prog[-2]-KL_bl_r, prog[-1]])

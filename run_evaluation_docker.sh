@@ -17,7 +17,7 @@ nvidia-docker run -it --name oa_progression_oof_inference --rm \
 	      --dataset_root /data/ \
 	      --save_dir /workdir/Results \
 	      --metadata_root /workdir/Metadata \
-         --from_cache True
+ #        --from_cache True
 
 # Running the "easy baseline" based on logreg
 nvidia-docker run -it --name oa_prog_logreg_baselines_eval --rm \

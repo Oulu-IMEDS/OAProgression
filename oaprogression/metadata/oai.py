@@ -23,10 +23,10 @@ def build_img_progression_meta(oai_src_dir):
         meta.fillna(-1, inplace=True)
         for c in meta.columns:
             meta[c.upper()] = meta[c]
-        # Removing the TKR at the baseline
+        # Removing the TKR and KL4 at the baseline
         if i == 0:
             meta = meta[meta[f'V{exam_codes[i]}XRKL'] != -1]
-            meta = meta[meta[f'V{exam_codes[i]}XRKL'] < 5]
+            meta = meta[meta[f'V{exam_codes[i]}XRKL'] < 4]
         meta = meta[meta[f'V{exam_codes[i]}XRKL'] <= 4]
 
         meta['KL'] = meta[f'V{exam_codes[i]}XRKL']

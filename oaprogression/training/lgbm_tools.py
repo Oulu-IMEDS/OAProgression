@@ -28,7 +28,8 @@ def fit_lgb(params, train_folds, feature_set, metric, return_oof_res=False, retu
 
     oof_results = pd.concat(oof_results)
     res = list()
-    res.append(metric(oof_results.Progressor, oof_results.prog_pred))
+    res.append(metric(oof_results.Progressor.values.astype(int),
+                      oof_results.prog_pred.values.astype(float)))
     
     if return_models:
         res.append(clfs)

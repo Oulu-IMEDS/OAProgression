@@ -6,6 +6,7 @@ OAI_MOST_IMG_SRC=/media/lext/FAST/OA_progression_project/Data/MOST_OAI_00_0_2
 
 docker build -t oaprog_img .
 
+
 echo "====> Working on the snapshot $SNAPSHOT"
 
 # If you run it first time - remove the option "--from_cache".

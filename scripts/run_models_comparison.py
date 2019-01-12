@@ -59,8 +59,13 @@ if __name__ == "__main__":
     models['dl'] = dl_preds
 
     # Stacking (combination model)
-    models['lgbm_stacking_no_kl'] = lgbm_stacking['preds_MOST_BL_all_AGE_SEX_BMI_SURG_INJ_WOMAC_kl_pred_0_kl_pred_1_kl_pred_2_kl_pred_3_kl_pred_4_prog_pred_0_prog_pred_1_prog_pred_2']
-    models['lgbm_stacking_kl'] = lgbm_stacking['preds_MOST_BL_all_AGE_SEX_BMI_KL_SURG_INJ_WOMAC_kl_pred_0_kl_pred_1_kl_pred_2_kl_pred_3_kl_pred_4_prog_pred_0_prog_pred_1_prog_pred_2']
+    models['lgbm_stacking_no_kl'] = lgbm_stacking['preds_MOST_BL_all_AGE_SEX_BMI_SURG_INJ_WOMAC_'
+                                                  'kl_pred_0_kl_pred_1_kl_pred_2_kl_pred_3_'
+                                                  'prog_pred_0_prog_pred_1_prog_pred_2']
+
+    models['lgbm_stacking_kl'] = lgbm_stacking['preds_MOST_BL_all_AGE_SEX_BMI_KL_SURG_INJ_WOMAC_'
+                                               'kl_pred_0_kl_pred_1_kl_pred_2_kl_pred_3_'
+                                               'prog_pred_0_prog_pred_1_prog_pred_2']
 
     print(colored('====> ', 'green') + 'Logistic regression baselines')
     fig, axs = init_auc_pr_plot(dl_preds.Progressor.values)

@@ -4,9 +4,10 @@ import glob
 import os
 from tqdm import tqdm
 from oaprogression.metadata.utils import read_sas7bdata_pd
+import cv2
 
 
-def build_img_progression_meta(most_src_dir):
+def build_img_progression_meta(most_src_dir, img_dir):
     # 0 - no progression observed (up to 84 months)
     # 1 - progression earlier than 60 months
     # 2 - progression later than 60 and earlier than 84 months
@@ -62,7 +63,7 @@ def build_img_progression_meta(most_src_dir):
                 tmp_r.append([ID, 'R', KL_bl_r, KL_r, visit_id])
 
         # KL4 subjects are end-stage and do not progress. TKR can be made by other reasons
-        if 0 <= KL_bl_l < 4:
+        if 0 <= KL_bl_l < 4 and cv2.imread(os.path.join(img_dir, f'{ID}_00_L.png')) is not None:
             if len(tmp_l) > 0:
                 # We exclude missing values and also "grades" 9 and 8
                 if sum(list(map(lambda x: x[3] == -1 or x[3] == 9, tmp_l))) == 0:
@@ -91,7 +92,7 @@ def build_img_progression_meta(most_src_dir):
                         progressors.append([ID, 'L', KL_bl_l, prog[-2]-KL_bl_l, prog[-1]])
 
         # Doing the same thing for the right knee
-        if 0 <= KL_bl_r < 4:
+        if 0 <= KL_bl_r < 4 and cv2.imread(os.path.join(img_dir, f'{ID}_00_R.png')) is not None:
             if len(tmp_r) > 0:
                 if sum(list(map(lambda x: x[3] == -1 or x[3] == 9, tmp_r))) == 0:
                     prog = None

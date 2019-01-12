@@ -60,7 +60,6 @@ if __name__ == "__main__":
                                  'kl_pred_1': preds_kl[:, 1],
                                  'kl_pred_2': preds_kl[:, 2],
                                  'kl_pred_3': preds_kl[:, 3],
-                                 'kl_pred_4': preds_kl[:, 4]
                                  })
 
         res.to_pickle(os.path.join(args.save_dir, 'oof_results.pkl'))
@@ -74,7 +73,7 @@ if __name__ == "__main__":
     res = pd.merge(res, session_snapshot['metadata'][0], on=('ID', 'Side'))
     val_metrics = tools.calc_metrics(res.Progressor.values, res.KL.values,
                                      res[['prog_pred_0', 'prog_pred_1', 'prog_pred_2']].values,
-                                     res[['kl_pred_0', 'kl_pred_1', 'kl_pred_2', 'kl_pred_3', 'kl_pred_4']].values,)
+                                     res[['kl_pred_0', 'kl_pred_1', 'kl_pred_2', 'kl_pred_3']].values,)
 
     pprint.pprint(val_metrics)
 

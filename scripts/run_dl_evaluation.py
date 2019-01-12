@@ -31,7 +31,7 @@ if __name__ == "__main__":
     with open(os.path.join(args.snapshots_root, args.snapshot, 'session.pkl'), 'rb') as f:
         session_snapshot = pickle.load(f)
 
-    loader = tools.init_loader(session_snapshot['metadata_test'][0], args)
+    loader = tools.init_loader(pd.read_csv(os.path.join(args.metadata_root, 'MOST_progression.csv')), args)
 
     gradcam_maps_all = 0
     res_kl = 0

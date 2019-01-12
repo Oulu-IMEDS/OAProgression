@@ -9,6 +9,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--oai_meta', default='/media/lext/FAST/OA_progression_project/Data/X-Ray_Image_Assessments_SAS')
     parser.add_argument('--most_meta', default='/media/lext/FAST/OA_progression_project/Data/most_meta')
+    parser.add_argument('--imgs_dir', default='/media/lext/FAST/OA_progression_project/Data/MOST_OAI_00_0_2')
     parser.add_argument('--save_meta', default='/media/lext/FAST/OA_progression_project/workdir/Metadata/')
     args = parser.parse_args()
 
@@ -28,7 +29,7 @@ if __name__ == "__main__":
         print('OAI participants metadata exists!')
 
     if not os.path.isfile(os.path.join(args.save_meta, 'MOST_progression.csv')):
-        most_meta = most.build_img_progression_meta(args.most_meta)
+        most_meta = most.build_img_progression_meta(args.most_meta, args.imgs_dir)
         most_meta.to_csv(os.path.join(args.save_meta, 'MOST_progression.csv'), index=None)
     else:
         most_meta = pd.read_csv(os.path.join(args.save_meta, 'MOST_progression.csv'))

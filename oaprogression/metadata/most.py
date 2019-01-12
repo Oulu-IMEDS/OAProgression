@@ -116,6 +116,7 @@ def build_img_progression_meta(most_src_dir, img_dir):
                         progressors.append([ID, 'R', KL_bl_r, prog[-2]-KL_bl_r, prog[-1]])
 
     progr_data = pd.DataFrame(progressors + non_progressors, columns=['ID', 'Side', 'KL', 'Prog_increase', 'Progressor'])
+    progr_data['Progressor_visit'] = progr_data.Progressor.copy()
     progr_data.Progressor = progr_data.apply(lambda x: mapping[x.Progressor], 1)
     return progr_data
 

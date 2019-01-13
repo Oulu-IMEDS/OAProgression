@@ -1,4 +1,4 @@
-FROM nvidia/cuda:9.1-cudnn7-devel-ubuntu16.04
+FROM nvidia/cuda:10.0-cudnn7-devel-ubuntu16.04
 
 MAINTAINER Aleksei Tiulpin, University of Oulu, Version 3.0
 
@@ -35,7 +35,7 @@ ENV PATH=/opt/conda/bin:${PATH}
 RUN conda update -n base conda
 
 RUN conda create -y --name oaprog python=3.6
-RUN conda install -y pytorch=0.4.1 torchvision cuda91 -c pytorch -n oaprog
+RUN conda install -y pytorch=1.0.0 torchvision cuda100 -c pytorch -n oaprog
 
 COPY requirements.txt requirements.txt
 ENV PATH /opt/conda/envs/oaprog/bin:$PATH

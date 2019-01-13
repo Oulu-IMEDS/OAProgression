@@ -36,95 +36,77 @@ def init_optimizer(parameters):
         raise NotImplementedError
 
 
-def train_epoch(net, optimizer, train_loader):
+def prog_epoch_pass(net, optimizer, loader):
     kvs = GlobalKVS()
-    net.train(True)
+    net.train(optimizer is not None)
     running_loss = 0.0
-    n_batches = len(train_loader)
-    pbar = tqdm(total=len(train_loader))
+    n_batches = len(loader)
+    pbar = tqdm(total=n_batches)
     epoch = kvs['cur_epoch']
     max_epoch = kvs['args'].n_epochs
     device = next(net.parameters()).device
-    for i, batch in enumerate(train_loader):
-        optimizer.zero_grad()
-        # forward + backward + optimize
-        labels_prog = batch['label'].long().to(device)
-        labels_kl = batch['KL'].long().to(device)
 
-        inputs = batch['img'].to(device)
-
-        outputs_kl, outputs_prog = net(inputs)
-        loss_kl = F.cross_entropy(outputs_kl, labels_kl)
-        loss_prog = F.cross_entropy(outputs_prog, labels_prog)
-
-        loss = loss_prog.mul(kvs['args'].loss_weight) + loss_kl.mul(1 - kvs['args'].loss_weight)
-
-        loss.backward()
-        if kvs['args'].clip_grad:
-            torch.nn.utils.clip_grad_norm_(net.parameters(), kvs['args'].clip_grad_norm)
-        optimizer.step()
-
-        running_loss += loss.item()
-        pbar.set_description(f'Training [{epoch} / {max_epoch}]:: {running_loss / (i + 1):.3f}')
-        pbar.update()
-
-        gc.collect()
-    gc.collect()
-    pbar.close()
-    return running_loss / n_batches
-
-
-def validate_epoch(net, val_loader):
-    kvs = GlobalKVS()
-    net.eval()
-    running_loss = 0.0
-    n_batches = len(val_loader)
-    epoch = kvs['cur_epoch']
-    max_epoch = kvs['args'].n_epochs
     preds_progression = []
     gt_progression = []
-
+    ids = []
     preds_kl = []
     gt_kl = []
-    device = next(net.parameters()).device
-    ids = []
-    with torch.no_grad():
-        for i, batch in tqdm(enumerate(val_loader), total=len(val_loader),
-                             desc=f'Validating [{epoch} / {max_epoch}]:: '):
 
+    with torch.set_grad_enabled(optimizer is not None):
+        for i, batch in enumerate(loader):
+            if optimizer is not None:
+                optimizer.zero_grad()
+            # forward + backward + optimize if train
             labels_prog = batch['label'].long().to(device)
             labels_kl = batch['KL'].long().to(device)
 
             inputs = batch['img'].to(device)
 
             outputs_kl, outputs_prog = net(inputs)
-
             loss_kl = F.cross_entropy(outputs_kl, labels_kl)
             loss_prog = F.cross_entropy(outputs_prog, labels_prog)
 
             loss = loss_prog.mul(kvs['args'].loss_weight) + loss_kl.mul(1 - kvs['args'].loss_weight)
 
-            probs_progression_batch = F.softmax(outputs_prog, 1).data.to('cpu').numpy()
-            probs_kl_batch = F.softmax(outputs_kl, 1).data.to('cpu').numpy()
+            if optimizer is not None:
+                loss.backward()
+                if kvs['args'].clip_grad:
+                    torch.nn.utils.clip_grad_norm_(net.parameters(), kvs['args'].clip_grad_norm)
+                optimizer.step()
+            else:
+                probs_progression_batch = F.softmax(outputs_prog, 1).data.to('cpu').numpy()
+                probs_kl_batch = F.softmax(outputs_kl, 1).data.to('cpu').numpy()
 
-            preds_progression.append(probs_progression_batch)
-            gt_progression.append(batch['label'].numpy())
+                preds_progression.append(probs_progression_batch)
+                gt_progression.append(batch['label'].numpy())
 
-            preds_kl.append(probs_kl_batch)
-            gt_kl.append(batch['KL'].numpy())
-            ids.extend(batch['ID_SIDE'])
+                preds_kl.append(probs_kl_batch)
+                gt_kl.append(batch['KL'].numpy())
+                ids.extend(batch['ID_SIDE'])
 
             running_loss += loss.item()
+            if optimizer is not None:
+                pbar.set_description(f'Training   [{epoch} / {max_epoch}]:: {running_loss / (i + 1):.3f}')
+            else:
+                pbar.set_description(f'Validating [{epoch} / {max_epoch}]:')
+            pbar.update()
+
             gc.collect()
-        gc.collect()
 
-    preds_progression = np.vstack(preds_progression)
-    gt_progression = np.hstack(gt_progression)
+    if optimizer is None:
+        preds_progression = np.vstack(preds_progression)
+        gt_progression = np.hstack(gt_progression)
 
-    preds_kl = np.vstack(preds_kl)
-    gt_kl = np.hstack(gt_kl)
+        preds_kl = np.vstack(preds_kl)
+        gt_kl = np.hstack(gt_kl)
 
-    return running_loss/n_batches, ids, gt_progression, preds_progression, gt_kl, preds_kl
+    gc.collect()
+    pbar.close()
+
+    if optimizer is not None:
+        return running_loss / n_batches
+    else:
+        return running_loss/n_batches, ids, gt_progression, preds_progression, gt_kl, preds_kl
 
 
 def log_metrics(boardlogger, train_loss, val_loss, gt_progression, preds_progression, gt_kl, preds_kl):

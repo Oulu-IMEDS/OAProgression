@@ -23,7 +23,7 @@ def eval_batch(sample, features, fc, fc_kl=None):
         maps_avg = F.adaptive_avg_pool2d(maps, 1).view(maps.size(0), -1)
         if fc_kl is not None:
             out_kl = F.softmax(fc_kl(maps_avg), 1).view(bs, ncrops, -1).mean(1)
-
+            out_kl = out_kl.to('cpu').numpy()
     fc.zero_grad()
     # Registering a hook to get the gradients
     grads = []

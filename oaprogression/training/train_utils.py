@@ -81,7 +81,7 @@ def prog_epoch_pass(net, optimizer, loader):
                 gt_progression.append(batch['label'].numpy())
 
                 preds_kl.append(probs_kl_batch)
-                gt_kl.append(batch['KL'].numpy())
+                gt_kl.append(batch['KL'])
                 ids.extend(batch['ID_SIDE'])
 
             running_loss += loss.item()

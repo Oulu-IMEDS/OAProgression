@@ -19,7 +19,10 @@ def init_model(kneenet=True):
     if kneenet:
         net = KneeNet(kvs['args'].backbone, kvs['args'].dropout_rate)
     else:
-        net = PretrainedModel(kvs['args'].backbone, kvs['args'].dropout_rate, 1, True)
+        if not kvs['args'].predict_age_sex_bmi:
+            net = PretrainedModel(kvs['args'].backbone, kvs['args'].dropout_rate, 1, True)
+        else:
+            net = PretrainedModel(kvs['args'].backbone, kvs['args'].dropout_rate, 3, True)
 
     if kvs['gpus'] > 1:
         net = nn.DataParallel(net).to('cuda')
@@ -57,19 +60,37 @@ def epoch_pass(net, optimizer, loader):
         criterion = F.binary_cross_entropy_with_logits
     else:
         criterion = F.mse_loss
-    preds = []
-    gt = []
-    ids = []
+    # Individual factors prediction
+    preds = list()
+    gt = list()
+    # Predicting Age, Sex, BMI
+    preds_age = list()
+    preds_sex = list()
+    preds_bmi = list()
+
+    gt_age = list()
+    gt_sex = list()
+    gt_bmi = list()
+
+    ids = list()
 
     with torch.set_grad_enabled(optimizer is not None):
         for i, batch in enumerate(loader):
             if optimizer is not None:
                 optimizer.zero_grad()
             inp = batch['img'].to(device)
-            target = batch[kvs['args'].target_var].float().to(device)
-
             output = net(inp).squeeze()
-            loss = criterion(output, target)
+            if not kvs['args'].predict_age_sex_bmi:
+                target = batch[kvs['args'].target_var].float().to(device)
+                loss = criterion(output, target)
+            else:
+                target_age = batch['AGE'].float().to(device)
+                target_sex = batch['SEX'].float().to(device)
+                target_bmi = batch['BMI'].float().to(device)
+                loss_age = F.mse_loss(output[:, 0].squeeze(), target_age)
+                loss_sex = F.binary_cross_entropy_with_logits(output[:, 1].squeeze(), target_sex)
+                loss_bmi = F.mse_loss(output[:, 2].squeeze(), target_bmi)
+                loss = loss_age + loss_sex + loss_bmi
 
             if optimizer is not None:
                 loss.backward()
@@ -77,13 +98,26 @@ def epoch_pass(net, optimizer, loader):
                     torch.nn.utils.clip_grad_norm_(net.parameters(), kvs['args'].clip_grad_norm)
                 optimizer.step()
             else:
-                if kvs['args'].target_var == 'SEX':
-                    pred_batch = torch.sigmoid(output).data.to('cpu').numpy().squeeze()
+                if not kvs['args'].predict_age_sex_bmi:
+                    if kvs['args'].target_var == 'SEX':
+                        pred_batch = torch.sigmoid(output).data.to('cpu').numpy().squeeze()
+                    else:
+                        pred_batch = output.data.to('cpu').numpy().squeeze()
+                    preds.append(pred_batch)
+                    gt.append(batch[kvs['args'].target_var].numpy().squeeze())
                 else:
-                    pred_batch = output.data.to('cpu').numpy().squeeze()
+                    preds_age_batch = output[:, 0].data.to('cpu').numpy().squeeze()
+                    preds_sex_batch = torch.sigmoid(output[:, 1]).data.to('cpu').numpy().squeeze()
+                    preds_bmi_batch = output[:, 2].data.to('cpu').numpy().squeeze()
 
-                preds.append(pred_batch)
-                gt.append(batch[kvs['args'].target_var].numpy().squeeze())
+                    preds_age.append(preds_age_batch)
+                    preds_sex.append(preds_sex_batch)
+                    preds_bmi.append(preds_bmi_batch)
+
+                    gt_age.append(batch['AGE'].numpy().squeeze())
+                    gt_sex.append(batch['SEX'].numpy().squeeze())
+                    gt_bmi.append(batch['BMI'].numpy().squeeze())
+
                 ids.extend(batch['ID_SIDE'])
 
             running_loss += loss.item()
@@ -95,17 +129,27 @@ def epoch_pass(net, optimizer, loader):
 
             gc.collect()
 
-    if optimizer is None:
-        preds = np.hstack(preds)
-        gt = np.hstack(gt)
-
     gc.collect()
     pbar.close()
 
     if optimizer is not None:
         return running_loss / n_batches
     else:
-        return running_loss/n_batches, ids, gt, preds
+        if not kvs['args'].predict_age_sex_bmi:
+            preds = np.hstack(preds)
+            gt = np.hstack(gt)
+            return running_loss/n_batches, ids, gt, preds
+        else:
+            preds_age = np.hstack(preds_age)
+            gt_age = np.hstack(gt_age)
+
+            preds_sex = np.hstack(preds_sex)
+            gt_sex = np.hstack(gt_sex)
+
+            preds_bmi = np.hstack(preds_bmi)
+            gt_bmi = np.hstack(gt_bmi)
+
+            return running_loss / n_batches, ids, gt_age, preds_age, gt_sex, preds_sex, gt_bmi, preds_bmi
 
 
 def prog_epoch_pass(net, optimizer, loader):
@@ -209,35 +253,59 @@ def log_metrics_prog(boardlogger, train_loss, val_loss, gt_progression, preds_pr
     kvs.save_pkl(os.path.join(kvs['args'].snapshots, kvs['snapshot_name'], 'session.pkl'))
 
 
-def log_metrics_age_sex_bmi(boardlogger, train_loss, val_loss, gt, preds):
+def log_metrics_age_sex_bmi(boardlogger, train_loss, val_res):
     kvs = GlobalKVS()
-    val_auc, val_mse, val_mae = None, None, None
     res = dict()
+    val_loss = val_res[0]
     res['val_loss'] = val_loss,
     res['epoch'] = kvs['cur_epoch']
-    if kvs['args'].target_var == 'SEX':
-        val_auc = roc_auc_score(gt.astype(int), preds)
-        res['sex_auc'] = val_auc
-        boardlogger.add_scalars('AUC sex', {'val': res['sex_auc']}, kvs['cur_epoch'])
-    else:
-        val_mse = mean_squared_error(gt, preds)
-        val_mae = median_absolute_error(gt, preds)
-        res[f"{kvs['args'].target_var}_mse"] = val_mse
-        res[f"{kvs['args'].target_var}_mae"] = val_mae
-
-        boardlogger.add_scalars(f"MSE [{kvs['args'].target_var}]", {'val': val_mse},
-                                kvs['cur_epoch'])
-        boardlogger.add_scalars(f"MAE [{kvs['args'].target_var}]", {'val': val_mae},
-                                kvs['cur_epoch'])
-
     print(colored('====> ', 'green') + f'Train loss: {train_loss:.5f}')
     print(colored('====> ', 'green') + f'Validation loss: {val_loss:.5f}')
-    if kvs['args'].target_var == 'SEX':
-        print(colored('====> ', 'green') + f'Validation AUC: {val_auc:.5f}')
-    else:
-        print(colored('====> ', 'green') + f'Validation mae: {val_mae:.5f}')
-        print(colored('====> ', 'green') + f'Validation mse: {val_loss:.5f}')
     boardlogger.add_scalars('Losses', {'train': train_loss, 'val': val_loss}, kvs['cur_epoch'])
+
+    if not kvs['args'].predict_age_sex_bmi:
+        _, ids, gt, preds = val_res
+        if kvs['args'].target_var == 'SEX':
+            val_auc = roc_auc_score(gt.astype(int), preds)
+            res['sex_auc'] = val_auc
+            print(colored('====> ', 'green') + f'Validation AUC: {val_auc:.5f}')
+            boardlogger.add_scalars('AUC sex', {'val': res['sex_auc']}, kvs['cur_epoch'])
+        else:
+            val_mse = mean_squared_error(gt, preds)
+            val_mae = median_absolute_error(gt, preds)
+            res[f"{kvs['args'].target_var}_mse"] = val_mse
+            res[f"{kvs['args'].target_var}_mae"] = val_mae
+
+            print(colored('====> ', 'green') + f'Validation mae: {val_mae:.5f}')
+            print(colored('====> ', 'green') + f'Validation mse: {val_mse:.5f}')
+
+            boardlogger.add_scalars(f"MSE [{kvs['args'].target_var}]", {'val': val_mse},
+                                    kvs['cur_epoch'])
+            boardlogger.add_scalars(f"MAE [{kvs['args'].target_var}]", {'val': val_mae},
+                                    kvs['cur_epoch'])
+    else:
+        _, ids, gt_age, preds_age, gt_sex, preds_sex, gt_bmi, preds_bmi = val_res
+        val_mse_age = mean_squared_error(gt_age, preds_age)
+        val_mae_age = median_absolute_error(gt_age, preds_age)
+        val_sex_auc = roc_auc_score(gt_sex.astype(int), preds_sex)
+        val_mse_bmi = mean_squared_error(gt_bmi, preds_bmi)
+        val_mae_bmi = median_absolute_error(gt_bmi, preds_bmi)
+
+        res["AGE_mse"] = val_mse_age
+        res["AGE_mae"] = val_mae_age
+
+        res["BMI_mse"] = val_mse_bmi
+        res["BMI_mae"] = val_mae_bmi
+
+        res["SEX_auc"] = val_sex_auc
+
+        print(colored('====> ', 'green') + f'Validation mae [Age]: {val_mae_age:.5f}')
+        print(colored('====> ', 'green') + f'Validation mse [Age]: {val_mse_age:.5f}')
+
+        print(colored('====> ', 'green') + f'Validation val_auc [Sex]: {val_sex_auc:.5f}')
+
+        print(colored('====> ', 'green') + f'Validation mae [BMI]: {val_mae_bmi:.5f}')
+        print(colored('====> ', 'green') + f'Validation mse [BMI]: {val_mse_bmi:.5f}')
 
     kvs.update(f'losses_fold_[{kvs["cur_fold"]}]', {'epoch': kvs['cur_epoch'],
                                                     'train_loss': train_loss,

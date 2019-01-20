@@ -130,12 +130,12 @@ def init_loaders(x_train, x_val, progression=True):
         ds = AgeSexBMIDataset
 
     train_dataset = ds(dataset=kvs['args'].dataset_root,
-                                         split=x_train,
-                                         trf=kvs['train_trf'])
+                       split=x_train,
+                       trf=kvs['train_trf'])
 
     val_dataset = ds(dataset=kvs['args'].dataset_root,
-                                       split=x_val,
-                                       trf=kvs['val_trf'])
+                     split=x_val,
+                     trf=kvs['val_trf'])
 
     train_loader = DataLoader(train_dataset, batch_size=kvs['args'].bs,
                               num_workers=kvs['args'].n_threads,

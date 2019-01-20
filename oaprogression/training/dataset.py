@@ -136,6 +136,10 @@ def init_progression_metadata():
 
 
 def img_labels2solt(inp):
+    if len(inp) == 3:
+        img, kl, prog = inp
+        return sld.DataContainer((img, kl, prog), fmt='ILL')
+
     img, age, sex, bmi = inp
     return sld.DataContainer((img, age, sex, bmi), fmt='ILLL')
 
@@ -200,7 +204,7 @@ def debug_augmentations(n_iter=20):
 
     ds = OAProgressionDataset(dataset=kvs['args'].dataset_root,
                               split=kvs['metadata'],
-                              transforms=init_train_augs())
+                              trf=init_train_augs())
 
     for ind in np.random.choice(len(ds), n_iter, replace=False):
         sample = ds[ind]

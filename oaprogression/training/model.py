@@ -20,18 +20,18 @@ class PretrainedModel(nn.Module):
         self.encoder = nn.Sequential(*self.encoder)
 
         if drop > 0:
-            self.classifier = nn.Sequential(FCViewer(),
+            self.fc = nn.Sequential(FCViewer(),
                                             nn.Dropout(drop),
                                             nn.Linear(model.last_linear.in_features, ncls))
         else:
-            self.classifier = nn.Sequential(
+            self.fc = nn.Sequential(
                 FCViewer(),
                 nn.Linear(model.last_linear.in_features, ncls)
             )
 
     def forward(self, x):
         x = self.encoder(x)
-        x = self.classifier(x)
+        x = self.fc(x)
         return x
 
 

@@ -97,7 +97,7 @@ def init_loader(metadata, args):
     ])
 
     dataset = OAProgressionDataset(dataset=args.dataset_root,
-                                   split=metadata, transforms=tta_trf)
+                                   split=metadata, trf=tta_trf)
 
     loader = DataLoader(dataset,
                         batch_size=args.bs,

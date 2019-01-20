@@ -5,7 +5,6 @@ if int(os.getenv('USE_AGG', 1)) == 1:
     matplotlib.use('Agg')
 
 import pickle
-import matplotlib.pyplot as plt
 from sklearn.metrics import average_precision_score, roc_auc_score
 
 from oaprogression.training import baselines

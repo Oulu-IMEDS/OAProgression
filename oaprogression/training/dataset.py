@@ -22,10 +22,10 @@ cv2.setNumThreads(0)
 
 
 class OAProgressionDataset(data.Dataset):
-    def __init__(self, dataset, split, transforms):
+    def __init__(self, dataset, split, trf):
         self.dataset = dataset
         self.split = split
-        self.transforms = transforms
+        self.transforms = trf
 
     def __getitem__(self, ind):
         if isinstance(ind, torch.Tensor):
@@ -50,7 +50,60 @@ class OAProgressionDataset(data.Dataset):
         return self.split.shape[0]
 
 
-def init_metadata():
+class AgeSexBMIDataset(data.Dataset):
+    def __init__(self, dataset, split, trf):
+        self.dataset = dataset
+        self.split = split
+        self.transforms = trf
+
+    def __getitem__(self, ind):
+        if isinstance(ind, torch.Tensor):
+            ind = ind.item()
+        entry = self.split.iloc[ind]
+        fname = os.path.join(self.dataset, '{}_00_{}.png'.format(entry.ID, entry.Side))
+        img = cv2.imread(fname, 0)
+        if entry.Side == 'L':
+            img = cv2.flip(img, 1)
+        img = img.reshape((img.shape[0], img.shape[1], 1))
+        img, age, sex, bmi = self.transforms((img, entry.AGE, entry.SEX, entry.BMI))
+
+        res = {'AGE': age,
+               'SEX': sex,
+               'BMI': bmi,
+               'img': img,
+               'ID_SIDE': str(entry.ID) + '_' + entry.Side
+               }
+
+        return res
+
+    def __len__(self):
+        return self.split.shape[0]
+
+
+def init_age_sex_bmi_metadata():
+    kvs = GlobalKVS()
+
+    oai_meta = pd.read_csv(os.path.join(kvs['args'].metadata_root, 'OAI_progression.csv'))
+    clinical_data_oai = pd.read_csv(os.path.join(kvs['args'].metadata_root, 'OAI_participants.csv'))
+    oai_meta = pd.merge(oai_meta, clinical_data_oai, on=('ID', 'Side'))
+    oai_meta = oai_meta[~oai_meta.BMI.isna() & ~oai_meta.AGE.isna() & ~oai_meta.SEX.isna()]
+
+    clinical_data_most = pd.read_csv(os.path.join(kvs['args'].metadata_root, 'MOST_participants.csv'))
+    metadata_test = pd.read_csv(os.path.join(kvs['args'].metadata_root, 'MOST_progression.csv'))
+    metadata_test = pd.merge(metadata_test, clinical_data_most, on=('ID', 'Side'))
+
+    kvs.update('metadata', oai_meta)
+    kvs.update('metadata_test', metadata_test)
+    gkf = GroupKFold(n_splits=5)
+    cv_split = [x for x in gkf.split(kvs['metadata'],
+                                     kvs['metadata'][kvs['args'].target_var],
+                                     kvs['metadata']['ID'].astype(str))]
+
+    kvs.update('cv_split_all_folds', cv_split)
+    kvs.save_pkl(os.path.join(kvs['args'].snapshots, kvs['snapshot_name'], 'session.pkl'))
+
+
+def init_progression_metadata():
     # We get should rid of non-progressors from MOST because we can check
     # non-progressors only up to 84 months
     kvs = GlobalKVS()
@@ -83,8 +136,8 @@ def init_metadata():
 
 
 def img_labels2solt(inp):
-    img, KL, prog_label = inp
-    return sld.DataContainer((img, KL, prog_label), fmt='ILL')
+    img, age, sex, bmi = inp
+    return sld.DataContainer((img, age, sex, bmi), fmt='ILLL')
 
 
 def unpack_solt_data(dc: sld.DataContainer):

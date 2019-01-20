@@ -1,23 +1,25 @@
 from tqdm import tqdm
 import gc
 import numpy as np
-
+from sklearn.metrics import mean_squared_error, roc_auc_score, median_absolute_error
 import torch
 from torch import nn
 import torch.nn.functional as F
 from torch import optim
 from oaprogression.kvs import GlobalKVS
-from oaprogression.training.model import KneeNet
-
+from oaprogression.training.model import KneeNet, PretrainedModel
 
 import os
 from termcolor import colored
 from oaprogression.evaluation import tools as testtools
 
 
-def init_model():
+def init_model(kneenet=True):
     kvs = GlobalKVS()
-    net = KneeNet(kvs['args'].backbone, kvs['args'].dropout_rate)
+    if kneenet:
+        net = KneeNet(kvs['args'].backbone, kvs['args'].dropout_rate)
+    else:
+        net = PretrainedModel(kvs['args'].backbone, kvs['args'].dropout_rate, 1, True)
 
     if kvs['gpus'] > 1:
         net = nn.DataParallel(net).to('cuda')
@@ -36,7 +38,7 @@ def init_optimizer(parameters):
         raise NotImplementedError
 
 
-def prog_epoch_pass(net, optimizer, loader):
+def init_epoch_pass(net, optimizer, loader):
     kvs = GlobalKVS()
     net.train(optimizer is not None)
     running_loss = 0.0
@@ -45,6 +47,70 @@ def prog_epoch_pass(net, optimizer, loader):
     epoch = kvs['cur_epoch']
     max_epoch = kvs['args'].n_epochs
     device = next(net.parameters()).device
+    return running_loss, pbar, n_batches, epoch, max_epoch, device
+
+
+def epoch_pass(net, optimizer, loader):
+    kvs = GlobalKVS()
+    running_loss, pbar, n_batches, epoch, max_epoch, device = init_epoch_pass(net, optimizer, loader)
+    if kvs['args'].target_var == 'SEX':
+        criterion = F.binary_cross_entropy_with_logits
+    else:
+        criterion = F.mse_loss
+    preds = []
+    gt = []
+    ids = []
+
+    with torch.set_grad_enabled(optimizer is not None):
+        for i, batch in enumerate(loader):
+            if optimizer is not None:
+                optimizer.zero_grad()
+            inp = batch['img'].to(device)
+            target = batch[kvs['args'].target_var].float().to(device)
+
+            output = net(inp)
+            loss = criterion(output, target)
+
+            if optimizer is not None:
+                loss.backward()
+                if kvs['args'].clip_grad:
+                    torch.nn.utils.clip_grad_norm_(net.parameters(), kvs['args'].clip_grad_norm)
+                optimizer.step()
+            else:
+                if kvs['args'].target_var == 'SEX':
+                    pred_batch = F.sigmoid(output).data.to('cpu').numpy().squeeze()
+                else:
+                    pred_batch = output.data.to('cpu').numpy().squeeze()
+
+                preds.append(pred_batch)
+                gt.append(batch[kvs['args'].target_var].numpy().squeeze())
+                ids.extend(batch['ID_SIDE'])
+
+            running_loss += loss.item()
+            if optimizer is not None:
+                pbar.set_description(f'Training   [{epoch} / {max_epoch}]:: {running_loss / (i + 1):.3f}')
+            else:
+                pbar.set_description(f'Validating [{epoch} / {max_epoch}]:')
+            pbar.update()
+
+            gc.collect()
+
+    if optimizer is None:
+        preds = np.hstack(preds)
+        gt = np.hstack(gt)
+
+    gc.collect()
+    pbar.close()
+
+    if optimizer is not None:
+        return running_loss / n_batches
+    else:
+        return running_loss/n_batches, ids, gt, preds
+
+
+def prog_epoch_pass(net, optimizer, loader):
+    kvs = GlobalKVS()
+    running_loss, pbar, n_batches, epoch, max_epoch, device = init_epoch_pass(net, optimizer, loader)
 
     preds_progression = []
     gt_progression = []
@@ -109,7 +175,7 @@ def prog_epoch_pass(net, optimizer, loader):
         return running_loss/n_batches, ids, gt_progression, preds_progression, gt_kl, preds_kl
 
 
-def log_metrics(boardlogger, train_loss, val_loss, gt_progression, preds_progression, gt_kl, preds_kl):
+def log_metrics_prog(boardlogger, train_loss, val_loss, gt_progression, preds_progression, gt_kl, preds_kl):
     kvs = GlobalKVS()
 
     res = testtools.calc_metrics(gt_progression, gt_kl, preds_progression, preds_kl)
@@ -133,6 +199,45 @@ def log_metrics(boardlogger, train_loss, val_loss, gt_progression, preds_progres
     boardlogger.add_scalars('F1-score @ 0.4 progression', {'val': res['f1_score_04_prog']}, kvs['cur_epoch'])
     boardlogger.add_scalars('F1-score @ 0.5 progression', {'val': res['f1_score_05_prog']}, kvs['cur_epoch'])
     boardlogger.add_scalars('Average Precision progression', {'val': res['ap_prog']}, kvs['cur_epoch'])
+
+    kvs.update(f'losses_fold_[{kvs["cur_fold"]}]', {'epoch': kvs['cur_epoch'],
+                                                    'train_loss': train_loss,
+                                                    'val_loss': val_loss})
+
+    kvs.update(f'val_metrics_fold_[{kvs["cur_fold"]}]', res)
+
+    kvs.save_pkl(os.path.join(kvs['args'].snapshots, kvs['snapshot_name'], 'session.pkl'))
+
+
+def log_metrics_age_sex_bmi(boardlogger, train_loss, val_loss, gt, preds):
+    kvs = GlobalKVS()
+    val_auc, val_mse, val_mae = None, None, None
+    res = dict()
+    res['val_loss'] = val_loss,
+    res['epoch'] = kvs['cur_epoch']
+    if kvs['args'].target_var == 'SEX':
+        val_auc = roc_auc_score(gt.astype(int), preds)
+        res['sex_auc'] = val_auc
+        boardlogger.add_scalars('AUC sex', {'val': res['sex_auc']}, kvs['cur_epoch'])
+    else:
+        val_mse = mean_squared_error(gt, preds)
+        val_mae = median_absolute_error(gt, preds)
+        res[f"{kvs['args'].target_var}_mse"] = val_mse
+        res[f"{kvs['args'].target_var}_mae"] = val_mae
+
+        boardlogger.add_scalars(f"MSE [{kvs['args'].target_var}]", {'val': val_mse},
+                                kvs['cur_epoch'])
+        boardlogger.add_scalars(f"MAE [{kvs['args'].target_var}]", {'val': val_mae},
+                                kvs['cur_epoch'])
+
+    print(colored('====> ', 'green') + f'Train loss: {train_loss:.5f}')
+    print(colored('====> ', 'green') + f'Validation loss: {val_loss:.5f}')
+    if kvs['args'].target_var == 'SEX':
+        print(colored('====> ', 'green') + f'Validation AUC: {val_auc:.5f}')
+    else:
+        print(colored('====> ', 'green') + f'Validation mae: {val_mae:.5f}')
+        print(colored('====> ', 'green') + f'Validation mse: {val_loss:.5f}')
+    boardlogger.add_scalars('Losses', {'train': train_loss, 'val': val_loss}, kvs['cur_epoch'])
 
     kvs.update(f'losses_fold_[{kvs["cur_fold"]}]', {'epoch': kvs['cur_epoch'],
                                                     'train_loss': train_loss,

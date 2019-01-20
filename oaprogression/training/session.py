@@ -14,7 +14,7 @@ from torchvision import transforms as tv_transforms
 import operator
 
 from oaprogression.training.args import parse_args
-from oaprogression.training.dataset import OAProgressionDataset
+from oaprogression.training.dataset import OAProgressionDataset, AgeSexBMIDataset
 from oaprogression.training.dataset import init_train_augs, apply_by_index, img_labels2solt, unpack_solt_data
 from oaprogression.kvs import GlobalKVS, git_info
 
@@ -63,7 +63,7 @@ def init_data_processing():
     kvs = GlobalKVS()
     train_augs = init_train_augs()
 
-    dataset = OAProgressionDataset(dataset=kvs['args'].dataset_root, split=kvs['metadata'], transforms=train_augs)
+    dataset = OAProgressionDataset(dataset=kvs['args'].dataset_root, split=kvs['metadata'], trf=train_augs)
 
     mean_vector, std_vector = init_mean_std(snapshots_dir=kvs['args'].snapshots,
                                             dataset=dataset, batch_size=kvs['args'].bs,
@@ -122,15 +122,20 @@ def init_mean_std(snapshots_dir, dataset, batch_size, n_threads):
     return mean_vector, std_vector
 
 
-def init_loaders(x_train, x_val):
+def init_loaders(x_train, x_val, progression=True):
     kvs = GlobalKVS()
-    train_dataset = OAProgressionDataset(dataset=kvs['args'].dataset_root,
-                                         split=x_train,
-                                         transforms=kvs['train_trf'])
 
-    val_dataset = OAProgressionDataset(dataset=kvs['args'].dataset_root,
+    ds = OAProgressionDataset
+    if not progression:
+        ds = AgeSexBMIDataset
+
+    train_dataset = ds(dataset=kvs['args'].dataset_root,
+                                         split=x_train,
+                                         trf=kvs['train_trf'])
+
+    val_dataset = ds(dataset=kvs['args'].dataset_root,
                                        split=x_val,
-                                       transforms=kvs['val_trf'])
+                                       trf=kvs['val_trf'])
 
     train_loader = DataLoader(train_dataset, batch_size=kvs['args'].bs,
                               num_workers=kvs['args'].n_threads,
@@ -143,7 +148,7 @@ def init_loaders(x_train, x_val):
     return train_loader, val_loader
 
 
-def init_folds():
+def init_folds(project='OA_progression'):
     kvs = GlobalKVS()
     writers = {}
     cv_split_train = {}
@@ -154,7 +159,7 @@ def init_folds():
         kvs.update(f'val_metrics_fold_[{fold_id}]', None, list)
         cv_split_train[fold_id] = split
         writers[fold_id] = SummaryWriter(os.path.join(kvs['args'].logs,
-                                                      'OA_progression',
+                                                      project,
                                                       'fold_{}'.format(fold_id), kvs['snapshot_name']))
 
     kvs.update('cv_split_train', cv_split_train)

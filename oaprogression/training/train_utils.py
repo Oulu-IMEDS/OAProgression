@@ -68,7 +68,7 @@ def epoch_pass(net, optimizer, loader):
             inp = batch['img'].to(device)
             target = batch[kvs['args'].target_var].float().to(device)
 
-            output = net(inp)
+            output = net(inp).squeeze()
             loss = criterion(output, target)
 
             if optimizer is not None:
@@ -78,7 +78,7 @@ def epoch_pass(net, optimizer, loader):
                 optimizer.step()
             else:
                 if kvs['args'].target_var == 'SEX':
-                    pred_batch = F.sigmoid(output).data.to('cpu').numpy().squeeze()
+                    pred_batch = torch.sigmoid(output).data.to('cpu').numpy().squeeze()
                 else:
                     pred_batch = output.data.to('cpu').numpy().squeeze()
 

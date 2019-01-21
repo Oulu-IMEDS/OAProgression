@@ -6,14 +6,11 @@ if int(os.getenv('USE_AGG', 1)) == 1:
 
 import argparse
 import pandas as pd
-import lightgbm as lgb
 import numpy as np
-import pickle
-import pprint
 from termcolor import colored
 import matplotlib.pyplot as plt
 
-from oaprogression.evaluation import tools, stats
+from oaprogression.evaluation import stats
 from oaprogression.evaluation.tools import pkl2df, init_auc_pr_plot, compute_and_plot_curves
 
 if __name__ == "__main__":

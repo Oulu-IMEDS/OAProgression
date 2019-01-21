@@ -9,3 +9,4 @@ pretrainedmodels==0.7.0
 scikit-learn==0.20.2
 hyperopt==0.1.1
 lightgbm==2.2.2
+lifelines==0.17.1

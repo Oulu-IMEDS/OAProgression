@@ -28,8 +28,6 @@ def build_img_progression_meta(most_src_dir, img_dir):
     data.set_index('MOSTID', inplace=True)
     tkr_l.set_index('MOSTID', inplace=True)
     tkr_r.set_index('MOSTID', inplace=True)
-    # we can use it for exclusion of all the images which are not PA10 @ V0
-    pa_10_bl_ids = set([fname[:5] for fname in most_names if ('V0' in fname and 'PA10' in fname)])
 
     enrolled = {}
     for visit in [0, 1, 2, 3, 5]:

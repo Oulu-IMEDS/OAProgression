@@ -67,5 +67,5 @@ if __name__ == '__main__':
     ax = kmf.plot()
     kmf.fit(visits_progressed[groups == 1], event_observed=progressed[groups == 1], label='progressed (pred)')
     ax = kmf.plot(ax=ax)
-    plt.xlim(0, 84)
+    plt.xlim(0, 86)
     plt.show()

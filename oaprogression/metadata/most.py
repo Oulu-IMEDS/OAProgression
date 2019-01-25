@@ -15,7 +15,6 @@ def build_img_progression_meta(most_src_dir, img_dir):
 
     files = glob.glob(os.path.join(most_src_dir, '*enroll.sas7bdat'))
     files_dict = {file.split('/')[-1].lower(): file for file in files}
-    most_names = np.loadtxt(os.path.join(most_src_dir, 'MOST_names.csv'), dtype=str)
     data = read_sas7bdata_pd(os.path.join(most_src_dir, 'mostv01235xray.sas7bdat')).fillna(-1)
     most_outcomes = read_sas7bdata_pd(os.path.join(most_src_dir, 'mostoutcomes.sas7bdat')).fillna(-1)
     ids_alive = most_outcomes[most_outcomes.V99EDINDEX == -1][['MOSTID']]

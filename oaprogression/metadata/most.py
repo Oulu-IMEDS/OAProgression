@@ -46,8 +46,6 @@ def build_img_progression_meta(most_src_dir, img_dir):
     non_progressors = []
 
     for ID in tqdm(enrolled[0], total=len(enrolled[0]), desc='Processing MOST:'):
-        #if ID not in pa_10_bl_ids:
-        #    continue
         tmp_l = []
         tmp_r = []
 
@@ -65,7 +63,7 @@ def build_img_progression_meta(most_src_dir, img_dir):
         # KL4 subjects are end-stage and do not progress. TKR can be made by other reasons
         if 0 <= KL_bl_l < 4 and cv2.imread(os.path.join(img_dir, f'{ID}_00_L.png')) is not None:
             if len(tmp_l) > 0:
-                # We exclude missing values and also "grades" 9 and 8
+                # We exclude missing values and also "grade 9"
                 if sum(list(map(lambda x: x[3] == -1 or x[3] == 9, tmp_l))) == 0:
                     prog = None
                     # going through the follow-up grades

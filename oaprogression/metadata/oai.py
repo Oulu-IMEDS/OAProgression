@@ -32,7 +32,6 @@ def build_img_progression_meta(oai_src_dir):
         meta['KL'] = meta[f'V{exam_codes[i]}XRKL']
         KL_files.append(meta[['ID', 'SIDE', 'KL']])
 
-    bad_ids = [9076900, 9466244]  # couldn't annotate these images, seem to be broken
     id_set_last_fu = set(KL_files[-1].ID.values.astype(int).tolist())  # Subjects present at all FU
 
     for follow_up_id in range(1, len(KL_files)):
@@ -43,8 +42,6 @@ def build_img_progression_meta(oai_src_dir):
     identified_prog = set()
     sides = [None, 'R', 'L']
     for _, knee in tqdm(KL_files[0].iterrows(), total=KL_files[0].shape[0], desc='Processing OAI:'):
-        if int(knee.ID) in bad_ids:
-            continue
         if int(knee.ID) in identified_prog:
             if identified_prog[int(knee.ID)] == sides[int(knee.SIDE)]:
                 continue
@@ -65,10 +62,9 @@ def build_img_progression_meta(oai_src_dir):
                         identified_prog.update({(int(knee.ID), sides[int(knee.SIDE)]), })
                 else:
                     # Adding only the TKR cases here
-                    if new_kl == -1:
-                        # We will denote it as 5
-                        progressors.append([int(knee.ID), sides[int(knee.SIDE)], old_kl, 5-old_kl, follow_up_id])
-                        identified_prog.update({(int(knee.ID), sides[int(knee.SIDE)]), })
+                    # We will denote it as 5
+                    progressors.append([int(knee.ID), sides[int(knee.SIDE)], old_kl, 5-old_kl, follow_up_id])
+                    identified_prog.update({(int(knee.ID), sides[int(knee.SIDE)]), })
 
     # Looking for non-progressors
     non_progressors = []
@@ -76,8 +72,6 @@ def build_img_progression_meta(oai_src_dir):
         if (int(knee.ID), sides[int(knee.SIDE)]) in identified_prog:
             continue
         if int(knee.ID) not in id_set_last_fu:
-            continue
-        if int(knee.ID) in bad_ids:
             continue
 
         non_progressors.append([int(knee.ID), sides[int(knee.SIDE)], int(knee.KL), 0, 0])

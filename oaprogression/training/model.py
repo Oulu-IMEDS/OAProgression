@@ -49,10 +49,10 @@ class KneeNet(nn.Module):
 
         # 4 KL-grades
         self.classifier_kl = nn.Sequential(nn.Dropout(p=drop),
-                                           nn.Linear(backbone.classifier[-1].in_features, 4))
+                                           nn.Linear(backbone.fc[-1].in_features, 4))
         # 3 progression sub-types
         self.classifier_prog = nn.Sequential(nn.Dropout(p=drop),
-                                             nn.Linear(backbone.classifier[-1].in_features, 3))
+                                             nn.Linear(backbone.fc[-1].in_features, 3))
 
     def forward(self, x):
         o = self.features(x)

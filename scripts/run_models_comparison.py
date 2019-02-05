@@ -101,7 +101,7 @@ if __name__ == "__main__":
         tmp_df = models[key]
         key = key.split('lgbm')[1]
         key = ' '.join(key.split('_')).upper()
-        compute_and_plot_curves(tmp_df, axs, legend=True)
+        compute_and_plot_curves(tmp_df, axs, key=key, legend=True)
         
     plt.savefig(os.path.join(args.results_dir, 'Lgbm_baselines.pdf'), bbox_inches='tight')
     plt.show()

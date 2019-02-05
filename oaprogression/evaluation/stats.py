@@ -1,9 +1,8 @@
-import numpy as np
-from sklearn.metrics import roc_auc_score, roc_curve, precision_recall_curve, average_precision_score
 import matplotlib.pyplot as plt
-from tqdm import tqdm
-
+import numpy as np
 import scipy.stats
+from sklearn.metrics import roc_auc_score, roc_curve, precision_recall_curve, average_precision_score
+from tqdm import tqdm
 
 
 def calc_curve_bootstrap(curve, metric, y, preds, n_bootstrap, seed, stratified=True, alpha=95):
@@ -41,7 +40,7 @@ def calc_curve_bootstrap(curve, metric, y, preds, n_bootstrap, seed, stratified=
             ind = np.hstack((ind_pos_bs, ind_neg_bs))
         else:
             ind = np.random.choice(y.shape[0], y.shape[0])
-        
+
         if y[ind].sum() == 0:
             continue
         metric_vals.append(metric(y[ind], preds[ind]))
@@ -75,7 +74,7 @@ def roc_curve_bootstrap(y, preds, savepath=None, n_bootstrap=1000, seed=42, retu
     """
     auc, ci_l, ci_h, fpr, tpr = calc_curve_bootstrap(roc_curve, roc_auc_score, y, preds,
                                                      n_bootstrap, seed, stratified=False, alpha=95)
-    
+
     plt.figure(figsize=(8, 8))
     plt.title(f'AUC {np.round(auc, 2):.2f} 95% CI [{np.round(ci_l, 2):.2f}-{np.round(ci_h, 2):.2f}]')
     plt.plot(fpr, tpr, 'r-')
@@ -124,14 +123,14 @@ def compare_curves(y, preds1, preds2, savepath_roc=None, savepath_pr=None, n_boo
     plt.close()
 
     plt.figure(figsize=(8, 8))
-    plt.axhline(y=y.sum()/y.shape[0], color='black', linestyle='--')
+    plt.axhline(y=y.sum() / y.shape[0], color='black', linestyle='--')
     AP, ci_l, ci_h, precision, recall = calc_curve_bootstrap(precision_recall_curve, average_precision_score, y,
                                                              preds1, n_bootstrap, seed, stratified=True, alpha=95)
     print(f'AP (method 1): {np.round(AP, 2):.2f} | 95% CI [{np.round(ci_l, 2):.2f},{np.round(ci_h, 2):.2f}]')
-    
+
     plt.plot(recall, precision, 'b-')
     AP, ci_l, ci_h, precision, recall = calc_curve_bootstrap(precision_recall_curve, average_precision_score, y,
-                                                             preds2, n_bootstrap, seed,  stratified=True, alpha=95)
+                                                             preds2, n_bootstrap, seed, stratified=True, alpha=95)
     print(f'AP (method 2): {np.round(AP, 2):.2f} | 95% CI [{np.round(ci_l, 2):.2f},{np.round(ci_h, 2):.2f}]')
     plt.plot(recall, precision, 'r-')
 
@@ -168,7 +167,7 @@ def compute_midrank(x):
         j = i
         while j < N and Z[j] == Z[i]:
             j += 1
-        T[i:j] = 0.5*(i + j - 1)
+        T[i:j] = 0.5 * (i + j - 1)
         i = j
     T2 = np.empty(N, dtype=np.float)
     # Note(kazeevn) +1 is due to Python using 0-based indexing
@@ -248,7 +247,7 @@ def fastDeLong_weights(predictions_sorted_transposed, label_1_count, sample_weig
     total_negative_weights = sample_weight[m:].sum()
     pair_weights = np.dot(sample_weight[:m, np.newaxis], sample_weight[np.newaxis, m:])
     total_pair_weights = pair_weights.sum()
-    aucs = (sample_weight[:m]*(tz[:, :m] - tx)).sum(axis=1) / total_pair_weights
+    aucs = (sample_weight[:m] * (tz[:, :m] - tx)).sum(axis=1) / total_pair_weights
     v01 = (tz[:, :m] - tx[:, :]) / total_negative_weights
     v10 = 1. - (tz[:, m:] - ty[:, :]) / total_positive_weights
     sx = np.cov(v01)

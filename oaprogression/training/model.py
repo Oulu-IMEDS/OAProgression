@@ -21,8 +21,8 @@ class PretrainedModel(nn.Module):
 
         if drop > 0:
             self.fc = nn.Sequential(FCViewer(),
-                                            nn.Dropout(drop),
-                                            nn.Linear(model.last_linear.in_features, ncls))
+                                    nn.Dropout(drop),
+                                    nn.Linear(model.last_linear.in_features, ncls))
         else:
             self.fc = nn.Sequential(
                 FCViewer(),

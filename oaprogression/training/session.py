@@ -1,22 +1,22 @@
+import operator
 import os
 import time
-import numpy as np
-from tqdm import tqdm
-from termcolor import colored
 from functools import partial
-from tensorboardX import SummaryWriter
-import torch
-from torch.utils.data import DataLoader
 
-import solt.transforms as slt
+import numpy as np
 import solt.core as slc
+import solt.transforms as slt
+import torch
+from tensorboardX import SummaryWriter
+from termcolor import colored
+from torch.utils.data import DataLoader
 from torchvision import transforms as tv_transforms
-import operator
+from tqdm import tqdm
 
+from oaprogression.kvs import GlobalKVS, git_info
 from oaprogression.training.args import parse_args
 from oaprogression.training.dataset import OAProgressionDataset, AgeSexBMIDataset
 from oaprogression.training.dataset import init_train_augs, apply_by_index, img_labels2solt, unpack_solt_data
-from oaprogression.kvs import GlobalKVS, git_info
 
 
 def init_session():
@@ -177,7 +177,7 @@ def save_checkpoint(model, val_metric_name, comparator='lt'):
     val_metric = kvs[f'val_metrics_fold_[{fold_id}]'][-1][0][val_metric_name]
     comparator = getattr(operator, comparator)
     cur_snapshot_name = os.path.join(kvs['args'].snapshots, kvs['snapshot_name'],
-                                     f'fold_{fold_id}_epoch_{epoch+1}.pth')
+                                     f'fold_{fold_id}_epoch_{epoch + 1}.pth')
 
     if kvs['prev_model'] is None:
         print(colored('====> ', 'red') + 'Snapshot was saved to', cur_snapshot_name)

@@ -1,17 +1,18 @@
-from tqdm import tqdm
 import gc
+import os
+
 import numpy as np
-from sklearn.metrics import mean_squared_error, roc_auc_score, median_absolute_error
 import torch
-from torch import nn
 import torch.nn.functional as F
+from sklearn.metrics import mean_squared_error, roc_auc_score, median_absolute_error
+from termcolor import colored
+from torch import nn
 from torch import optim
+from tqdm import tqdm
+
+from oaprogression.evaluation import tools as testtools
 from oaprogression.kvs import GlobalKVS
 from oaprogression.training.model import KneeNet, PretrainedModel
-
-import os
-from termcolor import colored
-from oaprogression.evaluation import tools as testtools
 
 
 def init_model(kneenet=True):
@@ -138,7 +139,7 @@ def epoch_pass(net, optimizer, loader):
         if not kvs['args'].predict_age_sex_bmi:
             preds = np.hstack(preds)
             gt = np.hstack(gt)
-            return running_loss/n_batches, ids, gt, preds
+            return running_loss / n_batches, ids, gt, preds
         else:
             preds_age = np.hstack(preds_age)
             gt_age = np.hstack(gt_age)
@@ -216,7 +217,7 @@ def prog_epoch_pass(net, optimizer, loader):
     if optimizer is not None:
         return running_loss / n_batches
     else:
-        return running_loss/n_batches, ids, gt_progression, preds_progression, gt_kl, preds_kl
+        return running_loss / n_batches, ids, gt_progression, preds_progression, gt_kl, preds_kl
 
 
 def log_metrics_prog(boardlogger, train_loss, val_loss, gt_progression, preds_progression, gt_kl, preds_kl):

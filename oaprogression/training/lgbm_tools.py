@@ -1,10 +1,11 @@
+import warnings
+from functools import partial
+
 import lightgbm as lgb
+import numpy as np
 import pandas as pd
 from hyperopt import hp, fmin, tpe, STATUS_OK, Trials, space_eval
-from functools import partial
-import numpy as np
 from tqdm import tqdm
-import warnings
 
 
 def fit_lgb(params, train_folds, feature_set, metric, return_oof_res=False, return_models=False):
@@ -30,7 +31,7 @@ def fit_lgb(params, train_folds, feature_set, metric, return_oof_res=False, retu
     res = list()
     res.append(metric(oof_results.Progressor.values.astype(int),
                       oof_results.prog_pred.values.astype(float)))
-    
+
     if return_models:
         res.append(clfs)
 

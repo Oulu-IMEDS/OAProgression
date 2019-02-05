@@ -2,16 +2,15 @@ import os
 
 if int(os.getenv('USE_AGG', 1)) == 1:
     import matplotlib
+
     matplotlib.use('Agg')
 
 import pickle
-import matplotlib.pyplot as plt
 from sklearn.metrics import average_precision_score
 
 from oaprogression.training.lgbm_tools import optimize_lgbm_hyperopt, fit_lgb
 from oaprogression.training import baselines
-from oaprogression.evaluation import stats, tools
-
+from oaprogression.evaluation import tools
 
 if __name__ == "__main__":
     args = baselines.init_args()
@@ -23,7 +22,6 @@ if __name__ == "__main__":
                         ['AGE', 'SEX', 'BMI', 'SURG', 'INJ', 'WOMAC'],
                         ['AGE', 'SEX', 'BMI', 'KL'],
                         ['AGE', 'SEX', 'BMI', 'KL', 'SURG', 'INJ', 'WOMAC']]:
-
         best_params, trials = optimize_lgbm_hyperopt(train_folds, feature_set,
                                                      average_precision_score,
                                                      seed, hyperopt_trials=args.lgbm_hyperopt_trials)
@@ -44,7 +42,3 @@ if __name__ == "__main__":
 
     with open(os.path.join(args.save_dir, 'results_baselines_lgbm.pkl'), 'wb') as f:
         pickle.dump(results, f)
-
-
-
-

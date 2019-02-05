@@ -2,13 +2,14 @@ import os
 
 if int(os.getenv('USE_AGG', 1)) == 1:
     import matplotlib
+
     matplotlib.use('Agg')
 
 import pickle
 from sklearn.metrics import average_precision_score, roc_auc_score
 
 from oaprogression.training import baselines
-from oaprogression.evaluation import stats, tools
+from oaprogression.evaluation import tools
 
 if __name__ == "__main__":
     args = baselines.init_args()
@@ -46,11 +47,7 @@ if __name__ == "__main__":
 
             if model_type != "sklearn":
                 results[f'preds_MOST_BL_all_{features_suffix}'] = (ids, sides, y_test, test_res)
-        print('='*80)
+        print('=' * 80)
 
     with open(os.path.join(args.save_dir, 'results_baselines_logreg.pkl'), 'wb') as f:
         pickle.dump(results, f)
-
-
-
-

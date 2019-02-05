@@ -1,18 +1,17 @@
-import os
-import gc
 import argparse
-import pandas as pd
+import gc
+import os
 import pickle
-from tqdm import tqdm
-import numpy as np
-import cv2
-import matplotlib.pyplot as plt
 
-from oaprogression.evaluation import tools, stats, gcam
+import cv2
+import numpy as np
+import pandas as pd
+from tqdm import tqdm
+
+from oaprogression.evaluation import tools, gcam
 
 cv2.ocl.setUseOpenCL(False)
 cv2.setNumThreads(0)
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -46,7 +45,8 @@ if __name__ == "__main__":
             gradcam_maps_fold = []
             ids = []
             sides = []
-            for batch_id, sample in enumerate(tqdm(loader, total=len(loader), desc='Prediction from fold {}'.format(fold_id))):
+            for batch_id, sample in enumerate(
+                    tqdm(loader, total=len(loader), desc='Prediction from fold {}'.format(fold_id))):
                 gcam_batch, probs_prog, probs_kl = gcam.eval_batch(sample, features, fc, fc_kl)
                 gradcam_maps_fold.append(gcam_batch)
                 preds_prog_fold.append(probs_prog)
@@ -90,12 +90,3 @@ if __name__ == "__main__":
                              figsize=10,
                              threshold=0.3,
                              savepath=args.save_dir)
-    
-
-
-
-
-
-
-
-

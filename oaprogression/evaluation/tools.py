@@ -1,30 +1,28 @@
 import glob
-import torch.nn.functional as F
-import cv2
 import os
-import numpy as np
-import pandas as pd
-from sklearn.metrics import roc_auc_score, cohen_kappa_score, confusion_matrix, mean_squared_error, f1_score, average_precision_score
-from sklearn.metrics import roc_curve, precision_recall_curve
-
-import matplotlib.pyplot as plt
-
 from functools import partial
 
-import solt.transforms as slt
+import cv2
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 import solt.core as slc
-
+import solt.transforms as slt
+import statsmodels.api as sm
 import torch
-from torch import nn
+import torch.nn.functional as F
 import torchvision.transforms as tv_transforms
+from sklearn.metrics import roc_auc_score, cohen_kappa_score, confusion_matrix, mean_squared_error, f1_score, \
+    average_precision_score
+from sklearn.metrics import roc_curve, precision_recall_curve
+from torch import nn
 from torch.utils.data import DataLoader
 from torch.utils.data.sampler import SequentialSampler
 
+from oaprogression.evaluation import stats
 from oaprogression.training import model
 from oaprogression.training import session as session
 from oaprogression.training.dataset import OAProgressionDataset, unpack_solt_data, img_labels2solt, apply_by_index
-from oaprogression.evaluation import stats
-import statsmodels.api as sm
 
 cv2.ocl.setUseOpenCL(False)
 cv2.setNumThreads(0)
@@ -36,15 +34,15 @@ def five_crop(img, size):
     img = img.clone()
     h, w = img.size()[-2:]
     # get central crop
-    c_cr = img[:, h//2-size//2:h//2+size//2, w//2-size//2:w//2+size//2]
+    c_cr = img[:, h // 2 - size // 2:h // 2 + size // 2, w // 2 - size // 2:w // 2 + size // 2]
     # upper-left crop
     ul_cr = img[:, 0:size, 0:size]
     # upper-right crop
-    ur_cr = img[:, 0:size, w-size:w]
+    ur_cr = img[:, 0:size, w - size:w]
     # bottom-left crop
-    bl_cr = img[:, h-size:h, 0:size]
+    bl_cr = img[:, h - size:h, 0:size]
     # bottom-right crop
-    br_cr = img[:, h-size:h, w-size:w]
+    br_cr = img[:, h - size:h, w - size:w]
     return torch.stack((c_cr, ul_cr, ur_cr, bl_cr, br_cr))
 
 
@@ -74,7 +72,6 @@ def init_fold(fold_id, session_snapshot, args, return_fc_kl=False):
 
 
 def init_loader(metadata, args):
-
     mean_vector, std_vector = session.init_mean_std(args.snapshots_root, None, None, None)
 
     norm_trf = tv_transforms.Normalize(torch.from_numpy(mean_vector).float(),
@@ -199,15 +196,15 @@ def init_auc_pr_plot(y):
     axs[0].set_xlabel('False positive rate')
     axs[0].set_ylabel('True positive rate')
     axs[0].set_title('ROC curve')
-    
-    axs[1].axhline(y=y.sum()/y.shape[0], linestyle='--', color='black')
+
+    axs[1].axhline(y=y.sum() / y.shape[0], linestyle='--', color='black')
     axs[1].set_xlim([0, 1])
     axs[1].set_ylim([0, 1])
     axs[1].grid()
     axs[1].set_xlabel('Recall')
     axs[1].set_ylabel('Precision')
     axs[1].set_title('Precision-Recall curve')
-    
+
     return fig, axs
 
 
@@ -218,23 +215,25 @@ def compute_and_plot_curves(tmp_df, axs, key=None, legend=True, color=None, n_bo
                                                            n_bootstrap, seed, stratified=True, alpha=95)
 
     if key is None:
-        key=''
+        key = ''
     if color is None:
-        axs[0].plot(fpr, tpr, label=key+f' ({np.round(auc,2)} [{np.round(ci_l, 2)}, {np.round(ci_h, 2)}])')
+        axs[0].plot(fpr, tpr, label=key + f' ({np.round(auc, 2)} [{np.round(ci_l, 2)}, {np.round(ci_h, 2)}])')
     else:
-        axs[0].plot(fpr, tpr, label=key+f' ({np.round(auc,2)} [{np.round(ci_l, 2)}, {np.round(ci_h, 2)}])', color=color)
+        axs[0].plot(fpr, tpr, label=key + f' ({np.round(auc, 2)} [{np.round(ci_l, 2)}, {np.round(ci_h, 2)}])',
+                    color=color)
     if legend:
         axs[0].legend()
-    
+
     ap, ci_l, ci_h, precision, recall = stats.calc_curve_bootstrap(precision_recall_curve, average_precision_score,
                                                                    tmp_df.Progressor.values.astype(int),
                                                                    tmp_df.Prediction.values.astype(float),
                                                                    n_bootstrap, seed, stratified=True, alpha=95)
 
     if color is None:
-        axs[1].plot(recall, precision, label=key+f' ({np.round(ap,2)} [{np.round(ci_l, 2)}, {np.round(ci_h, 2)}])')
+        axs[1].plot(recall, precision, label=key + f' ({np.round(ap, 2)} [{np.round(ci_l, 2)}, {np.round(ci_h, 2)}])')
     else:
-        axs[1].plot(recall, precision, label=key+f' ({np.round(ap,2)} [{np.round(ci_l, 2)}, {np.round(ci_h, 2)}])', color=color)
+        axs[1].plot(recall, precision, label=key + f' ({np.round(ap, 2)} [{np.round(ci_l, 2)}, {np.round(ci_h, 2)}])',
+                    color=color)
     if legend:
         axs[1].legend()
 
@@ -245,13 +244,13 @@ def compute_curves_and_metrics(model_name, tmp_df, n_bootstrap=2000, seed=12345)
                                                            tmp_df.Prediction.values.astype(float),
                                                            n_bootstrap, seed, stratified=True, alpha=95)
 
-    print(f'{model_name} | AUC: {np.round(auc,2)} [{np.round(ci_l, 2)}, {np.round(ci_h, 2)}]')
+    print(f'{model_name} | AUC: {np.round(auc, 2)} [{np.round(ci_l, 2)}, {np.round(ci_h, 2)}]')
 
     ap, ci_l, ci_h, precision, recall = stats.calc_curve_bootstrap(precision_recall_curve, average_precision_score,
                                                                    tmp_df.Progressor.values.astype(int),
                                                                    tmp_df.Prediction.values.astype(float),
                                                                    n_bootstrap, seed, stratified=True, alpha=95)
 
-    print(f'{model_name} | AP: {np.round(ap,2)} [{np.round(ci_l, 2)}, {np.round(ci_h, 2)}]')
+    print(f'{model_name} | AP: {np.round(ap, 2)} [{np.round(ci_l, 2)}, {np.round(ci_h, 2)}]')
 
-    print("="*80)
+    print("=" * 80)

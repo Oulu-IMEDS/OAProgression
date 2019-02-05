@@ -2,19 +2,15 @@ import os
 
 if int(os.getenv('USE_AGG', 1)) == 1:
     import matplotlib
+
     matplotlib.use('Agg')
 
 import argparse
 import pandas as pd
-import lightgbm as lgb
 import numpy as np
-import pickle
-import pprint
-from termcolor import colored
-import matplotlib.pyplot as plt
 
-from oaprogression.evaluation import tools, stats
-from oaprogression.evaluation.tools import pkl2df, init_auc_pr_plot, compute_and_plot_curves
+from oaprogression.evaluation import tools
+from oaprogression.evaluation.tools import pkl2df
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -23,7 +19,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     progression_meta = pd.read_csv(os.path.join(args.metadata_root, 'MOST_progression.csv'))
-    
+
     data = np.load(os.path.join(args.results_dir, 'results.npz'))
 
     preds_prog = data['preds_prog']
@@ -32,17 +28,17 @@ if __name__ == "__main__":
     dl_preds = pd.DataFrame(data={'ID': list(map(lambda x: x.split('_')[0], ids)),
                                   'Side': list(map(lambda x: x.split('_')[1], ids)),
                                   'Prediction': preds_prog[:, 1:].sum(1)})
-    
-    dl_preds = pd.merge(dl_preds,  progression_meta, on=('ID', 'Side'))
+
+    dl_preds = pd.merge(dl_preds, progression_meta, on=('ID', 'Side'))
     dl_preds['Progressor'] = dl_preds['Progressor'] > 0
     dl_preds = dl_preds[['ID', 'Side', 'Progressor', 'Prediction']]
 
-    bl_logreg = pkl2df(os.path.join(os.path.join(args.results_dir,'results_baselines_logreg.pkl')))
+    bl_logreg = pkl2df(os.path.join(os.path.join(args.results_dir, 'results_baselines_logreg.pkl')))
     bl_lgbm = pkl2df(os.path.join(args.results_dir, 'results_baselines_lgbm.pkl'))
     lgbm_stacking = pkl2df(os.path.join(args.results_dir, 'results_lgbm_stacking.pkl'))
 
-    models = {}
-    
+    models = dict()
+
     # logreg-based baselines
     models['logreg_age_sex_bmi'] = bl_logreg['preds_MOST_BL_all_AGE_SEX_BMI']
     models['logreg_kl'] = bl_logreg['preds_MOST_BL_all_KL']

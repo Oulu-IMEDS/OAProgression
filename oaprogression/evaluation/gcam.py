@@ -1,15 +1,15 @@
-import numpy as np
-import torch.nn.functional as F
-from sklearn.preprocessing import OneHotEncoder
-import torch
-import cv2
 import os
-import matplotlib.pyplot as plt
-from tqdm import tqdm
 
-import torchvision.transforms as tv_transforms
-import solt.transforms as slt
+import cv2
+import matplotlib.pyplot as plt
+import numpy as np
 import solt.core as slc
+import solt.transforms as slt
+import torch
+import torch.nn.functional as F
+import torchvision.transforms as tv_transforms
+from sklearn.preprocessing import OneHotEncoder
+from tqdm import tqdm
 
 from oaprogression.training.dataset import unpack_solt_data, img_labels2solt
 
@@ -71,8 +71,8 @@ def preds_and_hmaps(rs_result, gradcams, dataset_root, figsize, threshold, savep
     ids_rs = []
     hmaps = []
 
-    w, h = 700, 700 # 140x140mm
-    size = (650, 650) # 130x130mm - were used in the evaluation
+    w, h = 700, 700  # 140x140mm
+    size = (650, 650)  # 130x130mm - were used in the evaluation
     x1 = w // 2 - size[0] // 2
     y1 = h // 2 - size[1] // 2
 
@@ -89,14 +89,14 @@ def preds_and_hmaps(rs_result, gradcams, dataset_root, figsize, threshold, savep
         if entry.pred < threshold or entry.Progressor == 0:
             continue
         img = cv2.imread(os.path.join(dataset_root, f'{entry.ID}_00_{entry.Side}.png'), 0)
-        
+
         if 'L' == entry.Side:
             img = cv2.flip(img, 1)
 
         img = img.reshape((img.shape[0], img.shape[1], 1))
         img, _, _ = gcam_trf((img, 0, 0))
         img = img.squeeze()
-        
+
         # We had 310x310 image and 5 300x300 crops
         # Now we map these crops back to the image
         tmp = np.zeros((h, w))
@@ -126,7 +126,7 @@ def preds_and_hmaps(rs_result, gradcams, dataset_root, figsize, threshold, savep
         plt.yticks([])
 
         plt.subplot(122)
-        plt.title(f'Prog. {entry.KL} -> {entry.KL+entry.Prog_increase} | {entry.Progressor_type}')
+        plt.title(f'Prog. {entry.KL} -> {entry.KL + entry.Prog_increase} | {entry.Progressor_type}')
         plt.imshow(img, cmap=plt.cm.Greys_r)
         plt.imshow(tmp, cmap=plt.cm.jet, alpha=0.5)
         plt.xticks([])

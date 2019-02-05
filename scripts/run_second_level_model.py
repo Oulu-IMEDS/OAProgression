@@ -1,18 +1,16 @@
-import os
-import gc
 import argparse
-import pandas as pd
+import os
 import pickle
-from tqdm import tqdm
-import numpy as np
+
 import cv2
 import matplotlib.pyplot as plt
-
-from oaprogression.evaluation import tools, stats
-
+import numpy as np
+import pandas as pd
 from sklearn.metrics import average_precision_score
-from oaprogression.training.lgbm_tools import optimize_lgbm_hyperopt, fit_lgb
+
+from oaprogression.evaluation import tools
 from oaprogression.training.baselines import init_metadata_test
+from oaprogression.training.lgbm_tools import optimize_lgbm_hyperopt, fit_lgb
 
 cv2.ocl.setUseOpenCL(False)
 cv2.setNumThreads(0)
@@ -77,7 +75,6 @@ if __name__ == "__main__":
                          'kl_pred_3', 'prog_pred_0', 'prog_pred_1', 'prog_pred_2'],
                         ['AGE', 'SEX', 'BMI', 'KL', 'SURG', 'INJ', 'WOMAC', 'kl_pred_0', 'kl_pred_1', 'kl_pred_2',
                          'kl_pred_3', 'prog_pred_0', 'prog_pred_1', 'prog_pred_2']]:
-
         best_params, trials = optimize_lgbm_hyperopt(train_folds, feature_set,
                                                      average_precision_score,
                                                      seed, hyperopt_trials=args.lgbm_hyperopt_trials)

@@ -1,21 +1,21 @@
-import torch
-import torch.utils.data as data
-import cv2
+import copy
 import os
-import pandas as pd
-from oaprogression.kvs import GlobalKVS
-from sklearn.model_selection import GroupKFold
-from termcolor import colored
+from functools import partial
 
+import cv2
 import matplotlib.pyplot as plt
 import numpy as np
-
-from torchvision import transforms
-import solt.transforms as slt
+import pandas as pd
 import solt.core as slc
 import solt.data as sld
-import copy
-from functools import partial
+import solt.transforms as slt
+import torch
+import torch.utils.data as data
+from sklearn.model_selection import GroupKFold
+from termcolor import colored
+from torchvision import transforms
+
+from oaprogression.kvs import GlobalKVS
 
 cv2.ocl.setUseOpenCL(False)
 cv2.setNumThreads(0)
@@ -123,16 +123,16 @@ def init_progression_metadata():
     kvs.save_pkl(os.path.join(kvs['args'].snapshots, kvs['snapshot_name'], 'session.pkl'))
 
     print(colored("==> ", 'green') + f"Train dataset has "
-                                     f"{(kvs['metadata'].Progressor == 0).sum()} non-progressed knees")
+    f"{(kvs['metadata'].Progressor == 0).sum()} non-progressed knees")
 
-    print(colored("==> ", 'green')+f"Train dataset has "
-                                   f"{(kvs['metadata'].Progressor > 0).sum()} progressed knees")
+    print(colored("==> ", 'green') + f"Train dataset has "
+    f"{(kvs['metadata'].Progressor > 0).sum()} progressed knees")
 
     print(colored("==> ", 'green') + f"Test dataset has "
-                                     f"{(kvs['metadata_test'].Progressor == 0).sum()} non-progressed knees")
+    f"{(kvs['metadata_test'].Progressor == 0).sum()} non-progressed knees")
 
-    print(colored("==> ", 'green')+f"Test dataset has "
-                                   f"{(kvs['metadata_test'].Progressor > 0).sum()} progressed knees")
+    print(colored("==> ", 'green') + f"Test dataset has "
+    f"{(kvs['metadata_test'].Progressor > 0).sum()} progressed knees")
 
 
 def img_labels2solt(inp):
@@ -208,12 +208,9 @@ def debug_augmentations(n_iter=20):
 
     for ind in np.random.choice(len(ds), n_iter, replace=False):
         sample = ds[ind]
-        img = np.clip(sample['img'].numpy()*255, 0, 255).astype(np.uint8)
+        img = np.clip(sample['img'].numpy() * 255, 0, 255).astype(np.uint8)
         img = np.swapaxes(img, 0, -1)
         img = np.swapaxes(img, 0, 1)
         plt.figure()
         plt.imshow(img)
         plt.show()
-
-
-

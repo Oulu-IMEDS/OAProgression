@@ -1,8 +1,9 @@
+import os
+
 import pandas as pd
 from tqdm import tqdm
-import os
+
 from oaprogression.metadata.utils import read_sas7bdata_pd
-import numpy as np
 
 
 def build_img_progression_meta(oai_src_dir):
@@ -54,16 +55,16 @@ def build_img_progression_meta(oai_src_dir):
                 new_kl = int(follow_up[ind].KL.values[0])
                 # Skipping the ones who were identified as progressors already
                 if (int(knee.ID), sides[int(knee.SIDE)]) in identified_prog:
-                        continue
+                    continue
                 if 0 <= new_kl <= 4:
                     # If not TKR
                     if new_kl != 1 and new_kl > old_kl:
-                        progressors.append([int(knee.ID), sides[int(knee.SIDE)], old_kl, new_kl-old_kl, follow_up_id])
+                        progressors.append([int(knee.ID), sides[int(knee.SIDE)], old_kl, new_kl - old_kl, follow_up_id])
                         identified_prog.update({(int(knee.ID), sides[int(knee.SIDE)]), })
                 else:
                     # Adding only the TKR cases here
                     # We will denote it as 5
-                    progressors.append([int(knee.ID), sides[int(knee.SIDE)], old_kl, 5-old_kl, follow_up_id])
+                    progressors.append([int(knee.ID), sides[int(knee.SIDE)], old_kl, 5 - old_kl, follow_up_id])
                     identified_prog.update({(int(knee.ID), sides[int(knee.SIDE)]), })
 
     # Looking for non-progressors
@@ -114,4 +115,3 @@ def build_clinical(oai_src_dir):
     clinical_data_oai = pd.concat((clinical_data_oai_left, clinical_data_oai_right))
     clinical_data_oai.ID = clinical_data_oai.ID.values.astype(int)
     return clinical_data_oai[['ID', 'Side', 'AGE', 'SEX', 'BMI', 'INJ', 'SURG', 'WOMAC']]
-

@@ -1,13 +1,16 @@
 import argparse
 import os
-from oaprogression.metadata import oai
-from oaprogression.metadata import most
-from oaprogression.metadata.utils import data_stats
+
 import pandas as pd
+
+from oaprogression.metadata import most
+from oaprogression.metadata import oai
+from oaprogression.metadata.utils import data_stats
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--oai_meta', default='/media/lext/FAST/OA_progression_project/Data/X-Ray_Image_Assessments_SAS')
+    parser.add_argument('--oai_meta',
+                        default='/media/lext/FAST/OA_progression_project/Data/X-Ray_Image_Assessments_SAS')
     parser.add_argument('--most_meta', default='/media/lext/FAST/OA_progression_project/Data/most_meta')
     parser.add_argument('--imgs_dir', default='/media/lext/FAST/OA_progression_project/Data/MOST_OAI_00_0_2')
     parser.add_argument('--save_meta', default='/media/lext/FAST/OA_progression_project/workdir/Metadata/')

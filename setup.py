@@ -1,6 +1,5 @@
 from setuptools import setup, find_packages
 
-
 setup(
     name='oaprogression',
     version='0.1',

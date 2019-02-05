@@ -1,6 +1,6 @@
-from sas7bdat import SAS7BDAT
-import pandas as pd
 import numpy as np
+import pandas as pd
+from sas7bdat import SAS7BDAT
 
 
 def read_sas7bdata_pd(fname):
@@ -18,13 +18,13 @@ def data_stats(dataset, participants):
     print('## Unique subjects', np.unique(dataset.ID).shape[0])
     print('## Males', np.unique(dataset[dataset.SEX == 1].ID).shape[0])
     print('## Females', np.unique(dataset[dataset.SEX == 0].ID).shape[0])
-    
+
     print('## Mean Age', np.nanmean(participants.AGE))
     print('## STD Age', np.nanstd(participants.AGE))
 
     print('## Mean BMI', np.nanmean(participants.BMI))
     print('## STD BMI', np.nanstd(participants.BMI))
-    
+
     print('## Knees', dataset.ID.shape[0])
 
     print('## Knees (left non-progressors)',

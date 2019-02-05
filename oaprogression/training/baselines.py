@@ -1,10 +1,11 @@
-import pickle
 import argparse
 import os
-import pandas as pd
+import pickle
+
 import numpy as np
-from sklearn.linear_model import LogisticRegression
+import pandas as pd
 import statsmodels.api as sm
+from sklearn.linear_model import LogisticRegression
 
 
 def init_args():
@@ -109,4 +110,3 @@ def build_logreg_model(train_folds, feature_set, seed, n_vals_c, metric, regular
     models_best = models[opt_c_id]
     mean_std_best = means_stds[opt_c_id]
     return models_best, mean_std_best, np.array(folds_gt), np.array(folds_predicts)
-

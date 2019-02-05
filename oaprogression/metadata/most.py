@@ -1,10 +1,11 @@
-import pandas as pd
-import numpy as np
 import glob
 import os
-from tqdm import tqdm
-from oaprogression.metadata.utils import read_sas7bdata_pd
+
 import cv2
+import pandas as pd
+from tqdm import tqdm
+
+from oaprogression.metadata.utils import read_sas7bdata_pd
 
 
 def build_img_progression_meta(most_src_dir, img_dir):
@@ -84,7 +85,7 @@ def build_img_progression_meta(most_src_dir, img_dir):
                         if ID in last_follow_up and subj['V{0}X{1}{2}'.format(5, 'R', 'KL')] < 5:
                             non_progressors.append([ID, 'L', KL_bl_l, 0, 0])
                     else:
-                        progressors.append([ID, 'L', KL_bl_l, prog[-2]-KL_bl_l, prog[-1]])
+                        progressors.append([ID, 'L', KL_bl_l, prog[-2] - KL_bl_l, prog[-1]])
 
         # Doing the same thing for the right knee
         if 0 <= KL_bl_r < 4 and cv2.imread(os.path.join(img_dir, f'{ID}_00_R.png')) is not None:
@@ -108,9 +109,10 @@ def build_img_progression_meta(most_src_dir, img_dir):
                         if ID in last_follow_up and subj['V{0}X{1}{2}'.format(5, 'R', 'KL')] < 5:
                             non_progressors.append([ID, 'R', KL_bl_r, 0, 0])
                     else:
-                        progressors.append([ID, 'R', KL_bl_r, prog[-2]-KL_bl_r, prog[-1]])
+                        progressors.append([ID, 'R', KL_bl_r, prog[-2] - KL_bl_r, prog[-1]])
 
-    progr_data = pd.DataFrame(progressors + non_progressors, columns=['ID', 'Side', 'KL', 'Prog_increase', 'Progressor'])
+    progr_data = pd.DataFrame(progressors + non_progressors,
+                              columns=['ID', 'Side', 'KL', 'Prog_increase', 'Progressor'])
     progr_data['Progressor_visit'] = progr_data.Progressor.copy()
     progr_data.Progressor = progr_data.apply(lambda x: mapping[x.Progressor], 1)
     return progr_data

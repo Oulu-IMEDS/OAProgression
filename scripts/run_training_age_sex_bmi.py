@@ -1,19 +1,16 @@
 import sys
 
 import cv2
-
+from termcolor import colored
 from torch.optim.lr_scheduler import MultiStepLR
 
-from termcolor import colored
-
 from oaprogression.kvs import GlobalKVS
+from oaprogression.training import dataset
 from oaprogression.training import session
 from oaprogression.training import train_utils
-from oaprogression.training import dataset
 
 cv2.ocl.setUseOpenCL(False)
 cv2.setNumThreads(0)
-
 
 DEBUG = sys.gettrace() is not None
 
@@ -50,8 +47,8 @@ if __name__ == "__main__":
         for epoch in range(kvs['args'].n_epochs):
             kvs.update('cur_epoch', epoch)
             if epoch == kvs['args'].unfreeze_epoch:
-                print(colored('====> ', 'red')+'Unfreezing the layers!')
-                new_lr_drop_milestones = list(map(lambda x: x-kvs['args'].unfreeze_epoch, kvs['args'].lr_drop))
+                print(colored('====> ', 'red') + 'Unfreezing the layers!')
+                new_lr_drop_milestones = list(map(lambda x: x - kvs['args'].unfreeze_epoch, kvs['args'].lr_drop))
                 optimizer.add_param_group({'params': net.module.encoder.parameters()})
                 scheduler = MultiStepLR(optimizer, milestones=new_lr_drop_milestones, gamma=0.1)
 

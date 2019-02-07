@@ -66,7 +66,8 @@ nvidia-docker run -it --name oa_prog_eval_cmp --rm \
 	      --metadata_root /workdir/Metadata \
 	      --results_dir /workdir/Results
 
-# Generating the plots
+echo "==> Evaluation results for KL0-1"
+# Doing evaluation of the KL01 cases
 nvidia-docker run -it --name oa_prog_eval_kl01_cmp --rm \
 	      -v $WRKDIR:/workdir/:rw --ipc=host \
 	      oaprog_img python -u run_models_comparison_kl_01.py \

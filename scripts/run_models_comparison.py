@@ -147,6 +147,16 @@ if __name__ == "__main__":
     plt.show()
     plt.close(fig)
 
+    print(colored('====> ', 'green') + 'Best combination model vs simplest baseline (KL used)')
+    fig, axs = init_auc_pr_plot(dl_preds.Progressor.values)
+    for key, color, legend in zip(['logreg_age_sex_bmi_kl_surg_inj_womac', 'lgbm_stacking_kl'], ['blue', 'red'],
+                                  ['LR ref.', 'Stacking w. KL']):
+        tmp_df = models[key]
+        compute_and_plot_curves(tmp_df, axs, key=legend, legend=True, color=color)
+    plt.savefig(os.path.join(args.results_dir, 'Combined_vs_simplest_baseline.pdf'), bbox_inches='tight')
+    plt.show()
+    plt.close(fig)
+
     tmp = pd.merge(models['lgbm_age_sex_bmi_kl_surg_inj_womac'], models['lgbm_stacking_kl'].drop('Progressor', 1),
                    suffixes=['_lgb', '_stacking'], on=('ID', 'Side'))
     logp = stats.delong_roc_test(tmp.Progressor, tmp.Prediction_lgb, tmp.Prediction_stacking)

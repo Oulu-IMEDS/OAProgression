@@ -8,12 +8,11 @@ if int(os.getenv('USE_AGG', 1)) == 1:
 import argparse
 import pandas as pd
 import numpy as np
-from termcolor import colored
 import matplotlib.pyplot as plt
 
 from oaprogression.evaluation import stats
 from oaprogression.evaluation.tools import pkl2df
-from sklearn.metrics import roc_auc_score, roc_curve
+from sklearn.metrics import roc_auc_score, roc_curve, average_precision_score, precision_recall_curve
 
 
 def add_roc_curve(axs, tmp_df, key, color, legend=True, seed=42, n_bootstrap=2000):
@@ -27,8 +26,22 @@ def add_roc_curve(axs, tmp_df, key, color, legend=True, seed=42, n_bootstrap=200
     if color is None:
         axs.plot(fpr, tpr, label=key + f' ({np.round(auc, 2)} [{np.round(ci_l, 2)}, {np.round(ci_h, 2)}])')
     else:
-        axs.plot(fpr, tpr, label=key + f' ({np.round(auc, 2)} [{np.round(ci_l, 2)}, {np.round(ci_h, 2)}])',
-                    color=color)
+        axs.plot(fpr, tpr, label=key + f' ({np.round(auc, 2)} [{np.round(ci_l, 2)}, {np.round(ci_h, 2)}])', color=color)
+    if legend:
+        axs.legend()
+
+
+def add_pr_curve(axs, tmp_df, key, color, legend=True, seed=42, n_bootstrap=2000):
+    ap, ci_l, ci_h, precision, recall = stats.calc_curve_bootstrap(precision_recall_curve, average_precision_score,
+                                                                   tmp_df.Progressor.values.astype(int),
+                                                                   tmp_df.Prediction.values.astype(float),
+                                                                   n_bootstrap, seed, stratified=True, alpha=95)
+
+    if color is None:
+        axs.plot(recall, precision, label=key + f' ({np.round(ap, 2)} [{np.round(ci_l, 2)}, {np.round(ci_h, 2)}])')
+    else:
+        axs.plot(recall, precision, label=key + f' ({np.round(ap, 2)} [{np.round(ci_l, 2)}, {np.round(ci_h, 2)}])',
+                 color=color)
     if legend:
         axs.legend()
 
@@ -109,3 +122,125 @@ if __name__ == "__main__":
         plt.savefig(os.path.join(args.results_dir, f'roc_curves_{method}.pdf'), bbox_inches='tight')
         plt.show()
         plt.close(fig)
+
+        matplotlib.rcParams.update({'font.size': 14})
+        fig, axs = plt.subplots(nrows=1, ncols=1, figsize=(8, 8))
+        y = models[f'{method}_age_sex_bmi'].Progressor.values
+        axs.axhline(y=y.sum() / y.shape[0], linestyle='--', color='black')
+        axs.set_xlim([0, 1])
+        axs.set_ylim([0, 1])
+        axs.grid()
+        axs.set_xlabel('Recall')
+        axs.set_ylabel('Precision')
+
+        add_pr_curve(axs, models[f'{method}_age_sex_bmi_kl_surg_inj_womac'],
+                     'Age, SEX, BMI, KL, Surg, Inj, WOMAC', 'r')
+
+        add_pr_curve(axs, models[f'{method}_age_sex_bmi_kl'],
+                     'Age, SEX, BMI, KL', 'g')
+
+        add_pr_curve(axs, models[f'{method}_age_sex_bmi_surg_inj_womac'],
+                     'Age, SEX, BMI, Surg, Inj, WOMAC', 'b')
+
+        add_pr_curve(axs, models[f'{method}_age_sex_bmi'],
+                     'Age, SEX, BMI', 'k')
+
+        plt.savefig(os.path.join(args.results_dir, f'pr_curves_{method}.pdf'), bbox_inches='tight')
+        plt.show()
+        plt.close(fig)
+
+    matplotlib.rcParams.update({'font.size': 14})
+    fig, axs = plt.subplots(nrows=1, ncols=1, figsize=(8, 8))
+    axs.plot([0, 1], [0, 1], '--', color='black')
+    axs.set_xlim([0, 1])
+    axs.set_ylim([0, 1])
+    axs.grid()
+    axs.set_xlabel('False positive rate')
+    axs.set_ylabel('True positive rate')
+
+    add_roc_curve(axs, models['dl'],
+                  'CNN', 'r')
+
+    add_roc_curve(axs, models['lgbm_age_sex_bmi_kl_surg_inj_womac'],
+                  'GBM ref', 'g')
+
+    add_roc_curve(axs, models['logreg_age_sex_bmi_kl_surg_inj_womac'],
+                  'LR ref.', 'b')
+
+    plt.savefig(os.path.join(args.results_dir, f'roc_curves_cnn_vs_ref_methods.pdf'), bbox_inches='tight')
+    plt.show()
+    plt.close(fig)
+
+    matplotlib.rcParams.update({'font.size': 14})
+    fig, axs = plt.subplots(nrows=1, ncols=1, figsize=(8, 8))
+    y = models[f'{method}_age_sex_bmi'].Progressor.values
+    axs.axhline(y=y.sum() / y.shape[0], linestyle='--', color='black')
+    axs.set_xlim([0, 1])
+    axs.set_ylim([0, 1])
+    axs.grid()
+    axs.set_xlabel('Recall')
+    axs.set_ylabel('Precision')
+
+    add_pr_curve(axs, models['dl'],
+                 'CNN', 'r')
+
+    add_pr_curve(axs, models['lgbm_age_sex_bmi_kl_surg_inj_womac'],
+                 'GBM ref', 'g')
+
+    add_pr_curve(axs, models['logreg_age_sex_bmi_kl_surg_inj_womac'],
+                 'LR ref.', 'b')
+
+    plt.savefig(os.path.join(args.results_dir, f'pr_curves_cnn_vs_ref_methods.pdf'), bbox_inches='tight')
+    plt.show()
+    plt.close(fig)
+
+    matplotlib.rcParams.update({'font.size': 14})
+    fig, axs = plt.subplots(nrows=1, ncols=1, figsize=(8, 8))
+    axs.plot([0, 1], [0, 1], '--', color='black')
+    axs.set_xlim([0, 1])
+    axs.set_ylim([0, 1])
+    axs.grid()
+    axs.set_xlabel('False positive rate')
+    axs.set_ylabel('True positive rate')
+
+    add_roc_curve(axs, models['lgbm_stacking_kl'],
+                  'Stacking w. KL', 'c')
+
+    add_roc_curve(axs, models['lgbm_stacking_no_kl'],
+                  'Stacking w/o KL', 'r')
+
+    add_roc_curve(axs, models['lgbm_age_sex_bmi_kl_surg_inj_womac'],
+                  'GBM ref', 'g')
+
+    add_roc_curve(axs, models['logreg_age_sex_bmi_kl_surg_inj_womac'],
+                  'LR ref.', 'b')
+
+    plt.savefig(os.path.join(args.results_dir, f'roc_curves_stacking_vs_ref_methods.pdf'), bbox_inches='tight')
+    plt.show()
+    plt.close(fig)
+
+    matplotlib.rcParams.update({'font.size': 14})
+    fig, axs = plt.subplots(nrows=1, ncols=1, figsize=(8, 8))
+    y = models[f'{method}_age_sex_bmi'].Progressor.values
+    axs.axhline(y=y.sum() / y.shape[0], linestyle='--', color='black')
+    axs.set_xlim([0, 1])
+    axs.set_ylim([0, 1])
+    axs.grid()
+    axs.set_xlabel('Recall')
+    axs.set_ylabel('Precision')
+
+    add_pr_curve(axs, models['lgbm_stacking_kl'],
+                 'Stacking w. KL', 'c')
+
+    add_pr_curve(axs, models['lgbm_stacking_no_kl'],
+                 'Stacking w/o KL', 'r')
+
+    add_pr_curve(axs, models['lgbm_age_sex_bmi_kl_surg_inj_womac'],
+                 'GBM ref', 'g')
+
+    add_pr_curve(axs, models['logreg_age_sex_bmi_kl_surg_inj_womac'],
+                 'LR ref.', 'b')
+
+    plt.savefig(os.path.join(args.results_dir, f'pr_curves_stacking_vs_ref_methods.pdf'), bbox_inches='tight')
+    plt.show()
+    plt.close(fig)

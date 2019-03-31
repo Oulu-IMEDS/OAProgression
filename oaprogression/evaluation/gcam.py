@@ -1,5 +1,4 @@
 import os
-
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
@@ -67,7 +66,10 @@ def eval_batch(sample, features, fc, fc_kl=None):
     return gcam_batch, probs_not_summed
 
 
-def preds_and_hmaps(rs_result, gradcams, dataset_root, figsize, threshold, savepath):
+def preds_and_hmaps(results, gradcams, dataset_root, figsize, threshold, savepath, gcam_type='prog'):
+    if gcam_type not in ['prog', 'non-prog']:
+        raise ValueError('gcam type shoould be either prog or non-prog')
+
     ids_rs = []
     hmaps = []
 
@@ -85,9 +87,14 @@ def preds_and_hmaps(rs_result, gradcams, dataset_root, figsize, threshold, savep
         unpack_solt_data,
     ])
 
-    for i, entry in tqdm(rs_result.iterrows(), total=rs_result.shape[0]):
-        if entry.pred < threshold or entry.Progressor == 0:
-            continue
+    for i, entry in tqdm(results.iterrows(), total=results.shape[0], desc=f'GradCAM [{gcam_type}]:'):
+        if gcam_type == 'prog':
+            if entry.pred < threshold or entry.Progressor == 0:
+                continue
+        else:
+            if entry.pred > threshold or entry.Progressor == 1:
+                continue
+
         img = cv2.imread(os.path.join(dataset_root, f'{entry.ID}_00_{entry.Side}.png'), 0)
 
         if 'L' == entry.Side:

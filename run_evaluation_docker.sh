@@ -8,7 +8,7 @@ docker build -t oaprog_img .
 
 
 echo "====> Working on the snapshot $SNAPSHOT"
-#
+
 ## If you run it first time - remove the option "--from_cache".
 #nvidia-docker run -it --name oa_progression_oof_inference --rm \
 #	      -v $WRKDIR:/workdir/:rw \
@@ -38,17 +38,16 @@ echo "====> Working on the snapshot $SNAPSHOT"
 #	      --metadata_root /workdir/Metadata \
 #	      --save_dir /workdir/Results
 #
-## If you run it first time - remove the option "--from_cache".
-#nvidia-docker run -it --name oa_prog_evaluation --rm \
-#	      -v $WRKDIR:/workdir/:rw \
-#	      -v $OAI_MOST_IMG_SRC:/data/:ro --ipc=host \
-#	      oaprog_img python -u run_dl_evaluation.py --snapshots /workdir/snapshots \
-#	      --snapshot $SNAPSHOT \
-#	      --dataset_root /data/ \
-#	      --save_dir /workdir/Results \
-#	      --metadata_root /workdir/Metadata \
-#	      --plot_gcams True
-#	      #--from_cache True --plot_gcams True
+# If you run it first time - remove the option "--from_cache".
+nvidia-docker run -it --name oa_prog_evaluation --rm \
+	      -v $WRKDIR:/workdir/:rw \
+	      -v $OAI_MOST_IMG_SRC:/data/:ro --ipc=host \
+	      oaprog_img python -u run_dl_evaluation.py --snapshots /workdir/snapshots \
+	      --snapshot $SNAPSHOT \
+	      --dataset_root /data/ \
+	      --save_dir /workdir/Results \
+	      --metadata_root /workdir/Metadata \
+	      --from_cache True --plot_gcams True
 #
 ## Running the stacked predictions
 #nvidia-docker run -it --name oa_prog_stacking_eval --rm \
@@ -58,18 +57,18 @@ echo "====> Working on the snapshot $SNAPSHOT"
 #	      --snapshot $SNAPSHOT \
 #	      --metadata_root /workdir/Metadata \
 #	      --save_dir /workdir/Results
-
-# Generating the preliminary plots (just for viewing)
-nvidia-docker run -it --name oa_prog_eval_cmp --rm \
-	      -v $WRKDIR:/workdir/:rw --ipc=host \
-	      oaprog_img python -u run_models_comparison.py \
-	      --metadata_root /workdir/Metadata \
-	      --results_dir /workdir/Results
-
-echo "==> Evaluation results for KL0-1"
-# Doing evaluation of the KL01 cases
-nvidia-docker run -it --name oa_prog_eval_kl01_cmp --rm \
-	      -v $WRKDIR:/workdir/:rw --ipc=host \
-	      oaprog_img python -u run_models_comparison_kl_01.py \
-	      --metadata_root /workdir/Metadata \
-	      --results_dir /workdir/Results
+#
+## Generating the preliminary plots (just for viewing)
+#nvidia-docker run -it --name oa_prog_eval_cmp --rm \
+#	      -v $WRKDIR:/workdir/:rw --ipc=host \
+#	      oaprog_img python -u run_models_comparison.py \
+#	      --metadata_root /workdir/Metadata \
+#	      --results_dir /workdir/Results
+#
+#echo "==> Evaluation results for KL0-1"
+## Doing evaluation of the KL01 cases
+#nvidia-docker run -it --name oa_prog_eval_kl01_cmp --rm \
+#	      -v $WRKDIR:/workdir/:rw --ipc=host \
+#	      oaprog_img python -u run_models_comparison_kl_01.py \
+#	      --metadata_root /workdir/Metadata \
+#	      --results_dir /workdir/Results

@@ -84,9 +84,19 @@ if __name__ == "__main__":
     res.Progressor = res.Progressor > 0
 
     if args.plot_gcams:
-        gcam.preds_and_hmaps(rs_result=res,
+        os.makedirs(os.path.join(args.save_dir, 'prog_heatmaps'), exist_ok=True)
+        gcam.preds_and_hmaps(results=res,
                              gradcams=gcams,
                              dataset_root=args.dataset_root,
                              figsize=10,
-                             threshold=0.3,
-                             savepath=args.save_dir)
+                             threshold=0.4,
+                             savepath=os.path.join(args.save_dir, 'prog_heatmaps'),
+                             gcam_type='prog')
+        os.makedirs(os.path.join(args.save_dir, 'nonprog_heatmaps'), exist_ok=True)
+        gcam.preds_and_hmaps(results=res,
+                             gradcams=gcams,
+                             dataset_root=args.dataset_root,
+                             figsize=10,
+                             threshold=0.4,
+                             savepath=os.path.join(args.save_dir, 'nonprog_heatmaps'),
+                             gcam_type='non-prog')

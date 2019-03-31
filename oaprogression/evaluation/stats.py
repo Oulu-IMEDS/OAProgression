@@ -5,7 +5,7 @@ from sklearn.metrics import roc_auc_score, roc_curve, precision_recall_curve, av
 from tqdm import tqdm
 
 
-def calc_curve_bootstrap(curve, metric, y, preds, n_bootstrap, seed, stratified=True, alpha=95):
+def calc_curve_bootstrap(curve, metric, y, preds, n_bootstrap, seed=12345, stratified=True, alpha=95):
     """
     Parameters
     ----------
@@ -45,7 +45,7 @@ def calc_curve_bootstrap(curve, metric, y, preds, n_bootstrap, seed, stratified=
             continue
         metric_vals.append(metric(y[ind], preds[ind]))
 
-    metric_val = np.mean(metric_vals)
+    metric_val = metric(y, preds)
     x_curve_vals, y_curve_vals, _ = curve(y, preds)
     ci_l = np.percentile(metric_vals, (100 - alpha) // 2)
     ci_h = np.percentile(metric_vals, alpha + (100 - alpha) // 2)
@@ -98,15 +98,15 @@ def roc_curve_bootstrap(y, preds, savepath=None, n_bootstrap=1000, seed=42, retu
     return auc, ci_l, ci_h
 
 
-def compare_curves(y, preds1, preds2, savepath_roc=None, savepath_pr=None, n_bootstrap=2000, seed=42):
+def compare_curves(y, preds1, preds2, savepath_roc=None, savepath_pr=None, n_bootstrap=2000, seed=12345):
     plt.figure(figsize=(8, 8))
-    auc, ci_l, ci_h, fpr, tpr = calc_curve_bootstrap(roc_curve, roc_auc_score, y, preds1, n_bootstrap,
-                                                     seed, stratified=True, alpha=95)
+    auc, ci_l, ci_h, fpr, tpr = calc_curve_bootstrap(roc_curve, roc_auc_score, y, preds1, n_bootstrap=n_bootstrap,
+                                                     seed=seed, stratified=True, alpha=95)
     print(f'AUC (method 1): {np.round(auc, 2):.2f} | 95% CI [{np.round(ci_l, 2):.2f},{np.round(ci_h, 2):.2f}]')
     plt.plot(fpr, tpr, 'b-')
 
-    auc, ci_l, ci_h, fpr, tpr = calc_curve_bootstrap(roc_curve, roc_auc_score, y, preds2, n_bootstrap,
-                                                     seed, stratified=True, alpha=95)
+    auc, ci_l, ci_h, fpr, tpr = calc_curve_bootstrap(roc_curve, roc_auc_score, y, preds2, n_bootstrap=n_bootstrap,
+                                                     seed=seed, stratified=True, alpha=95)
     print(f'AUC (method 2): {np.round(auc, 2):.2f} | 95% CI [{np.round(ci_l, 2):.2f},{np.round(ci_h, 2):.2f}]')
     plt.plot(fpr, tpr, 'r-')
     plt.plot([0, 1], [0, 1], '-', color='black')

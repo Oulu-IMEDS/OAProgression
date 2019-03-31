@@ -15,12 +15,12 @@ from oaprogression.evaluation.tools import pkl2df
 from sklearn.metrics import roc_auc_score, roc_curve, average_precision_score, precision_recall_curve
 
 
-def add_roc_curve(axs, tmp_df, key, color, legend=True, seed=42, n_bootstrap=2000):
+def add_roc_curve(axs, tmp_df, key, color, legend=True, seed=12345, n_bootstrap=2000):
     auc, ci_l, ci_h, fpr, tpr = stats.calc_curve_bootstrap(roc_curve, roc_auc_score,
                                                            tmp_df.Progressor.values.astype(int),
                                                            tmp_df.Prediction.values.astype(float),
-                                                           n_bootstrap, seed, stratified=True, alpha=95)
-
+                                                           n_bootstrap=n_bootstrap,
+                                                           seed=seed, stratified=True, alpha=95)
     if key is None:
         key = ''
     if color is None:
@@ -31,11 +31,12 @@ def add_roc_curve(axs, tmp_df, key, color, legend=True, seed=42, n_bootstrap=200
         axs.legend()
 
 
-def add_pr_curve(axs, tmp_df, key, color, legend=True, seed=42, n_bootstrap=2000):
+def add_pr_curve(axs, tmp_df, key, color, legend=True, seed=12345, n_bootstrap=2000):
     ap, ci_l, ci_h, precision, recall = stats.calc_curve_bootstrap(precision_recall_curve, average_precision_score,
                                                                    tmp_df.Progressor.values.astype(int),
                                                                    tmp_df.Prediction.values.astype(float),
-                                                                   n_bootstrap, seed, stratified=True, alpha=95)
+                                                                   n_bootstrap=n_bootstrap,
+                                                                   seed=seed, stratified=True, alpha=95)
 
     if color is None:
         axs.plot(recall, precision, label=key + f' ({np.round(ap, 2)} [{np.round(ci_l, 2)}, {np.round(ci_h, 2)}])')
@@ -50,6 +51,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--results_dir', default='')
     parser.add_argument('--metadata_root', default='')
+    parser.add_argument('--seed', type=int, default=12345)
     args = parser.parse_args()
 
     data = np.load(os.path.join(args.results_dir, 'results.npz'))
@@ -108,16 +110,16 @@ if __name__ == "__main__":
         axs.set_ylabel('True positive rate')
 
         add_roc_curve(axs, models[f'{method}_age_sex_bmi_kl_surg_inj_womac'],
-                      'Age, SEX, BMI, KL, Surg, Inj, WOMAC', 'r')
+                      'Age, SEX, BMI, KL, Surg, Inj, WOMAC', 'r', seed=args.seed)
 
         add_roc_curve(axs, models[f'{method}_age_sex_bmi_kl'],
-                      'Age, SEX, BMI, KL', 'g')
+                      'Age, SEX, BMI, KL', 'g', seed=args.seed)
 
         add_roc_curve(axs, models[f'{method}_age_sex_bmi_surg_inj_womac'],
-                      'Age, SEX, BMI, Surg, Inj, WOMAC', 'b')
+                      'Age, SEX, BMI, Surg, Inj, WOMAC', 'b', seed=args.seed)
 
         add_roc_curve(axs, models[f'{method}_age_sex_bmi'],
-                      'Age, SEX, BMI', 'k')
+                      'Age, SEX, BMI', 'k', seed=args.seed)
 
         plt.savefig(os.path.join(args.results_dir, f'roc_curves_{method}.pdf'), bbox_inches='tight')
         plt.show()
@@ -134,16 +136,16 @@ if __name__ == "__main__":
         axs.set_ylabel('Precision')
 
         add_pr_curve(axs, models[f'{method}_age_sex_bmi_kl_surg_inj_womac'],
-                     'Age, SEX, BMI, KL, Surg, Inj, WOMAC', 'r')
+                     'Age, SEX, BMI, KL, Surg, Inj, WOMAC', 'r', seed=args.seed)
 
         add_pr_curve(axs, models[f'{method}_age_sex_bmi_kl'],
-                     'Age, SEX, BMI, KL', 'g')
+                     'Age, SEX, BMI, KL', 'g', seed=args.seed)
 
         add_pr_curve(axs, models[f'{method}_age_sex_bmi_surg_inj_womac'],
-                     'Age, SEX, BMI, Surg, Inj, WOMAC', 'b')
+                     'Age, SEX, BMI, Surg, Inj, WOMAC', 'b', seed=args.seed)
 
         add_pr_curve(axs, models[f'{method}_age_sex_bmi'],
-                     'Age, SEX, BMI', 'k')
+                     'Age, SEX, BMI', 'k', seed=args.seed)
 
         plt.savefig(os.path.join(args.results_dir, f'pr_curves_{method}.pdf'), bbox_inches='tight')
         plt.show()
@@ -159,13 +161,13 @@ if __name__ == "__main__":
     axs.set_ylabel('True positive rate')
 
     add_roc_curve(axs, models['dl'],
-                  'CNN', 'r')
+                  'CNN', 'r', seed=args.seed)
 
     add_roc_curve(axs, models['lgbm_age_sex_bmi_kl_surg_inj_womac'],
-                  'GBM ref', 'g')
+                  'GBM ref', 'g', seed=args.seed)
 
     add_roc_curve(axs, models['logreg_age_sex_bmi_kl_surg_inj_womac'],
-                  'LR ref.', 'b')
+                  'LR ref.', 'b', seed=args.seed)
 
     plt.savefig(os.path.join(args.results_dir, f'roc_curves_cnn_vs_ref_methods.pdf'), bbox_inches='tight')
     plt.show()
@@ -182,13 +184,13 @@ if __name__ == "__main__":
     axs.set_ylabel('Precision')
 
     add_pr_curve(axs, models['dl'],
-                 'CNN', 'r')
+                 'CNN', 'r', seed=args.seed)
 
     add_pr_curve(axs, models['lgbm_age_sex_bmi_kl_surg_inj_womac'],
-                 'GBM ref', 'g')
+                 'GBM ref', 'g', seed=args.seed)
 
     add_pr_curve(axs, models['logreg_age_sex_bmi_kl_surg_inj_womac'],
-                 'LR ref.', 'b')
+                 'LR ref.', 'b', seed=args.seed)
 
     plt.savefig(os.path.join(args.results_dir, f'pr_curves_cnn_vs_ref_methods.pdf'), bbox_inches='tight')
     plt.show()
@@ -204,16 +206,16 @@ if __name__ == "__main__":
     axs.set_ylabel('True positive rate')
 
     add_roc_curve(axs, models['lgbm_stacking_kl'],
-                  'Stacking w. KL', 'c')
+                  'Stacking w. KL', 'c', seed=args.seed)
 
     add_roc_curve(axs, models['lgbm_stacking_no_kl'],
-                  'Stacking w/o KL', 'r')
+                  'Stacking w/o KL', 'r', seed=args.seed)
 
     add_roc_curve(axs, models['lgbm_age_sex_bmi_kl_surg_inj_womac'],
-                  'GBM ref', 'g')
+                  'GBM ref', 'g', seed=args.seed)
 
     add_roc_curve(axs, models['logreg_age_sex_bmi_kl_surg_inj_womac'],
-                  'LR ref.', 'b')
+                  'LR ref.', 'b', seed=args.seed)
 
     plt.savefig(os.path.join(args.results_dir, f'roc_curves_stacking_vs_ref_methods.pdf'), bbox_inches='tight')
     plt.show()
@@ -230,16 +232,16 @@ if __name__ == "__main__":
     axs.set_ylabel('Precision')
 
     add_pr_curve(axs, models['lgbm_stacking_kl'],
-                 'Stacking w. KL', 'c')
+                 'Stacking w. KL', 'c', seed=args.seed)
 
     add_pr_curve(axs, models['lgbm_stacking_no_kl'],
-                 'Stacking w/o KL', 'r')
+                 'Stacking w/o KL', 'r', seed=args.seed)
 
     add_pr_curve(axs, models['lgbm_age_sex_bmi_kl_surg_inj_womac'],
-                 'GBM ref', 'g')
+                 'GBM ref', 'g', seed=args.seed)
 
     add_pr_curve(axs, models['logreg_age_sex_bmi_kl_surg_inj_womac'],
-                 'LR ref.', 'b')
+                 'LR ref.', 'b', seed=args.seed)
 
     plt.savefig(os.path.join(args.results_dir, f'pr_curves_stacking_vs_ref_methods.pdf'), bbox_inches='tight')
     plt.show()

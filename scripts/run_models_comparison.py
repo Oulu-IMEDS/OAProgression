@@ -18,6 +18,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--results_dir', default='')
     parser.add_argument('--metadata_root', default='')
+    parser.add_argument('--seed', type=int, default=12345)
     args = parser.parse_args()
 
     data = np.load(os.path.join(args.results_dir, 'results.npz'))
@@ -38,7 +39,7 @@ if __name__ == "__main__":
     bl_lgbm = pkl2df(os.path.join(args.results_dir, 'results_baselines_lgbm.pkl'))
     lgbm_stacking = pkl2df(os.path.join(args.results_dir, 'results_lgbm_stacking.pkl'))
 
-    models = {}
+    models = dict()
 
     # logreg-based baselines
     models['logreg_age_sex_bmi'] = bl_logreg['preds_MOST_BL_all_AGE_SEX_BMI']
@@ -74,7 +75,7 @@ if __name__ == "__main__":
         tmp_df = models[key]
         key = key.split('logreg')[1]
         key = ' '.join(key.split('_')).upper()
-        compute_and_plot_curves(tmp_df, axs, key=key, legend=True)
+        compute_and_plot_curves(tmp_df, axs, key=key, legend=True, seed=args.seed)
 
     plt.savefig(os.path.join(args.results_dir, 'Logreg_baselines.pdf'), bbox_inches='tight')
     plt.show()
@@ -88,7 +89,7 @@ if __name__ == "__main__":
         tmp_df = models[key]
         key = key.split('logreg')[1]
         key = ' '.join(key.split('_')).upper()
-        compute_and_plot_curves(tmp_df, axs, key=key, legend=True)
+        compute_and_plot_curves(tmp_df, axs, key=key, legend=True, seed=args.seed)
     plt.savefig(os.path.join(args.results_dir, 'KL_grade_baseline.pdf'), bbox_inches='tight')
     plt.show()
     plt.close(fig)
@@ -102,7 +103,7 @@ if __name__ == "__main__":
         tmp_df = models[key]
         key = key.split('lgbm')[1]
         key = ' '.join(key.split('_')).upper()
-        compute_and_plot_curves(tmp_df, axs, key=key, legend=True)
+        compute_and_plot_curves(tmp_df, axs, key=key, legend=True, seed=args.seed)
 
     plt.savefig(os.path.join(args.results_dir, 'Lgbm_baselines.pdf'), bbox_inches='tight')
     plt.show()
@@ -112,7 +113,7 @@ if __name__ == "__main__":
     fig, axs = init_auc_pr_plot(dl_preds.Progressor.values)
     for key, color, legend in zip(['lgbm_age_sex_bmi_kl_surg_inj_womac', 'dl'], ['blue', 'red'], ['GBM ref.', 'CNN']):
         tmp_df = models[key]
-        compute_and_plot_curves(tmp_df, axs, key=legend, legend=True, color=color)
+        compute_and_plot_curves(tmp_df, axs, key=legend, legend=True, color=color, seed=args.seed)
 
     plt.savefig(os.path.join(args.results_dir, 'DL_vs_strongest_baselines.pdf'), bbox_inches='tight')
     plt.show()
@@ -127,7 +128,7 @@ if __name__ == "__main__":
     fig, axs = init_auc_pr_plot(dl_preds.Progressor.values)
     for key, color, legend in zip(['logreg_age_sex_bmi_kl_surg_inj_womac', 'dl'], ['blue', 'red'], ['LR ref.', 'CNN']):
         tmp_df = models[key]
-        compute_and_plot_curves(tmp_df, axs, key=legend, legend=True, color=color)
+        compute_and_plot_curves(tmp_df, axs, key=legend, legend=True, color=color, seed=args.seed)
     plt.savefig(os.path.join(args.results_dir, 'DL_vs_simple_baselines.pdf'), bbox_inches='tight')
     plt.show()
     plt.close(fig)
@@ -142,7 +143,7 @@ if __name__ == "__main__":
     for key, color, legend in zip(['lgbm_age_sex_bmi_kl_surg_inj_womac', 'lgbm_stacking_kl'], ['blue', 'red'],
                                   ['GBM ref.', 'Stacking w. KL']):
         tmp_df = models[key]
-        compute_and_plot_curves(tmp_df, axs, key=legend, legend=True, color=color)
+        compute_and_plot_curves(tmp_df, axs, key=legend, legend=True, color=color, seed=args.seed)
     plt.savefig(os.path.join(args.results_dir, 'Combined_vs_strongest_baseline.pdf'), bbox_inches='tight')
     plt.show()
     plt.close(fig)
@@ -152,7 +153,7 @@ if __name__ == "__main__":
     for key, color, legend in zip(['logreg_age_sex_bmi_kl_surg_inj_womac', 'lgbm_stacking_kl'], ['blue', 'red'],
                                   ['LR ref.', 'Stacking w. KL']):
         tmp_df = models[key]
-        compute_and_plot_curves(tmp_df, axs, key=legend, legend=True, color=color)
+        compute_and_plot_curves(tmp_df, axs, key=legend, legend=True, color=color, seed=args.seed)
     plt.savefig(os.path.join(args.results_dir, 'Combined_vs_simplest_baseline.pdf'), bbox_inches='tight')
     plt.show()
     plt.close(fig)
@@ -167,7 +168,7 @@ if __name__ == "__main__":
     for key, color, legend in zip(['lgbm_age_sex_bmi_kl_surg_inj_womac', 'lgbm_stacking_no_kl'], ['blue', 'red'],
                                   ['GBM ref.', 'Stacking w/o KL']):
         tmp_df = models[key]
-        compute_and_plot_curves(tmp_df, axs, key=legend, legend=True, color=color)
+        compute_and_plot_curves(tmp_df, axs, key=legend, legend=True, color=color, seed=args.seed)
 
     plt.savefig(os.path.join(args.results_dir, 'Combined_automatic_vs_strongest_baseline.pdf'), bbox_inches='tight')
     plt.show()
@@ -182,7 +183,7 @@ if __name__ == "__main__":
     for key, color, legend in zip(['logreg_age_sex_bmi_kl_surg_inj_womac', 'lgbm_stacking_no_kl'], ['blue', 'red'],
                                   ['LR ref.', 'Stacking w/o KL']):
         tmp_df = models[key]
-        compute_and_plot_curves(tmp_df, axs, key=legend, legend=True, color=color)
+        compute_and_plot_curves(tmp_df, axs, key=legend, legend=True, color=color, seed=args.seed)
 
     plt.savefig(os.path.join(args.results_dir, 'Combined_automatic_vs_simple_baselines.pdf'), bbox_inches='tight')
     plt.show()

@@ -16,6 +16,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--results_dir', default='')
     parser.add_argument('--metadata_root', default='')
+    parser.add_argument('--seed', type=int, default=12345)
     args = parser.parse_args()
 
     progression_meta = pd.read_csv(os.path.join(args.metadata_root, 'MOST_progression.csv'))
@@ -65,5 +66,5 @@ if __name__ == "__main__":
 
     for model_name in models:
         tmp = pd.merge(models[model_name], progression_meta[['ID', 'Side', 'KL']], on=('ID', 'Side'))
-        tmp = tmp[(tmp.KL == 0) | (tmp.KL == 1)].drop('KL', axis=1)
-        tools.compute_curves_and_metrics(model_name, tmp)
+        tmp = tmp[(tmp.KL == 0) | (tmp.KL == 1)]
+        tools.compute_curves_and_metrics(model_name, tmp, seed=args.seed)

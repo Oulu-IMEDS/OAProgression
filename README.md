@@ -1,8 +1,8 @@
-# Personalized Osteoarthritis Progression Prediction using Machine Learning 
+# Multimodal Machine Learning-based Knee Osteoarthritis Progression Prediction from Plain Radiographs and Clinical Data
 
 *Codes for paper and the pre-trained models.*
 
-(c) Aleksei Tiulpin, University of Oulu, 2018.
+(c) Aleksei Tiulpin, University of Oulu, 2018-2019.
 
 ## About
 
@@ -20,16 +20,21 @@ To run this project, we used `Ubuntu 16.04`, `Docker` and also `nvidia-docker`. 
 
 We used 3xGTX1080Ti NVIDIA cards to train our models, so, please make sure that you have enough memory for minibatches allocation. We assume, that 2xGTX1080Ti will also be sufficient.
 
-### Reproducing the experiemnts
+### Reproducing the experiments
 
 1. Set-up the metadata, localized ROI and workdir paths in `run_training_docker.sh`. Do the same for `run_evaluation_docker.sh`
 2. Execute `run_training_docker.sh`
 3. Execute `run_evaluation_docker.sh`
 
-Eventually, these scripts will generate a snapshot, containing 5 models from each cross-validation fold. You can monitor the process using tensorboard (needs to be run independently), or look at the training logs later, after the experiments. They will be generated in the `WRKDIR` (look at the `run_training_docker.sh`.
+Eventually, these scripts will generate a snapshot, containing 5 models from each cross-validation fold. 
+You can monitor the process using tensorboard (needs to be run independently), or look at the training logs later, after the experiments. 
+They will be generated in the `WRKDIR` (look at the `run_training_docker.sh`.
+
+### Pre-trained models
+The pre-trained CNN models are available at [http://mipt-ml.oulu.fi/models/OAProgression/](http://mipt-ml.oulu.fi/models/OAProgression/).
+To train the second-level LightGBM models, you need to obtain the OAI dataset metadata.
 
 ## License
-
-This software and the pretrained models can be used only for research purposes
+This software and the pre-trained models can be used only for research purposes.
 
 

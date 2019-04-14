@@ -16,7 +16,9 @@ This repository contains the full codes to reproduce the training process in the
 
 ### Dependencies
 
-To run this project, we used `Ubuntu 16.04`, `Docker` and also `nvidia-docker`. These are the only software dependencies you will need. Please, install these and you are set.
+To run this project, we used `Ubuntu 16.04`, `Docker` and also `nvidia-docker`. 
+These are the only software dependencies you will need. Please, install these and you are set. 
+If you do not want to use the `Docker`, you can follow teh given Dockerfile to follow the installation process.
 
 We used 3xGTX1080Ti NVIDIA cards to train our models, so, please make sure that you have enough memory for minibatches allocation. We assume, that 2xGTX1080Ti will also be sufficient.
 

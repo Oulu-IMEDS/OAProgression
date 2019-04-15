@@ -1,7 +1,8 @@
 # Multimodal Machine Learning-based Knee Osteoarthritis Progression Prediction from Plain Radiographs and Clinical Data
 
-Arxiv pre-print: http://arxiv.org/abs/1904.06236
 *Codes for paper and the pre-trained models.*
+
+Arxiv pre-print: http://arxiv.org/abs/1904.06236
 
 (c) Aleksei Tiulpin, University of Oulu, 2018-2019.
 
@@ -37,6 +38,17 @@ They will be generated in the `WRKDIR` (look at the `run_training_docker.sh`.
 The pre-trained CNN models are available at [http://mipt-ml.oulu.fi/models/OAProgression/](http://mipt-ml.oulu.fi/models/OAProgression/).
 To train the second-level LightGBM models, you need to obtain the OAI dataset metadata.
 
+## Citation
+If you use any of this code or data, please cite the following paper:
+
+```
+@misc{1904.06236,
+Author = {Aleksei Tiulpin and Stefan Klein and Sita M. A. Bierma-Zeinstra and Jérôme Thevenot and Esa Rahtu and Joyce van Meurs and Edwin H. G. Oei and Simo Saarakkala},
+Title = {Multimodal Machine Learning-based Knee Osteoarthritis Progression Prediction from Plain Radiographs and Clinical Data},
+Year = {2019},
+Eprint = {arXiv:1904.06236},
+}
+```
 ## License
 This software and the pre-trained models can be used only for research purposes.
 

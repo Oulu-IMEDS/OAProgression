@@ -1,5 +1,6 @@
 # Multimodal Machine Learning-based Knee Osteoarthritis Progression Prediction from Plain Radiographs and Clinical Data
 
+Arxiv pre-print: http://arxiv.org/abs/1904.06236
 *Codes for paper and the pre-trained models.*
 
 (c) Aleksei Tiulpin, University of Oulu, 2018-2019.

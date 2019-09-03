@@ -28,7 +28,6 @@ if __name__ == "__main__":
     parser.add_argument('--metadata_root', default='')
     parser.add_argument('--seed', type=int, default=12345)
     parser.add_argument('--lgbm_hyperopt_trials', type=int, default=500)
-    parser.add_argument('--n_bootstrap', type=int, default=2000)
     parser.add_argument('--save_dir', default='')
     args = parser.parse_args()
 

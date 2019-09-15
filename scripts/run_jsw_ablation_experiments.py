@@ -1,80 +1,51 @@
 import sys
 import os
 import cv2
-import pandas as pd
 import argparse
-import numpy as np
-from oaprogression.metadata.utils import read_sas7bdata_pd
+import pickle
+
 from sklearn.metrics import average_precision_score
 from sklearn.model_selection import GroupKFold
 
+from oaprogression.metadata.oai import jsw_features, read_jsw_metadata_oai, beam_angle_feature
 from oaprogression.training.lgbm_tools import optimize_lgbm_hyperopt, fit_lgb
-import pickle
 from oaprogression.evaluation import tools
+
 
 cv2.ocl.setUseOpenCL(False)
 cv2.setNumThreads(0)
 
 DEBUG = sys.gettrace() is not None
 
-sides = [None, 'R', 'L']
-JSW_features = ['V00JSW150', 'V00JSW175', 'V00JSW200', 'V00JSW225', 'V00JSW250', 'V00JSW275', 'V00JSW300',
-                'V00LJSW700', 'V00LJSW725', 'V00LJSW750', 'V00LJSW775', 'V00LJSW800', 'V00LJSW825', 'V00LJSW850',
-                'V00LJSW875', 'V00LJSW900']
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset_root', default='')
     parser.add_argument('--metadata_root', default='')
     parser.add_argument('--seed', type=int, default=12345)
-    parser.add_argument('--lgbm_hyperopt_trials', type=int, default=500)
+    parser.add_argument('--lgbm_hyperopt_trials', type=int, default=2)
     parser.add_argument('--save_dir', default='')
     args = parser.parse_args()
 
-    oai_meta = pd.read_csv(os.path.join(args.metadata_root, 'OAI_progression.csv'))
-    oai_participants = pd.read_csv(os.path.join(args.metadata_root, 'OAI_participants.csv'))
-    oai_participants_raw = read_sas7bdata_pd(os.path.join(os.path.join(args.dataset_root,
-                                                                       'X-Ray_Image_Assessments_SAS'),
-                                                          'enrollees.sas7bdat'))
-
-    sites = oai_participants_raw[['ID', 'V00SITE']]
-    sites.ID = sites.ID.astype(int)
-    metadata = pd.merge(oai_meta, oai_participants, on=('ID', 'Side'))
-    metadata = pd.merge(metadata, sites)
-
-    quant_readings = read_sas7bdata_pd(os.path.join(args.dataset_root, 'X-Ray_Image_Assessments_SAS',
-                                                    'Quant JSW_SAS',
-                                                    'kxr_qjsw_duryea00.sas7bdat'))
-
-    quant_readings.drop_duplicates(subset=['ID', 'SIDE'], inplace=True)
-    quant_readings = quant_readings[(quant_readings['V00NOLJSWX'].astype(float) +
-                                     quant_readings['V00NOMJSWX'].astype(float)) == 0]
-
-    quant_readings = quant_readings[['ID', 'SIDE'] + JSW_features+ ['V00BMANG']]
-
-    quant_readings['Side'] = quant_readings.SIDE.apply(lambda x: (sides[int(x)]), 1)
-    quant_readings['ID'] = quant_readings.ID.astype(int)
-    quant_readings.drop('SIDE', axis=1, inplace=True)
-    metadata = pd.merge(quant_readings, metadata, on=('ID', 'Side'))
-    sites = np.unique(metadata.V00SITE.values)
+    sites, metadata = read_jsw_metadata_oai(args.metadata_root, args.dataset_root)
 
     results = {}
-    for feature_set in [['AGE', 'SEX', 'BMI'], # Reproducing the test results
+    for feature_set in [['AGE', 'SEX', 'BMI'],
                         ['AGE', 'SEX', 'BMI', 'SURG', 'INJ', 'WOMAC'],
                         ['AGE', 'SEX', 'BMI', 'KL'],
                         ['AGE', 'SEX', 'BMI', 'KL', 'SURG', 'INJ', 'WOMAC'],
-                        ['AGE', 'SEX', 'BMI', 'V00BMANG'], # Reproducing the test results w. beam angle
-                        ['AGE', 'SEX', 'BMI', 'SURG', 'INJ', 'WOMAC', 'V00BMANG'],
-                        ['AGE', 'SEX', 'BMI', 'KL', 'V00BMANG'],
-                        ['AGE', 'SEX', 'BMI', 'KL', 'SURG', 'INJ', 'WOMAC', 'V00BMANG'],
-                        ['AGE', 'SEX', 'BMI'] + JSW_features, # Adding JSW to the base model
-                        ['AGE', 'SEX', 'BMI', 'KL'] + JSW_features,
-                        ['AGE', 'SEX', 'BMI', 'KL', 'SURG', 'INJ', 'WOMAC'] + JSW_features,
-                        ['AGE', 'SEX', 'BMI', 'SURG', 'INJ', 'WOMAC'] + JSW_features,
-                        ['AGE', 'SEX', 'BMI', 'V00BMANG'] + JSW_features, # Let's try to add the beam angle as well
-                        ['AGE', 'SEX', 'BMI', 'KL', 'V00BMANG'] + JSW_features,
-                        ['AGE', 'SEX', 'BMI', 'KL', 'SURG', 'INJ', 'WOMAC', 'V00BMANG'] + JSW_features,
-                        ['AGE', 'SEX', 'BMI', 'SURG', 'INJ', 'WOMAC', 'V00BMANG'] + JSW_features,
+                        ['AGE', 'SEX', 'BMI', beam_angle_feature], # Reproducing the test results w. beam angle
+                        ['AGE', 'SEX', 'BMI', 'SURG', 'INJ', 'WOMAC', beam_angle_feature],
+                        ['AGE', 'SEX', 'BMI', 'KL', beam_angle_feature],
+                        ['AGE', 'SEX', 'BMI', 'KL', 'SURG', 'INJ', 'WOMAC', beam_angle_feature],
+                        ['AGE', 'SEX', 'BMI'] + jsw_features, # Adding JSW to the base model
+                        ['AGE', 'SEX', 'BMI', 'KL'] + jsw_features,
+                        ['AGE', 'SEX', 'BMI', 'KL', 'SURG', 'INJ', 'WOMAC'] + jsw_features,
+                        ['AGE', 'SEX', 'BMI', 'SURG', 'INJ', 'WOMAC'] + jsw_features,
+                        ['AGE', 'SEX', 'BMI', beam_angle_feature] + jsw_features, # Let's try to add the beam angle as well
+                        ['AGE', 'SEX', 'BMI', 'KL', beam_angle_feature] + jsw_features,
+                        ['AGE', 'SEX', 'BMI', 'KL', 'SURG', 'INJ', 'WOMAC', beam_angle_feature] + jsw_features,
+                        ['AGE', 'SEX', 'BMI', 'SURG', 'INJ', 'WOMAC', beam_angle_feature] + jsw_features,
                         ]:
 
         features_suffix = '_'.join(feature_set)

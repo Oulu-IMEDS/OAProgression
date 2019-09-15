@@ -30,45 +30,12 @@ if __name__ == "__main__":
     with open(os.path.join(args.snapshots_root, args.snapshot, 'session.pkl'), 'rb') as f:
         session_snapshot = pickle.load(f)
 
-    loader = tools.init_loader(pd.read_csv(os.path.join(args.metadata_root, 'MOST_progression.csv')), args)
+    os.makedirs(args.save_dir, exist_ok=True)
 
-    gradcam_maps_all = 0
-    res_kl = 0
-    res_prog = 0
-    ids = None
     if not args.from_cache:
-        for fold_id in range(session_snapshot['args'][0].n_folds):
-            features, fc, fc_kl = tools.init_fold(fold_id, session_snapshot, args, return_fc_kl=True)
-
-            preds_prog_fold = []
-            preds_kl_fold = []
-            gradcam_maps_fold = []
-            ids = []
-            sides = []
-            for batch_id, sample in enumerate(
-                    tqdm(loader, total=len(loader), desc='Prediction from fold {}'.format(fold_id))):
-                gcam_batch, probs_prog, probs_kl = gcam.eval_batch(sample, features, fc, fc_kl)
-                gradcam_maps_fold.append(gcam_batch)
-                preds_prog_fold.append(probs_prog)
-                preds_kl_fold.append(probs_kl)
-                ids.extend(sample['ID_SIDE'])
-                gc.collect()
-
-            preds_prog_fold = np.vstack(preds_prog_fold)
-            preds_kl_fold = np.vstack(preds_kl_fold)
-            gradcam_maps_all += np.vstack(gradcam_maps_fold)
-
-            res_kl += preds_kl_fold
-            res_prog += preds_prog_fold
-            gc.collect()
-
-        res_kl /= 5.
-        res_prog /= 5.
-        np.savez_compressed(os.path.join(args.save_dir, 'results.npz'),
-                            gradcam_maps_all=gradcam_maps_all,
-                            preds_kl=res_kl,
-                            preds_prog=res_prog,
-                            ids=ids)
+        loader = tools.init_loader(pd.read_csv(os.path.join(args.metadata_root, 'MOST_progression.csv')), args,
+                                   args.snapshots_root)
+        tools.run_test_inference(loader, session_snapshot, args.snapshots_root, args.snapshot, args.save_dir)
 
     data = np.load(os.path.join(args.save_dir, 'results.npz'))
 

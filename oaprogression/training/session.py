@@ -19,7 +19,16 @@ from oaprogression.training.dataset import OAProgressionDataset, AgeSexBMIDatase
 from oaprogression.training.dataset import init_train_augs, apply_by_index, img_labels2solt, unpack_solt_data
 
 
-def init_session():
+def init_snapshot_dir(snapshot_name_prefix=None):
+    kvs = GlobalKVS()
+    snapshot_name = time.strftime('%Y_%m_%d_%H_%M')
+    if snapshot_name_prefix is not None:
+        snapshot_name = f'{snapshot_name_prefix}_{snapshot_name}'
+    os.makedirs(os.path.join(kvs['args'].snapshots, snapshot_name), exist_ok=True)
+    kvs.update('snapshot_name', snapshot_name)
+
+
+def init_session(snapshot_name_prefix=None):
     if not torch.cuda.is_available():
         raise EnvironmentError('The code must be run on GPU.')
 
@@ -27,21 +36,14 @@ def init_session():
 
     # Getting the arguments
     args = parse_args()
+    kvs.update('args', args)
+
     # Initializing the seeds
     torch.manual_seed(args.seed)
     torch.cuda.manual_seed(args.seed)
     np.random.seed(args.seed)
     # Creating the snapshot
-    snapshot_name = time.strftime('%Y_%m_%d_%H_%M')
-    os.makedirs(os.path.join(args.snapshots, snapshot_name), exist_ok=True)
-
-    res = git_info()
-    if res is not None:
-        kvs.update('git branch name', res[0])
-        kvs.update('git commit id', res[1])
-    else:
-        kvs.update('git branch name', None)
-        kvs.update('git commit id', None)
+    init_snapshot_dir(snapshot_name_prefix)
 
     kvs.update('pytorch_version', torch.__version__)
 
@@ -52,11 +54,9 @@ def init_session():
         kvs.update('cuda', None)
         kvs.update('gpus', None)
 
-    kvs.update('snapshot_name', snapshot_name)
-    kvs.update('args', args)
-    kvs.save_pkl(os.path.join(args.snapshots, snapshot_name, 'session.pkl'))
+    kvs.save_pkl(os.path.join(args.snapshots, kvs['snapshot_name'], 'session.pkl'))
 
-    return args, snapshot_name
+    return args, kvs['snapshot_name']
 
 
 def init_data_processing():
@@ -72,8 +72,7 @@ def init_data_processing():
     print(colored('====> ', 'red') + 'Mean:', mean_vector)
     print(colored('====> ', 'red') + 'Std:', std_vector)
 
-    norm_trf = tv_transforms.Normalize(torch.from_numpy(mean_vector).float(),
-                                       torch.from_numpy(std_vector).float())
+    norm_trf = tv_transforms.Normalize(mean_vector.tolist(), std_vector.tolist())
     train_trf = tv_transforms.Compose([
         train_augs,
         partial(apply_by_index, transform=norm_trf, idx=0)

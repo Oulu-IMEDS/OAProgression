@@ -5,6 +5,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset_root', default='')
     parser.add_argument('--metadata_root', default='')
+    parser.add_argument('--oai_data_root', default='')
     parser.add_argument('--snapshots', default='')
     parser.add_argument('--logs', default='')
     parser.add_argument('--backbone', type=str, choices=['se_resnet50',

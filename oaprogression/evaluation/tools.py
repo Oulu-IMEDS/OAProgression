@@ -14,6 +14,9 @@ import torch.nn.functional as F
 import torchvision.transforms as tv_transforms
 from sklearn.metrics import roc_auc_score, cohen_kappa_score, confusion_matrix, mean_squared_error, f1_score, \
     average_precision_score
+import gc
+
+from tqdm import tqdm
 from sklearn.metrics import roc_curve, precision_recall_curve
 from torch import nn
 from torch.utils.data import DataLoader
@@ -23,6 +26,7 @@ from oaprogression.evaluation import stats
 from oaprogression.training import model
 from oaprogression.training import session as session
 from oaprogression.training.dataset import OAProgressionDataset, unpack_solt_data, img_labels2solt, apply_by_index
+from oaprogression.evaluation import gcam
 
 cv2.ocl.setUseOpenCL(False)
 cv2.setNumThreads(0)
@@ -46,9 +50,9 @@ def five_crop(img, size):
     return torch.stack((c_cr, ul_cr, ur_cr, bl_cr, br_cr))
 
 
-def init_fold(fold_id, session_snapshot, args, return_fc_kl=False):
+def init_fold(fold_id, session_snapshot, fold_path, return_fc_kl=False):
     net = model.KneeNet(session_snapshot['args'][0].backbone, 0.5, False)
-    snapshot_name = glob.glob(os.path.join(args.snapshots_root, args.snapshot, f'fold_{fold_id}*.pth'))[0]
+    snapshot_name = glob.glob(os.path.join(fold_path, f'fold_{fold_id}*.pth'))[0]
 
     net.load_state_dict(torch.load(snapshot_name))
 
@@ -71,13 +75,10 @@ def init_fold(fold_id, session_snapshot, args, return_fc_kl=False):
     return features, fc
 
 
-def init_loader(metadata, args):
-    mean_vector, std_vector = session.init_mean_std(args.snapshots_root, None, None, None)
+def init_loader(metadata, args, snapshots_root):
+    mean_vector, std_vector = session.init_mean_std(snapshots_root, None, None, None)
 
-    norm_trf = tv_transforms.Normalize(torch.from_numpy(mean_vector).float(),
-                                       torch.from_numpy(std_vector).float())
-
-    os.makedirs(args.save_dir, exist_ok=True)
+    norm_trf = tv_transforms.Normalize(mean_vector.tolist(), std_vector.tolist())
 
     tta_trf = tv_transforms.Compose([
         img_labels2solt,
@@ -117,6 +118,45 @@ def eval_batch(sample, features, fc_prog, fc_kl=None):
             return out_prog.to("cpu").numpy(), out_kl.to("cpu").numpy()
 
         return out_prog.to("cpu").numpy()
+
+
+def run_test_inference(loader, session_snapshot, snapshots_root, snapshot, save_dir):
+    gradcam_maps_all = 0
+    res_kl = 0
+    res_prog = 0
+    ids = None
+    for fold_id in range(session_snapshot['args'][0].n_folds):
+        features, fc, fc_kl = init_fold(fold_id, session_snapshot, os.path.join(snapshots_root, snapshot),
+                                        return_fc_kl=True)
+
+        preds_prog_fold = []
+        preds_kl_fold = []
+        gradcam_maps_fold = []
+        ids = []
+        for batch_id, sample in enumerate(
+                tqdm(loader, total=len(loader), desc='Prediction from fold {}'.format(fold_id))):
+            gcam_batch, probs_prog, probs_kl = gcam.eval_batch(sample, features, fc, fc_kl)
+            gradcam_maps_fold.append(gcam_batch)
+            preds_prog_fold.append(probs_prog)
+            preds_kl_fold.append(probs_kl)
+            ids.extend(sample['ID_SIDE'])
+            gc.collect()
+
+        preds_prog_fold = np.vstack(preds_prog_fold)
+        preds_kl_fold = np.vstack(preds_kl_fold)
+        gradcam_maps_all += np.vstack(gradcam_maps_fold)
+
+        res_kl += preds_kl_fold
+        res_prog += preds_prog_fold
+        gc.collect()
+
+    res_kl /= 5.
+    res_prog /= 5.
+    np.savez_compressed(os.path.join(save_dir, 'results.npz'),
+                        gradcam_maps_all=gradcam_maps_all,
+                        preds_kl=res_kl,
+                        preds_prog=res_prog,
+                        ids=ids)
 
 
 def calc_metrics(gt_progression, gt_kl, preds_progression, preds_kl):

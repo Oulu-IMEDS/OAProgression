@@ -50,6 +50,10 @@ RUN conda install -y statsmodels=0.9.0 -n oaprog
 RUN mkdir -p /root/.config/matplotlib/
 RUN echo "backend : Agg" > /root/.config/matplotlib/matplotlibrc
 
+# Making sure that the locales are correctly installed
+ENV LC_CTYPE en_US.UTF-8
+ENV LANG en_US.UTF-8
+
 # Setting up the package
 RUN mkdir /opt/pkg
 COPY . /opt/pkg

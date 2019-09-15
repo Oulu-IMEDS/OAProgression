@@ -4,6 +4,15 @@ import pandas as pd
 from tqdm import tqdm
 
 from oaprogression.metadata.utils import read_sas7bdata_pd
+import numpy as np
+
+jsw_features = ['V00JSW150', 'V00JSW175', 'V00JSW200', 'V00JSW225', 'V00JSW250', 'V00JSW275', 'V00JSW300',
+                'V00LJSW700', 'V00LJSW725', 'V00LJSW750', 'V00LJSW775', 'V00LJSW800', 'V00LJSW825', 'V00LJSW850',
+                'V00LJSW875', 'V00LJSW900']
+
+sides = [None, 'R', 'L']
+
+beam_angle_feature = 'V00BMANG'
 
 
 def build_img_progression_meta(oai_src_dir):
@@ -115,3 +124,32 @@ def build_clinical(oai_src_dir):
     clinical_data_oai = pd.concat((clinical_data_oai_left, clinical_data_oai_right))
     clinical_data_oai.ID = clinical_data_oai.ID.values.astype(int)
     return clinical_data_oai[['ID', 'Side', 'AGE', 'SEX', 'BMI', 'INJ', 'SURG', 'WOMAC']]
+
+
+def read_jsw_metadata_oai(preprocessed_metadata_dir, oai_src_dir):
+    oai_meta = pd.read_csv(os.path.join(preprocessed_metadata_dir, 'OAI_progression.csv'))
+    oai_participants = pd.read_csv(os.path.join(preprocessed_metadata_dir, 'OAI_participants.csv'))
+    oai_participants_raw = read_sas7bdata_pd(os.path.join(os.path.join(oai_src_dir, 'X-Ray_Image_Assessments_SAS',
+                                                                       'enrollees.sas7bdat')))
+
+    sites = oai_participants_raw[['ID', 'V00SITE']]
+    sites.ID = sites.ID.astype(int)
+    metadata = pd.merge(oai_meta, oai_participants, on=('ID', 'Side'))
+    metadata = pd.merge(metadata, sites)
+
+    quant_readings = read_sas7bdata_pd(os.path.join(oai_src_dir, 'X-Ray_Image_Assessments_SAS',
+                                                    'Quant JSW_SAS',
+                                                    'kxr_qjsw_duryea00.sas7bdat'))
+
+    quant_readings.drop_duplicates(subset=['ID', 'SIDE'], inplace=True)
+    quant_readings = quant_readings[(quant_readings['V00NOLJSWX'].astype(float) +
+                                     quant_readings['V00NOMJSWX'].astype(float)) == 0]
+
+    quant_readings = quant_readings[['ID', 'SIDE'] + jsw_features + [beam_angle_feature, ]]
+
+    quant_readings['Side'] = quant_readings.SIDE.apply(lambda x: (sides[int(x)]), 1)
+    quant_readings['ID'] = quant_readings.ID.astype(int)
+    quant_readings.drop('SIDE', axis=1, inplace=True)
+    metadata = pd.merge(quant_readings, metadata, on=('ID', 'Side'))
+    sites = np.unique(metadata.V00SITE.values)
+    return sites, metadata

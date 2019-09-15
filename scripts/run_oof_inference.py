@@ -34,10 +34,13 @@ if __name__ == "__main__":
     ids = []
     if not args.from_cache:
         for fold_id in range(session_snapshot['args'][0].n_folds):
-            features, fc_prog, fc_kl = tools.init_fold(fold_id, session_snapshot, args, return_fc_kl=True)
+            features, fc_prog, fc_kl = tools.init_fold(fold_id, session_snapshot, os.path.join(args.snapshots_root,
+                                                                                               args.snapshot),
+                                                       return_fc_kl=True)
+
             _, val_index = session_snapshot['cv_split_train'][0][fold_id]
             x_val = session_snapshot['metadata'][0].iloc[val_index]
-            loader = tools.init_loader(x_val, args)
+            loader = tools.init_loader(x_val, args, args.snapshots_root)
 
             for batch_id, sample in enumerate(tqdm(loader, total=len(loader),
                                                    desc='Prediction from fold {}'.format(fold_id))):

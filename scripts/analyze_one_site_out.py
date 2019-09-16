@@ -9,6 +9,7 @@ from sklearn.metrics import average_precision_score, roc_auc_score
 
 from oaprogression.evaluation import tools
 from oaprogression.training.lgbm_tools import optimize_lgbm_hyperopt, fit_lgb
+from oaprogression.metadata.oai import jsw_features
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -16,6 +17,7 @@ if __name__ == "__main__":
     parser.add_argument('--snapshot', default='')
     parser.add_argument('--lgbm_hyperopt_trials', type=int, default=500)
     parser.add_argument('--jsw_ablation_path', default='')
+    parser.add_argument('--save_dir', default='')
     args = parser.parse_args()
 
     results = {}
@@ -91,10 +93,26 @@ if __name__ == "__main__":
             ids, sides, y_test, test_res = results[site][model]
             ap[model].append(average_precision_score(y_test, test_res))
             auc[model].append(roc_auc_score(y_test, test_res))
+
     for model in auc:
         print('================')
         print(f'{model} AP: {np.mean(ap[model]):.2}±{np.std(ap[model]):.2}')
         print(f'{model} AUC: {np.mean(auc[model]):.2}±{np.std(auc[model]):.2}')
 
+    with open(os.path.join(args.save_dir, 'results_one_site_out_all.pkl'), 'wb') as f:
+        pickle.dump(results, f)
 
+    with open(args.jsw_ablation_path, 'rb') as f:
+        data = pickle.load(f)
 
+    for features in data.keys():
+        model = features.replace('_'.join(jsw_features), 'JSWs').replace('V00BMANG', 'BeamAngle')
+        ap = []
+        auc = []
+        for site in data[features]:
+            ids, sides, y_test, test_res = data[features][site]
+            ap.append(average_precision_score(y_test, test_res))
+            auc.append(roc_auc_score(y_test, test_res))
+        print('================')
+        print(f'{model} AP: {np.mean(ap):.2}±{np.std(ap):.2}')
+        print(f'{model} AUC: {np.mean(auc):.2}±{np.std(auc):.2}')

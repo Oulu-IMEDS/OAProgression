@@ -93,6 +93,9 @@ if __name__ == "__main__":
         ids = metadata_test.ID.values
         sides = metadata_test.Side.values
         results[f'preds_MOST_BL_all_{features_suffix}'] = (ids, sides, y_test, test_res)
+        results[f'lgbm_params_MOST_BL_all_{features_suffix}'] = best_params
+        results[f'lgbm_params_OAI_BL_all_OOF_{features_suffix}'] = oof_preds
+        results[f'lgbm_fi_{features_suffix}'] = [gbm.feature_importance() for gbm in models_best]
 
     with open(os.path.join(args.save_dir, 'results_lgbm_stacking.pkl'), 'wb') as f:
         pickle.dump(results, f)

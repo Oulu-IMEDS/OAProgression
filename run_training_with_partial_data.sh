@@ -23,7 +23,6 @@ do
               --n_epochs 20
 
     SNAPSHOT=$(ls -td $WRKDIR/snapshots/* | head -1 | rev |cut -d/ -f1 | rev)
-    mkdir -p $WRKDIR/snapshots/$SNAPSHOT/test_inference
 
     nvidia-docker run -it --name oa_prog_evaluation --rm \
 	      -v $WRKDIR:/workdir/:rw \

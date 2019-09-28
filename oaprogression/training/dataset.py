@@ -111,6 +111,21 @@ def init_progression_metadata():
     most_meta = pd.read_csv(os.path.join(kvs['args'].metadata_root, 'MOST_progression.csv'))
     oai_meta = pd.read_csv(os.path.join(kvs['args'].metadata_root, 'OAI_progression.csv'))
 
+    if kvs['args'].subsample_train != -1:
+        n_train = oai_meta.shape[0]
+        prevalence = (oai_meta.Progressor > 0).sum() / n_train
+        sample_pos = int(kvs['args'].subsample_train * prevalence)
+        sample_neg = kvs['args'].subsample_train - sample_pos
+        train_pos = oai_meta[oai_meta.Progressor > 0]
+        train_neg = oai_meta[oai_meta.Progressor == 0]
+
+        pos_sampled = train_pos.iloc[np.random.choice(train_pos.shape[0], sample_pos)]
+        neg_sampled = train_neg.iloc[np.random.choice(train_neg.shape[0], sample_neg)]
+
+        new_meta = pd.concat((pos_sampled, neg_sampled))
+        oai_meta = new_meta.iloc[np.random.choice(new_meta.shape[0], new_meta.shape[0])]
+        print(colored("==> ", 'red') + f"Train set has been sub-sampled. New # pos/neg {sample_pos}/{sample_neg}")
+
     kvs.update('metadata', oai_meta)
     kvs.update('metadata_test', most_meta)
 
@@ -122,17 +137,17 @@ def init_progression_metadata():
     kvs.update('cv_split_all_folds', cv_split)
     kvs.save_pkl(os.path.join(kvs['args'].snapshots, kvs['snapshot_name'], 'session.pkl'))
 
-    print(colored("==> ", 'green') + f"Train dataset has "
-    f"{(kvs['metadata'].Progressor == 0).sum()} non-progressed knees")
+    print(colored("==> ", 'green') +
+          f"Train dataset has {(kvs['metadata'].Progressor == 0).sum()} non-progressed knees")
 
-    print(colored("==> ", 'green') + f"Train dataset has "
-    f"{(kvs['metadata'].Progressor > 0).sum()} progressed knees")
+    print(colored("==> ", 'green') +
+          f"Train dataset has {(kvs['metadata'].Progressor > 0).sum()} progressed knees")
 
-    print(colored("==> ", 'green') + f"Test dataset has "
-    f"{(kvs['metadata_test'].Progressor == 0).sum()} non-progressed knees")
+    print(colored("==> ", 'green') +
+          f"Test dataset has {(kvs['metadata_test'].Progressor == 0).sum()} non-progressed knees")
 
-    print(colored("==> ", 'green') + f"Test dataset has "
-    f"{(kvs['metadata_test'].Progressor > 0).sum()} progressed knees")
+    print(colored("==> ", 'green') +
+          f"Test dataset has {(kvs['metadata_test'].Progressor > 0).sum()} progressed knees")
 
 
 def img_labels2solt(inp):

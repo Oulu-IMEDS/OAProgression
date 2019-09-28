@@ -19,6 +19,7 @@ def parse_args():
     parser.add_argument('--target_var', type=str, choices=['AGE', 'SEX', 'BMI'], default='AGE')
     parser.add_argument('--predict_age_sex_bmi', type=bool, default=False)
     parser.add_argument('--n_folds', type=int, default=5)
+    parser.add_argument('--subsample_train', type=int, default=-1)
     parser.add_argument('--fold', type=int, default=-1)
     parser.add_argument('--n_epochs', type=int, default=20)
     parser.add_argument('--n_threads', type=int, default=12)

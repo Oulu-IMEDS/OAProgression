@@ -23,6 +23,7 @@ do
               --n_epochs 20
 
     SNAPSHOT=$(ls -td $WRKDIR/snapshots/* | head -1 | rev |cut -d/ -f1 | rev)
+    mkdir -p $WRKDIR/snapshots/$SNAPSHOT/test_inference
 
     nvidia-docker run -it --name oa_prog_evaluation --rm \
 	      -v $WRKDIR:/workdir/:rw \
@@ -30,6 +31,6 @@ do
 	      oaprog_img python -u run_dl_evaluation.py --snapshots /workdir/snapshots \
 	      --snapshot $SNAPSHOT \
 	      --dataset_root /data/ \
-	      --save_dir /workdir/Results \
+	      --save_dir /workdir/snapshots/$SNAPSHOT/test_inference \
 	      --metadata_root /workdir/Metadata
 done;

@@ -1,4 +1,4 @@
-tensorflow==1.7.0
+tensorflow==2.5.0
 tensorboardx==1.1
 termcolor
 tqdm
